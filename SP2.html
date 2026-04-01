@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>커넥트 마인드 - 조현병 인식 개선 시뮬레이션</title>
+    <style>
+        /* --- 기본 스타일: 따뜻한 감성 테마 --- */
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background-color: #fdfaf5; /* 아주 연한 크림색 배경 */
+            color: #5d4037; /* 부드러운 브라운 톤 글씨 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            transition: background-color 0.8s ease; /* 배경색 변화 부드럽게 */
+        }
+
+        #game-container {
+            background-color: white;
+            width: 100%;
+            max-width: 800px;
+            border-radius: 25px; /* 둥글둥글하게 */
+            box-shadow: 0 10px 40px rgba(139, 69, 19, 0.1); /* 갈색톤의 부드러운 그림자 */
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+            position: relative;
+            overflow: hidden; /* 폭죽이 컨테이너 안에서 터지도록 */
+        }
+
+        /* --- 타이틀 및 디자인 요소 --- */
+        h1 {
+            color: #795548;
+            font-size: 30px;
+            margin-bottom: 5px;
+            text-align: center;
+            letter-spacing: -1px;
+        }
+
+        .header-title {
+            font-size: 16px;
+            color: #a1887f;
+            margin-bottom: 25px;
+            text-align: center;
+            font-weight: 300;
+        }
+
+        /* 따뜻한 느낌의 구분선 */
+        .title-divider {
+            width: 60px;
+            height: 3px;
+            background-color: #d7ccc8;
+            margin: 0 auto 25px auto;
+            border-radius: 2px;
+        }
+
+        /* --- 상태바 스타일 --- */
+        #status-bar-container {
+            display: none;
+            margin-bottom: 20px;
+            background-color: #f5f0e1;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        #score-label {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #8d6e63;
+        }
+
+        #status-bar {
+            background-color: #e6dfc4;
+            border-radius: 10px;
+            height: 20px;
+            overflow: hidden;
+        }
+
+        #score-level {
+            height: 100%;
+            width: 50%;
+            transition: width 0.5s ease-in-out, background-color 0.5s;
+            background-color: #d4a781; /* 초기 보통 상태 색상 */
+        }
+
+        /* --- 스토리 및 대화창 스타일 --- */
+        #story-text {
+            font-size: 17px;
+            color: #4e342e;
+            line-height: 1.9; /* 줄간격 넓혀서 시인성 확보 */
+            margin-bottom: 25px;
+            min-height: 220px;
+            padding: 25px;
+            background-color: #fffaf0; /* 따뜻한 아이보리 대화창 배경 */
+            border-radius: 15px;
+            border: 1px solid #f3e5f5;
+            position: relative;
+        }
+
+        /* 대화창 상단 부드러운 포인트 (다시 부활시킨 따옴표!) */
+        #story-text::before {
+            content: '“';
+            font-size: 60px;
+            color: #d7ccc8;
+            position: absolute;
+            top: -10px;
+            left: 15px;
+            font-family: serif;
+        }
+
+        /* --- 선택지 버튼 스타일 --- */
+        #choices-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: auto;
+        }
+
+        .choice-btn {
+            padding: 18px 25px;
+            background-color: #efebe9; /* 기본 버튼: 연한 회갈색 */
+            color: #5d4037;
+            border: 1px solid #d7ccc8;
+            border-radius: 15px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            line-height: 1.6;
+            word-break: keep-all;
+        }
+
+        .choice-btn:hover {
+            background-color: #d7ccc8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+
+        /* 인트로 및 메인 메뉴 버튼 (따뜻한 포인트) */
+        .menu-btn {
+            background-color: #d4a781; /* 코랄 섞인 베이지 */
+            color: white;
+            border: none;
+            text-align: center;
+            font-weight: bold;
+            font-size: 17px;
+        }
+
+        .menu-btn:hover { background-color: #bf8b62; }
+
+        /* 에피소드 선택 버튼 */
+        .ep-btn {
+            background-color: #8d6e63; /* 짙은 브라운 */
+            color: white;
+            border: none;
+        }
+
+        .ep-btn:hover { background-color: #6d4c41; }
+
+        /* 텍스트 강조 효과 */
+        .highlight { font-weight: bold; color: #d32f2f; }
+        .success { color: #2e7d32; font-weight: bold; font-size: 18px; }
+
+        /* 인트로 및 메시지 박스 */
+        .intro-box {
+            background-color: #fdfae5;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            text-align: left;
+            border: 1px solid #f9f0b1;
+        }
+        .intro-box h3 { margin-top: 0; color: #5d4037; font-size: 18px; }
+
+        /* --- 팡! 폭죽 효과 스타일 (크고 화려하게 유지) --- */
+        .confetti-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none; /* 클릭 방해 안 함 */
+            z-index: 10;
+        }
+
+        .confetti {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%; /* 동그란 폭죽 */
+            opacity: 0;
+            animation: confetti-burst 1.5s ease-out forwards;
+        }
+
+        @keyframes confetti-burst {
+            0% { transform: translate(0, 0) scale(0); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="confetti-overlay" id="confetti-overlay"></div>
+
+<div id="game-container">
+    <h1 id="game-title">커넥트 마인드</h1>
+    <div id="subtitle" class="header-title">조현병 인식 개선 프로젝트</div>
+    <div class="title-divider"></div>
+    
+    <div id="status-bar-container">
+        <div id="score-label">현재 점수</div>
+        <div id="status-bar">
+            <div id="score-level"></div>
+        </div>
+    </div>
+
+    <div id="story-text"></div>
+    <div id="choices-container"></div>
+</div>
+
+<script>
+    let currentScore = 50;
+
+    /* --- 팡! 효과 (폭죽) 함수 --- */
+    function triggerPangEffect() {
+        const overlay = document.getElementById('confetti-overlay');
+        const colors = ['#ffab91', '#ffcc80', '#e6ee9c', '#81d4fa', '#f48fb1', '#ce93d8', '#ffeb3b', '#4caf50', '#2196f3', '#9c27b0', '#ff9800', '#e91e63']; 
+
+        const centerX = overlay.offsetWidth / 2;
+        const centerY = overlay.offsetHeight / 2;
+
+        for (let i = 0; i < 150; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            confetti.style.left = centerX + 'px';
+            confetti.style.top = centerY + 'px';
+
+            const angle = Math.random() * Math.PI * 2; 
+            const distance = 80 + Math.random() * 350; 
+            const dx = Math.cos(angle) * distance + 'px';
+            const dy = Math.sin(angle) * distance + 'px';
+            confetti.style.setProperty('--dx', dx);
+            confetti.style.setProperty('--dy', dy);
+
+            overlay.appendChild(confetti);
+
+            setTimeout(() => {
+                confetti.remove();
+            }, 1500);
+        }
+    }
+
+    const storyNodes = {
+        // ================= 프로젝트 인트로 및 메뉴 =================
+        intro_page: {
+            text: "<div class='intro-text'><b><커넥트 마인드>에 오신 것을 환영합니다.</b><br><br>이 시뮬레이션은 조현병에 대한 막연한 두려움을 해소하고, 환자를 우리 사회의 일원으로 포용하기 위해 기획되었습니다. 플레이어는 두 가지 시점을 통해 질환을 입체적으로 이해하게 됩니다.<br><br>" +
+                  "<div class='intro-box'><h3>🤝 일반인을 위한 목적</h3>미디어가 만든 '조현병 = 위험한 범죄자'라는 편견을 바로잡습니다. 망상과 환청을 겪는 이웃에게 상처 주지 않고 공감하며, 전문가의 도움으로 연결하는 <b>올바른 대처법을 학습</b>합니다.</div>" +
+                  "<div class='intro-box'><h3>📚 약대생을 위한 목적</h3>단순한 약리학 암기를 넘어, 실제 임상 현장에서 마주할 <b>복잡한 부작용(EPS, 대사증후군 등) 호소와 환자의 심리적 저항에 대처하는 복약지도 및 처방 중재 능력</b>을 기릅니다.</div></div>",
+            choices: [ { text: "시뮬레이션 시작하기", next: "main_menu", isMenu: true } ]
+        },
+        main_menu: {
+            text: "<b>플레이할 모드를 선택해 주세요.</b>",
+            choices: [
+                { text: "🤝 일반인 모드 (인식 개선 및 대처)", next: "gen_menu", isMenu: true },
+                { text: "📚 약대생 모드 (임상 약학 및 중재)", next: "pharm_menu", isMenu: true }
+            ]
+        },
+        gen_menu: {
+            text: "<b>[일반인 모드 에피소드]</b><br>경험하고 싶은 상황을 선택하세요.",
+            choices: [
+                { text: "EP 1. 카페의 친구 (급성 환청/망상 대처)", next: "gen1_start", isEp: true },
+                { text: "EP 2. 새로운 직장 동료 (편견 극복 및 협업)", next: "gen2_start", isEp: true },
+                { text: "EP 3. 가족의 단약 선언 (부작용 호소와 지지)", next: "gen3_start", isEp: true },
+                { text: "⬅️ 뒤로 가기", next: "main_menu", isMenu: true }
+            ]
+        },
+        pharm_menu: {
+            text: "<b>[약대생 모드 에피소드]</b><br>풀이할 임상 케이스를 선택하세요.",
+            choices: [
+                { text: "Case 1. 체중 증가 우려와 좌불안석 (Aripiprazole)", next: "pharm1_start", isEp: true },
+                { text: "Case 2. 심한 음성 증상과 치명적 부작용 (Clozapine)", next: "pharm2_start", isEp: true },
+                { text: "Case 3. 호르몬 이상과 수용체 기전 (Risperidone)", next: "pharm3_start", isEp: true },
+                { text: "⬅️ 뒤로 가기", next: "main_menu", isMenu: true }
+            ]
+        },
+
+        // ================= [일반인 EP 1] 카페의 친구 =================
+        gen1_start: { text: "친한 친구 '민수'를 오랜만에 카페에서 만났습니다. 민수가 갑자기 당신의 팔을 꽉 잡으며 불안한 눈빛으로 속삭입니다.<br><br><span class='highlight'>\"야... 저기 구석에 있는 남자가 내 스마트폰을 해킹해서 내 생각을 엿듣고 있어. 아까부터 내 귀에 대고 죽으라고 속삭인다고!\"</span>", choices: [ { text: "미쳤어? 저 사람은 그냥 커피 마시고 있잖아. 말도 안 되는 소리 하지 마.", next: "gen1_bad1", scoreChange: -30 }, { text: "정말? 큰일이네! 당장 저 사람한테 가서 따지자.", next: "gen1_bad2", scoreChange: -20 }, { text: "나는 그런 소리가 안 들리는데... 네가 지금 많이 무섭고 힘들어 보여.", next: "gen1_step2", scoreChange: +30 } ] },
+        gen1_bad1: { text: "민수는 배신감을 느끼며 화를 냅니다. 망상을 부정하거나 비난하면 환자는 극도의 고립감을 느깁니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen1_bad2: { text: "당신이 동조하자 민수는 더 큰 패닉에 빠집니다. 망상에 동조하는 것은 환자의 불안을 증폭시키는 위험한 행동입니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen1_step2: { text: "당신의 공감에 민수의 떨림이 조금 잦아듭니다.<br><br>\"너한테는 안 들려?... 근데 너무 생생해. 나 미쳐가는 걸까?\"<br><br>민수는 혼란스러워하며 눈물을 글썽입니다.", choices: [ { text: "일단 여기는 사람이 많으니까, 조용한 공원으로 자리를 옮겨서 좀 쉬자.", next: "gen1_step3", scoreChange: +20 }, { text: "너 빨리 정신병원부터 가봐야겠다. 심각하네.", next: "gen1_bad3", scoreChange: -20 } ] },
+        gen1_bad3: { text: "병원이라는 직설적인 단어에 민수는 거부감을 보이며 도망칩니다. 환자가 안정을 취하는 것이 먼저입니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen1_step3: { text: "조용한 공원 벤치에 앉자 민수가 한숨을 쉬며 말합니다.<br><br>\"사실 취업 스트레스 때문에 며칠 밤을 새웠어. 잠을 못 자니까 환청이 더 심해지는 것 같아. 나 어떡해야 하지?\"", choices: [ { text: "그냥 피곤해서 그래. 집에 가서 며칠 푹 자고 나면 다 나을 거야.", next: "gen1_bad4", scoreChange: -30 }, { text: "혼자 견디기 너무 힘들었겠다. 우리 학교 학생상담센터나 근처 마음건강센터에 같이 가볼래? 내가 동행해 줄게.", next: "gen1_good", scoreChange: +30 } ] },
+        gen1_bad4: { text: "조현병의 전조 증상을 단순 피로로 치부하여 골든타임을 놓쳤습니다. 몇 주 뒤 민수의 상태는 심각하게 악화되었습니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen1_good: { text: "<span class='success'>🎉 [대처 성공: 훌륭한 조력자]</span><br><br>망상을 부정/동조하지 않고 감정에 공감한 뒤, 부드럽게 전문가에게 연결하는 정석적인 대처입니다. 조기 개입 덕분에 민수는 빠르게 일상을 회복할 수 있었습니다.", choices: [{ text: "결과 및 메시지 보기", next: "awareness_message" }] },
+
+        // ================= [일반인 EP 2] 새로운 직장 동료 =================
+        gen2_start: { text: "새로 입사한 동료 '지영'과 단둘이 점심을 먹게 되었습니다. 지영이 조심스럽게 입을 엽니다.<br><br>\"대리님, 사실 저 5년 전부터 조현병 약을 먹고 있어요. 꾸준히 관리해서 일상에 전혀 문제가 없지만, 대리님은 좋은 분 같아서 미리 말씀드려요.\"", choices: [ { text: "(당황하며) 아... 네. 그럼 혹시 일하다가 갑자기 난폭해지거나 그러시진 않죠?", next: "gen2_bad1", scoreChange: -30 }, { text: "그렇군요. 용기 내서 말해줘서 정말 고마워요. 우리 프로젝트 잘해봐요!", next: "gen2_step2", scoreChange: +30 }, { text: "에이, 전혀 그렇게 안 보이는데? 오진 아닐까요? 약 끊어도 될 것 같아요.", next: "gen2_bad2", scoreChange: -20 } ] },
+        gen2_bad1: { text: "지영은 상처받은 표정으로 입을 다뭅니다. 미디어가 만든 '조현병=잠재적 범죄자'라는 편견을 그대로 드러낸 무례한 발언입니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen2_bad2: { text: "환자의 병식을 부정하고 임의 단약을 부추기는 것은 매우 위험한 발언입니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen2_step2: { text: "지영은 안도하는 표정입니다. 몇 주 뒤, 연말 마감으로 업무가 몰리면서 지영이 평소보다 많이 피곤해 보이고 불안해합니다. 조현병 환자에게 과도한 스트레스는 증상 재발의 트리거가 될 수 있습니다.", choices: [ { text: "다른 팀원들에게 지영의 병을 알리고 지영의 업무를 아예 빼버린다.", next: "gen2_bad3", scoreChange: -30 }, { text: "따뜻한 차를 건네며 \"요즘 많이 피곤해 보이는데, 잠깐 쉴까요? 급한 건 제가 조금 도와줄게요.\"라고 말한다.", next: "gen2_step3", scoreChange: +30 } ] },
+        gen2_bad3: { text: "아웃팅(본인 동의 없이 병을 알리는 것)은 절대 금물입니다! 지영은 조직 내에서 따돌림을 당할까 두려워 극심한 스트레스를 받게 되었습니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen2_step3: { text: "지영은 고마워하며 휴게실에서 한숨을 돌립니다.<br><br>\"감사해요. 스트레스를 받으니 머릿속이 조금 복잡해져서 무서웠거든요. 혹시 팀장님께도 제 상태를 말씀드리는 게 좋을까요?\"", choices: [ { text: "무조건 숨기세요. 회사에서 그런 걸 알면 인사 고과에 불이익이 올 거예요.", next: "gen2_bad4", scoreChange: -20 }, { text: "지영 씨가 편하신 대로 하는 게 맞아요. 하지만 팀장님은 배려심이 많으시니, 필요하다면 업무량 조절을 위해 면담해 보는 것도 좋을 것 같아요.", next: "gen2_good", scoreChange: +20 } ] },
+        gen2_bad4: { text: "숨기라고 강요하는 것은 환자에게 질환을 '부끄러운 것'으로 각인시킵니다. 당장의 불이익보다 건강 관리가 우선입니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen2_good: { text: "<span class='success'>🎉 [대처 성공: 최고의 동료]</span><br><br>편견 없는 태도와 세심한 배려 덕분에 지영은 건강하게 프로젝트를 마쳤습니다. 조현병 환자도 적절한 관리와 환경적 지지가 있다면 훌륭한 사회 구성원이 될 수 있습니다.", choices: [{ text: "결과 및 메시지 보기", next: "awareness_message" }] },
+
+        // ================= [일반인 EP 3] 가족의 단약 선언 =================
+        gen3_start: { text: "조현병 진단을 받은 남동생이 화를 내며 약봉지를 쓰레기통에 던집니다.<br><br>\"나 이제 약 안 먹어! 환청도 다 사라졌고 나 완전 정상이야. 약 먹으면 하루 종일 잠만 오고, 머리가 멍청해진 것 같아!\"", choices: [ { text: "너 또 병원에 입원하고 싶어?! 의사가 먹으라는데 왜 고집을 피워!", next: "gen3_bad1", scoreChange: -20 }, { text: "그래, 환청도 없는데 약 끊어도 되겠다. 부작용이 그렇게 심하면 먹지 마.", next: "gen3_bad2", scoreChange: -30 }, { text: "약 때문에 종일 졸리고 무기력해서 정말 답답했겠다. 그 마음 이해해.", next: "gen3_step2", scoreChange: +30 } ] },
+        gen3_bad1: { text: "동생은 방문을 꽝 닫고 잠가버립니다. 강압적인 태도는 환자가 몰래 약을 버리게 만듭니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen3_bad2: { text: "조현병은 유지 치료가 필수입니다. 임의 단약은 1년 내 재발률이 70%가 넘는 매우 치명적인 실수입니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen3_step2: { text: "동생이 한숨을 쉬며 누그러집니다.<br><br>\"누나는 내 맘 몰라. 예전처럼 친구들도 만나고 운동도 하고 싶은데, 약에 취해서 나갈 수가 없다고.\"", choices: [ { text: "다음 진료 때 의사 선생님한테 졸림 부작용이 너무 심하다고 꼭 말하자. 약을 바꿔주실 수도 있어.", next: "gen3_step3", scoreChange: +20 }, { text: "원래 정신과 약이 다 독해서 그래. 낫기 위해서 네가 참아야지 어떡해.", next: "gen3_bad3", scoreChange: -20 } ] },
+        gen3_bad3: { text: "부작용을 무조건 참으라는 말은 환자를 절망하게 합니다. 부작용은 참는 것이 아니라 조절하는 것입니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen3_step3: { text: "동생은 여전히 회의적입니다.<br><br>\"말해도 소용없을걸? 지난번에도 의사 선생님은 내 얼굴 3분 보고 처방전만 뽑아줬잖아. 내 말은 듣지도 않으셔.\"", choices: [ { text: "그럼 병원을 바꾸자. 당장 오늘부터 약 끊고 다른 병원 알아봐.", next: "gen3_bad4", scoreChange: -20 }, { text: "짧은 진료 시간에 말하기 어려웠구나. 다음 진료 땐 내가 같이 가서 부작용 메모한 걸 보여드릴게. 같이 해결해 보자.", next: "gen3_good", scoreChange: +30 } ] },
+        gen3_bad4: { text: "성급한 의사 교체와 임의 단약은 치료 연속성을 해칩니다.", choices: [{ text: "결과 확인", next: "gen_bad_end" }] },
+        gen3_good: { text: "<span class='success'>🎉 [대처 성공: 따뜻한 가족]</span><br><br>동생의 어려움에 공감하고, 의료진과의 소통을 돕는 구체적인 해결책을 제시했습니다. 가족의 적극적인 지지는 환자의 약물 순응도를 높이는 가장 강력한 무기입니다.", choices: [{ text: "결과 및 메시지 보기", next: "awareness_message" }] },
+
+        // ================= [약대생 Case 1] 체중증가와 EPS =================
+        pharm1_start: { text: "[실습 평가 Case 1]<br><br><b>환자:</b> 22세 여성, 무용 전공 대학생. 최근 '누군가 해치려 한다'는 망상으로 초발 조현병 진단.<br><b>교수님:</b> \"무용 전공이라 체중 증가에 극도로 예민하네. 첫 번째 약물로 무엇을 추천하겠나?\"", choices: [ { text: "Haloperidol (1세대 정형 항정신병약)", next: "pharm1_bad1", scoreChange: -20 }, { text: "Olanzapine (2세대 비정형 항정신병약)", next: "pharm1_bad2", scoreChange: -20 }, { text: "Aripiprazole (2세대 비정형 항정신병약)", next: "pharm1_step2", scoreChange: +30 } ] },
+        pharm1_bad1: { text: "<b>교수님:</b> \"Haloperidol은 EPS(추체외로 증후군) 위험이 높아 무용 전공 학생에게 치명적이네. 탈락.\"", choices: [{ text: "다시 선택", next: "pharm1_start" }] },
+        pharm1_bad2: { text: "<b>교수님:</b> \"Olanzapine은 대사 증후군과 체중 증가 부작용이 가장 심해 환자가 금방 단약할 걸세. 탈락.\"", choices: [{ text: "다시 선택", next: "pharm1_start" }] },
+        pharm1_step2: { text: "<b>교수님:</b> \"정답! Aripiprazole은 체중 증가 부작용이 상대적으로 적어 적합하지.<br><br>2주 뒤, 환자가 다리에 벌레가 기어가는 것 같고 제자리에 가만히 앉아있지 못하겠다고 호소하네. 어떻게 중재하겠나?\"", choices: [ { text: "Akathisia(좌불안석) 의심. Propranolol(베타차단제) 추가 건의", next: "pharm1_step3", scoreChange: +30 }, { text: "Pseudoparkinsonism 의심. Benztropine(항콜린제) 추가 건의", next: "pharm_bad_end", scoreChange: -20 } ] },
+        pharm1_step3: { text: "<b>환자의 질문:</b><br><br>\"약사님, 그럼 저는 조현병 약에다가 평생 다른 약(Propranolol)까지 같이 달고 살아야 하는 건가요? 너무 우울해요.\"", choices: [ { text: "네, 안타깝지만 약물 부작용을 막기 위해서는 평생 같이 복용하셔야 합니다.", next: "pharm1_bad3", scoreChange: -20 }, { text: "아닙니다. 부작용 조절을 위해 일시적으로 사용하며, 증상이 호전되면 주치의와 상의하여 Aripiprazole 용량을 줄이거나 다른 약으로 변경할 수 있습니다.", next: "pharm1_good", scoreChange: +30 } ] },
+        pharm1_bad3: { text: "부적절한 복약지도입니다. Akathisia는 용량 의존적일 수 있으며 약물 변경/감량으로 해결할 수 있습니다. 환자에게 평생 복용을 단정지어 절망감을 주어선 안 됩니다.", choices: [{ text: "결과 확인", next: "pharm_bad_end" }] },
+        pharm1_good: { text: "<span class='success'>🎓 [Case 1 통과: A+ 처방 중재]</span><br><br>환자의 라이프스타일을 고려한 약물 선택(Aripiprazole), 흔한 부작용(Akathisia)의 정확한 감별, 그리고 환자의 불안을 덜어주는 안심 복약지도까지 완벽한 임상 약학의 정석입니다.", choices: [{ text: "결과 및 메시지 보기", next: "awareness_message" }] },
+
+        // ================= [약대생 Case 2] 음성증상과 클로자핀 =================
+        pharm2_start: { text: "[실습 평가 Case 2]<br><br><b>환자:</b> 35세 남성. 10년째 Haloperidol 복용 중. 환청은 없으나, 감정이 메마르고 방 밖으로 나오지 않으며 씻지 않음(심각한 음성 증상).<br><b>교수님:</b> \"전형적인 음성 증상 악화 상태네. 약물 교체를 건의해 보게.\"", choices: [ { text: "Haloperidol 용량 증량", next: "pharm2_bad1", scoreChange: -20 }, { text: "Clozapine 계열 등 비정형(2세대) 항정신병약물로 교체", next: "pharm2_step2", scoreChange: +30 } ] },
+        pharm2_bad1: { text: "<b>교수님:</b> \"1세대 정형 약물은 음성 증상 개선 효과가 거의 없고 오히려 악화시킬 수 있네. 틀렸어.\"", choices: [{ text: "다시 선택", next: "pharm2_start" }] },
+        pharm2_step2: { text: "<b>교수님:</b> \"좋아. 음성 증상 개선을 위해 치료 저항성 환자에게 최종적으로 <b>Clozapine(클로자핀)</b>을 투여하기로 했네. 약사로서 가장 치명적으로 모니터링해야 할 혈액학적 부작용은 무엇인가?\"", choices: [ { text: "무과립구증 (Agranulocytosis)", next: "pharm2_step3", scoreChange: +30 }, { text: "추체외로 부작용(EPS)", next: "pharm_bad_end", scoreChange: -20 } ] },
+        pharm2_step3: { text: "<b>[1달 뒤]</b><br>환자가 다시 약국을 찾았습니다.<br><br>\"약사님, 약 바꾸고 나서 방 밖으로 나가기도 하고 좋은데... 밤마다 베개가 다 젖을 정도로 침을 너무 많이 흘려요(Sialorrhea). 약을 다시 끊고 싶어요.\"", choices: [ { text: "그 정도는 감수하셔야 합니다. 클로자핀은 최후의 보루라 끊으면 안 됩니다.", next: "pharm2_bad2", scoreChange: -20 }, { text: "침 흘림은 흔한 부작용입니다. 잘 때 베개를 높이거나, 주치의와 상의하여 항콜린성 점안액을 구강 내에 떨어뜨리는 방법을 써볼 수 있습니다.", next: "pharm2_good", scoreChange: +30 } ] },
+        pharm2_bad2: { text: "부작용을 방치하면 복약 순응도가 떨어집니다. 약사로서 실질적인 생활 요법이나 해결책을 제시해야 합니다.", choices: [{ text: "결과 확인", next: "pharm_bad_end" }] },
+        pharm2_good: { text: "<span class='success'>🎓 [Case 2 통과: A+ 처방 중재]</span><br><br>Clozapine의 적응증과 치명적 부작용(무과립구증) 모니터링을 잘 숙지했습니다. 또한 Sialorrhea(타액분비과다)라는 특이적이고 불편한 부작용에 대한 실용적인 대처법까지 제시한 점이 훌륭합니다.", choices: [{ text: "결과 및 메시지 보기", next: "awareness_message" }] },
+
+        // ================= [약대생 Case 3] 호르몬 부작용 =================
+        pharm3_start: { text: "[실습 평가 Case 3]<br><br><b>환자:</b> 28세 여성. 3개월 전부터 Risperidone 복용 중. 최근 월경이 끊기고 가슴에서 유즙이 분비된다며 불안해함.<br><b>교수님:</b> \"환자가 많이 놀랐군. 이 부작용(고프로락틴혈증)의 원인이 되는 뇌의 도파민 경로는 어디인가?\"", choices: [ { text: "결절누두 경로 (Tuberoinfundibular pathway)", next: "pharm3_step2", scoreChange: +30 }, { text: "흑질선조체 경로 (Nigrostriatal pathway)", next: "pharm3_bad1", scoreChange: -20 } ] },
+        pharm3_bad1: { text: "<b>교수님:</b> \"흑질선조체 경로는 운동 조절을 담당해서 EPS(추체외로 증후군)와 관련이 있지 호르몬과는 무관하네. 다시 골라봐.\"", choices: [{ text: "다시 선택", next: "pharm3_start" }] },
+        pharm3_step2: { text: "<b>교수님:</b> \"정확해! 결절누두 경로에서 도파민이 차단되면서 억제되던 프로락틴 수치가 급증한 것이지. 그럼 어떤 약물로 교체하는 것이 좋겠나?\"", choices: [ { text: "Aripiprazole (아리피프라졸) 또는 Quetiapine (쿠에티아핀)으로 변경하거나 Bromocriptine 추가", next: "pharm3_step3", scoreChange: +30 }, { text: "Paliperidone (팔리페리돈)", next: "pharm_bad_end", scoreChange: -20 } ] },
+        pharm3_step3: { text: "<b>환자의 질문:</b><br><br>\"약사님, 같은 조현병 약인데 왜 Risperidone은 부작용이 생기고 Aripiprazole은 괜찮은 건가요? 둘 다 도파민을 막는 거 아닌가요?\"", choices: [ { text: "Aripiprazole은 도파민을 완전히 차단(Full Antagonist)하지 않고, 부분 효능제(Partial Agonist)로 작용하여 도파민 활성을 적정 수준으로 유지해주기 때문입니다.", next: "pharm3_good", scoreChange: +30 }, { text: "제약 회사 기술력이 발전해서 그렇습니다. 그냥 믿고 드시면 됩니다.", next: "pharm3_bad2", scoreChange: -20 } ] },
+        pharm3_bad2: { text: "환자에게 정확한 약리 기전을 알기 쉽게 설명하지 않고 회피하는 것은 전문가의 자세가 아닙니다.", choices: [{ text: "결과 확인", next: "pharm_bad_end" }] },
+        pharm3_good: { text: "<span class='success'>🎓 [Case 3 통과: A+ 처방 중재]</span><br><br>도파민의 4가지 뇌 경로 중 부작용과 연관된 경로를 정확히 파악했고, 프로락틴 상승이 적은 약물 선택 및 부분 효능제(Partial Agonist)라는 핵심 기전까지 완벽하게 설명했습니다!", choices: [{ text: "결과 및 메시지 보기", next: "awareness_message" }] },
+
+        // ================= 공통 배드엔딩 =================
+        gen_bad_end: { text: "🚨 <b>[대처 실패]</b><br><br>조현병에 대한 올바른 지식과 공감이 부족했습니다. 환자는 고립되거나 증상이 악화될 수 있습니다. 다시 도전해 보세요!", choices: [{ text: "결과 및 메시지 보기", next: "awareness_message" }] },
+        pharm_bad_end: { text: "🚨 <b>[임상 지식 부족]</b><br><br>약물 기전이나 부작용에 대한 이해가 부족하여 잘못된 중재를 했습니다. 이는 환자에게 치명적일 수 있습니다. 약리학 교과서를 다시 복습해 보세요!", choices: [{ text: "결과 및 메시지 보기", next: "awareness_message" }] },
+
+        // ================= 마지막 인식 개선 메시지 (추가됨) =================
+        awareness_message: { 
+            text: "<b>[조현병, 오해와 진실]</b><br><br>게임을 마쳐주셔서 감사합니다.<br><br>혹시 조현병 환자가 무섭게 느껴지시나요?<br><br>실제 통계에 따르면 <b>조현병 환자의 범죄율은 일반인보다 훨씬 낮습니다.</b> 적절한 치료를 받는다면 범죄 위험성은 일반인 수준으로 떨어집니다. 미디어에 보도되는 극히 일부의 자극적인 사건들이 질환에 대한 막연한 공포를 만들어냈을 뿐입니다.<br><br>그러나 사회의 차가운 시선과 '무섭다'는 편견 때문에, 수많은 환자들이 집 밖을 나서지 못하고 사회생활의 기회조차 얻지 못한 채 스스로를 고립시키고 있습니다.<br><br>조현병 환자는 두려운 존재가 아니라, 따뜻한 이해와 지지가 필요한 우리의 이웃입니다. 오늘 여러분의 공감과 이해가 이들이 다시 세상으로 나올 수 있는 가장 큰 힘이 됩니다. 💖", 
+            choices: [{ text: "메인 메뉴로 돌아가기", next: "main_menu", isMenu: true }] 
+        }
+    };
+
+    const storyTextElement = document.getElementById('story-text');
+    const choicesContainer = document.getElementById('choices-container');
+    const scoreLevelElement = document.getElementById('score-level');
+    const statusBarContainer = document.getElementById('status-bar-container');
+    const scoreLabel = document.getElementById('score-label');
+    const titleElement = document.getElementById('game-title');
+    const subtitleElement = document.getElementById('subtitle');
+
+    function updateGame(nodeId) {
+        const node = storyNodes[nodeId];
+        
+        if (nodeId === 'intro_page') {
+            statusBarContainer.style.display = 'none';
+            document.body.style.backgroundColor = '#fdfaf5';
+        } else if (nodeId === 'main_menu') {
+            currentScore = 50;
+            statusBarContainer.style.display = 'none';
+            titleElement.innerHTML = "커넥트 마인드";
+            subtitleElement.innerHTML = "조현병 인식 개선 시뮬레이션";
+            document.body.style.backgroundColor = '#fdf2e9';
+        } else if (nodeId === 'gen_menu' || nodeId.startsWith('gen')) {
+            statusBarContainer.style.display = 'block';
+            scoreLabel.innerText = "❤️ 공감 및 라포 지수";
+            titleElement.innerHTML = "🤝 일반인 모드";
+            subtitleElement.innerHTML = "이해의 다리 놓기";
+            document.body.style.backgroundColor = '#fdfae5';
+            if (nodeId.startsWith('gen') && !nodeId.includes('menu')) updateScoreUI();
+        } else if (nodeId === 'pharm_menu' || nodeId.startsWith('pharm')) {
+            statusBarContainer.style.display = 'block';
+            scoreLabel.innerText = "🧠 임상 지식 점수";
+            titleElement.innerHTML = "📚 약대생 모드";
+            subtitleElement.innerHTML = "약물학 마스터";
+            document.body.style.backgroundColor = '#e8f5e9';
+            if (nodeId.startsWith('pharm') && !nodeId.includes('menu')) updateScoreUI();
+        } else if (nodeId === 'awareness_message') {
+            // 메시지 창 전용 스타일
+            statusBarContainer.style.display = 'none';
+            titleElement.innerHTML = "💡 기억해 주세요";
+            subtitleElement.innerHTML = "우리의 작은 공감이 만드는 변화";
+            document.body.style.backgroundColor = '#fff3e0'; /* 따뜻한 살구색 배경 */
+        }
+
+        if (nodeId === 'gen_menu' || nodeId === 'pharm_menu') {
+            currentScore = 50;
+            updateScoreUI();
+        }
+
+        // 성공 엔딩 확인 후 폭죽 발사
+        if (node && node.text && node.text.includes('success')) {
+            setTimeout(triggerPangEffect, 200);
+        }
+
+        storyTextElement.innerHTML = node.text;
+        
+        choicesContainer.innerHTML = '';
+        if (node.choices.length > 0) {
+            node.choices.forEach(choice => {
+                const button = document.createElement('button');
+                
+                if (choice.isMenu) button.className = 'choice-btn menu-btn';
+                else if (choice.isEp) button.className = 'choice-btn ep-btn';
+                else button.className = 'choice-btn';
+                
+                button.innerHTML = choice.text;
+                button.onclick = () => {
+                    if (choice.scoreChange) {
+                        currentScore += choice.scoreChange;
+                        if (currentScore > 100) currentScore = 100;
+                        if (currentScore < 0) currentScore = 0;
+                        updateScoreUI();
+                    }
+                    updateGame(choice.next);
+                };
+                choicesContainer.appendChild(button);
+            });
+        }
+    }
+
+    function updateScoreUI() {
+        scoreLevelElement.style.width = currentScore + '%';
+        if (currentScore >= 70) scoreLevelElement.style.backgroundColor = '#a5d6a7';
+        else if (currentScore >= 40) scoreLevelElement.style.backgroundColor = '#ffcc80';
+        else scoreLevelElement.style.backgroundColor = '#ef9a9a';
+    }
+
+    // 인트로 페이지로 초기 실행
+    updateGame('intro_page');
+</script>
+
+</body>
+</html>

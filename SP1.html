@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>멘탈 가디언: 최고의 치료사, 조현병 GO</title>
+    <style>
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: #2c3e50;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: #333;
+        }
+
+        #game-container {
+            width: 650px;
+            height: 640px;
+            background-color: #ecf0f1;
+            border: 4px solid #34495e;
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+        }
+
+        #game-header {
+            width: 100%;
+            height: 120px;
+            background-image: url('https://i.ibb.co/8DR9tMcb/image-1.png');
+            background-size: cover;
+            background-position: center;
+            border-bottom: 2px solid #34495e;
+            flex-shrink: 0;
+        }
+
+        #screen {
+            flex: 1;
+            padding: 16px 20px 10px 20px;
+            box-sizing: border-box;
+            background-image: url('https://i.ibb.co/8gQ2YyJY/image-6.png');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        #image-screen {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            min-height: 0;
+        }
+
+        #player-side {
+            width: 42%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        #patient-side {
+            width: 56%;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            gap: 10px;
+            visibility: hidden;
+            min-height: 170px;
+        }
+
+        .patient-visual {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        #player-image, #patient-image {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #34495e;
+            margin-bottom: 10px;
+            background: #fff;
+        }
+
+        .text-area {
+            background: rgba(255, 255, 255, 0.78);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: left;
+            box-sizing: border-box;
+        }
+
+        #player-side .text-area {
+            width: 100%;
+            text-align: left;
+            align-self: stretch;
+        }
+
+        #patient-side .text-area {
+            text-align: right;
+            align-self: center;
+            min-width: 160px;
+        }
+
+        .bar-container {
+            width: 150px;
+            height: 15px;
+            background-color: #bdc3c7;
+            border: 2px solid #7f8c8d;
+            border-radius: 5px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .severity-bar {
+            height: 100%;
+            background-color: #e74c3c;
+            width: 100%;
+            transition: width 0.5s ease-in-out, background-color 0.5s;
+        }
+
+        .patient-dialogue-box {
+            width: 190px;
+            min-height: 118px;
+            background: #fdebd0;
+            border: 2px solid #e67e22;
+            border-radius: 16px;
+            padding: 10px 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #6e2c00;
+            text-align: left;
+            position: relative;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            box-sizing: border-box;
+        }
+
+        .patient-dialogue-box::after {
+            content: "";
+            position: absolute;
+            top: 38px;
+            right: -12px;
+            border-width: 10px 0 10px 12px;
+            border-style: solid;
+            border-color: transparent transparent transparent #e67e22;
+        }
+
+        .patient-dialogue-speaker {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #a04000;
+        }
+
+        .patient-dialogue-text {
+            word-break: keep-all;
+        }
+
+        .professor-briefing {
+            min-height: 100px;
+            max-height: 122px;
+            overflow-y: auto;
+            background: #eef6ff;
+            border-top: 3px solid #3498db;
+            border-bottom: 2px solid #bcd9f5;
+            padding: 10px 14px;
+            box-sizing: border-box;
+            font-size: 14px;
+            line-height: 1.5;
+            color: #1f3b57;
+            flex-shrink: 0;
+        }
+
+        #text-box {
+            height: 138px;
+            background-color: #fcf1a7;
+            border-top: 4px solid #34495e;
+            padding: 12px 14px;
+            box-sizing: border-box;
+            font-size: 15px;
+            line-height: 1.5;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        #speaker-name {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 6px;
+            color: #2c3e50;
+        }
+
+        .speech-bubble {
+            position: relative;
+            max-width: 94%;
+            padding: 10px 12px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+            box-sizing: border-box;
+            min-height: 78px;
+        }
+
+        .speech-bubble::after {
+            content: "";
+            position: absolute;
+            bottom: -10px;
+            left: 20px;
+            border-width: 10px 10px 0 10px;
+            border-style: solid;
+        }
+
+        .speech-bubble.professor {
+            background: #ffffff;
+            border: 2px solid #3498db;
+            color: #2c3e50;
+        }
+
+        .speech-bubble.professor::after {
+            border-color: #3498db transparent transparent transparent;
+        }
+
+        .speech-bubble.jiwoo {
+            background: #e8f8f5;
+            border: 2px solid #27ae60;
+            color: #1e8449;
+        }
+
+        .speech-bubble.jiwoo::after {
+            border-color: #27ae60 transparent transparent transparent;
+        }
+
+        .speech-bubble.system {
+            background: #fff7d6;
+            border: 2px solid #f39c12;
+            color: #7d6608;
+        }
+
+        .speech-bubble.system::after {
+            border-color: #f39c12 transparent transparent transparent;
+        }
+
+        .speech-bubble.narrator {
+            background: #f4f6f7;
+            border: 2px solid #7f8c8d;
+            color: #2c3e50;
+        }
+
+        .speech-bubble.narrator::after {
+            border-color: #7f8c8d transparent transparent transparent;
+        }
+
+        #menu-grid {
+            display: none;
+            grid-template-columns: 1fr 1fr;
+            grid-auto-rows: 1fr;
+            height: 150px;
+            background-color: white;
+            border-top: 4px solid #34495e;
+            flex-shrink: 0;
+        }
+
+        .menu-btn {
+            border: 1px solid #bdc3c7;
+            background: #fff;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+            padding: 6px;
+            box-sizing: border-box;
+        }
+
+        .menu-btn:hover {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-full {
+            grid-column: 1 / span 2;
+        }
+
+        h3 {
+            margin: 0 0 5px 0;
+            font-size: 18px;
+            color: #2c3e50;
+        }
+
+        .companion-list {
+            font-size: 13px;
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .small-note {
+            font-size: 12px;
+            color: #4a6984;
+            margin-top: 4px;
+        }
+
+        .highlight {
+            color: #e67e22;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-header"></div>
+
+        <div id="screen">
+            <div id="image-screen">
+                <div id="player-side">
+                    <img id="player-image" src="https://i.ibb.co/5hpkyB1W/image-2.png" alt="김지우">
+                    <div class="text-area">
+                        <h3>주인공: 김지우</h3>
+                        <div class="companion-list" id="companion-list">동행 환자: 없음</div>
+                    </div>
+                </div>
+
+                <div id="patient-side">
+                    <div id="patient-dialogue-box" class="patient-dialogue-box">
+                        <div class="patient-dialogue-speaker">환자</div>
+                        <div class="patient-dialogue-text">……</div>
+                    </div>
+
+                    <div class="patient-visual">
+                        <img id="patient-image" src="" alt="환자">
+                        <div class="text-area">
+                            <h3 id="patient-name">환자 이름</h3>
+                            <div>증상 심각도</div>
+                            <div class="bar-container">
+                                <div class="severity-bar" id="patient-severity"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="professor-briefing" class="professor-briefing">
+            제박사님의 환자 브리핑이 여기에 표시됩니다.
+        </div>
+
+        <div id="text-box" onclick="advanceDialogue()">
+            <div id="speaker-name"></div>
+            <div id="speech-bubble" class="speech-bubble narrator">
+                화면을 클릭하여 시작하세요.
+            </div>
+        </div>
+
+        <div id="menu-grid">
+            <button class="menu-btn" onclick="useTreatment(1)">Risperidone</button>
+            <button class="menu-btn" onclick="useTreatment(2)">Olanzapine</button>
+            <button class="menu-btn" onclick="useTreatment(3)">Clozapine</button>
+            <button class="menu-btn" onclick="useTreatment(4)">Clozapine + Aripiprazole</button>
+            <button class="menu-btn btn-full" onclick="useTreatment(5)">Olanzapine + Amisulpiride</button>
+        </div>
+    </div>
+
+    <script>
+        const meowthImage = 'https://i.ibb.co/MxSrmgj6/image-3.png';
+        const royImage = 'https://i.ibb.co/dwwd3y1z/image-5.png';
+        const rosaImage = 'https://i.ibb.co/JR1PkZtb/image-4.png';
+
+        const optionNames = {
+            1: "Risperidone",
+            2: "Olanzapine",
+            3: "Clozapine",
+            4: "Clozapine + Aripiprazole",
+            5: "Olanzapine + Amisulpiride"
+        };
+
+        // 환자별 이미지 위치 설정 (좌우% 상하% — 숫자 조정으로 미세 튜닝 가능)
+        const imagePositions = {
+            "로제":   "center 35%",   // 위로: 상하 숫자를 낮추면 더 위로
+            "로이스": "center 10%",      // 왼쪽 아래: 좌우 낮추면 더 왼쪽, 상하 높이면 더 아래
+            "먕먕":   "center 50%"    // 기본값 유지
+        };
+
+        const cases = [
+            {
+                name: "로제",
+                image: rosaImage,
+                targetStep: 1,
+                severity: "중등도",
+                introBriefing:
+                    "제박사님: 로제는 약 7개월 전부터 사람들의 시선을 과도하게 의식하기 시작했고, 최근 6주 동안은 자신을 험담하는 소리가 들리는 등 양성증상이 뚜렷해졌단다. 최근에는 결석이 늘고 친구들과의 교류도 줄어들었고, 성적도 눈에 띄게 떨어졌어. 아직 항정신병약 치료는 시작하지 않은 상태야.",
+                patientLines: [
+                    "요즘 길을 걸으면 사람들이 다 저를 쳐다보는 것 같아요… 감시당하는 느낌도 들어요.",
+                    "가끔은 누가 제 욕을 하는 소리가 들려요. 그래서 사람 많은 곳에 가기가 무서워요.",
+                    "예전보다 아무것도 하기 싫고 친구들도 피하게 되고 학교 성적도 많이 떨어졌어요."
+                ],
+                stepHints: [
+                    "제박사님: 아직 항정신병약 치료 전이니, 초기 단계의 약물치료부터 차근차근 시작해보자.",
+                    "제박사님: 첫 번째 비정형 항정신병약에 충분한 반응이 없었구나. 이제 같은 단계의 다른 비정형 항정신병약으로 바꾸어 반응을 보자."
+                ],
+                successText:
+                    "제박사님: 좋아! 초기 단계에서는 비정형 항정신병약 단일요법으로도 충분히 호전을 기대할 수 있단다."
+            },
+            {
+                name: "로이스",
+                image: royImage,
+                targetStep: 3,
+                severity: "중증",
+                introBriefing:
+                    "제박사님: 로이스는 1년 전부터 환청과 피해망상이 반복되었고 최근 3개월 사이 증상이 더 심해졌단다. 지금도 기능 저하가 뚜렷하고 사회적 위축과 자기관리 저하가 함께 보이는 상태야.",
+                patientLines: [
+                    "밖에 나오면 누가 저한테 계속 명령하는 소리가 들려요… 따라오라고 해요.",
+                    "사람들이 절 해치려고 꾸미는 것 같아서 가족 말도 못 믿겠어요.",
+                    "요즘은 아무 의욕도 없고 씻는 것도 귀찮아서 방에만 있게 돼요."
+                ],
+                stepHints: [
+                    "제박사님: 아직 첫 번째 항정신병약을 평가하는 단계야. 우선 초기 약물치료 반응을 확인해보자.",
+                    "제박사님: 첫 번째 비정형 항정신병약을 충분한 기간 사용했지만 반응이 부족했어. 이제 다른 비정형 항정신병약으로 교체해보자.",
+                    "제박사님: 서로 다른 두 가지 항정신병약 단일요법에도 양성증상이 지속되고 있구나. 이제 다음 단계 치료를 고려할 시점이야."
+                ],
+                successText:
+                    "제박사님: 잘했어! 두 번의 단일요법 실패 뒤에는 다음 단계 치료를 고려해야 한단다."
+            },
+            {
+                name: "먕먕",
+                image: meowthImage,
+                targetStep: 5,
+                severity: "매우 중증",
+                introBriefing:
+                    "제박사님: 먕먕은 수년간 질환 경과가 있었고, 현재 와해행동과 자기관리 저하가 심해. 망상과 환청이 여전히 뚜렷하고 식사와 위생 관리도 어려운 상태란다.",
+                patientLines: [
+                    "지나가는 사람들이 다 저 얘기하는 것 같아요… 머릿속이 너무 시끄러워요.",
+                    "누가 제 생각을 조종하는 느낌이 들어요… 제 생각이 제 것 같지 않아요.",
+                    "요즘은 씻는 것도 잊고 밥 먹는 것도 자꾸 놓쳐요… 아무 의욕도 없어요."
+                ],
+                stepHints: [
+                    "제박사님: 우선 첫 번째 항정신병약 반응부터 확인해보자.",
+                    "제박사님: 첫 번째 약물에 충분한 반응이 없었어. 다른 비정형 항정신병약으로 바꾸어 보자.",
+                    "제박사님: 두 번의 단일요법에도 증상이 계속되고 있구나. 이제 다음 단계 치료를 고려해야 해.",
+                    "제박사님: 다음 단계 단독요법에도 유의미한 개선이 부족했어. 이제 강화 전략을 검토해보자.",
+                    "제박사님: 강화 전략 이후에도 증상이 남아 있다면, 병용 전략을 고려할 수 있단다."
+                ],
+                successText:
+                    "제박사님: 그래. 여러 단계 치료 후에도 증상이 지속되던 환자라면 병용 전략을 검토할 수 있단다."
+            }
+        ];
+
+        let currentCase = 0;
+        let currentPatientStep = 1;
+        let companions = [];
+        let state = "INTRO";
+        let dialogueQueue = [];
+
+        const textBox = document.getElementById('text-box');
+        const menuGrid = document.getElementById('menu-grid');
+        const patientSide = document.getElementById('patient-side');
+        const patientImage = document.getElementById('patient-image');
+        const severityBar = document.getElementById('patient-severity');
+        const speakerName = document.getElementById('speaker-name');
+        const speechBubble = document.getElementById('speech-bubble');
+        const companionList = document.getElementById('companion-list');
+        const patientName = document.getElementById('patient-name');
+        const professorBriefing = document.getElementById('professor-briefing');
+        const patientDialogueBox = document.getElementById('patient-dialogue-box');
+
+        function setPatientDialogue(name, text) {
+            patientDialogueBox.innerHTML = `
+                <div class="patient-dialogue-speaker">${name}</div>
+                <div class="patient-dialogue-text">${text}</div>
+            `;
+        }
+
+        function queueDialogue(dialogues) {
+            dialogueQueue = dialogues.slice();
+            showNextDialogue();
+        }
+
+        function showNextDialogue() {
+            if (dialogueQueue.length > 0) {
+                textBox.style.display = 'block';
+                menuGrid.style.display = 'none';
+
+                const currentDialogue = dialogueQueue.shift();
+
+                if (currentDialogue.type === 'patient') {
+                    setPatientDialogue(currentDialogue.speaker, currentDialogue.text);
+                    showNextDialogue();
+                    return;
+                }
+
+                speakerName.innerText = currentDialogue.speaker || "";
+                speechBubble.className = `speech-bubble ${currentDialogue.type || 'narrator'}`;
+                speechBubble.innerHTML = currentDialogue.text;
+            } else {
+                if (state === "INTRO") {
+                    startBattle();
+                } else if (state === "BATTLE_END") {
+                    currentCase += 1;
+
+                    if (currentCase < cases.length) {
+                        startBattle();
+                    } else {
+                        state = "ENDING";
+                        patientSide.style.visibility = 'hidden';
+                        professorBriefing.innerHTML =
+                            "<b>제박사님 총평</b><br>좋아, 지우야. 환자의 양성증상, 기능 저하, 그리고 단계별 치료 반응을 보고 적절히 판단했구나.";
+
+                        queueDialogue([
+                            {
+                                speaker: "제박사님",
+                                type: "professor",
+                                text: "지우야, 정말 훌륭하다! 환자별 상태를 보고 단계적으로 적절한 치료 전략을 선택했어."
+                            },
+                            {
+                                speaker: "김지우",
+                                type: "jiwoo",
+                                text: "감사합니다, 박사님! 처음부터 정답을 아는 게 아니라, 치료 반응을 보면서 판단해야 한다는 걸 배웠어요."
+                            },
+                            {
+                                speaker: "나레이터",
+                                type: "narrator",
+                                text: "로제, 로이스, 먕먕이는 안정을 되찾고 지우의 든든한 동행인이 되었다."
+                            },
+                            {
+                                speaker: "SYSTEM",
+                                type: "system",
+                                text: "~ 멘탈 가디언: 태초마을의 위대한 치료사 끝 ~<br>(플레이해 주셔서 감사합니다!)"
+                            }
+                        ]);
+                    }
+                } else if (state === "BATTLE_PHASE") {
+                    textBox.style.display = 'none';
+                    menuGrid.style.display = 'grid';
+                }
+            }
+        }
+
+        function advanceDialogue() {
+            if (textBox.style.display !== 'none') {
+                showNextDialogue();
+            }
+        }
+
+        function startBattle() {
+            state = "BATTLE_PHASE";
+            patientSide.style.visibility = 'visible';
+            severityBar.style.width = '100%';
+            severityBar.style.backgroundColor = '#e74c3c';
+            currentPatientStep = 1;
+
+            const p = cases[currentCase];
+            patientName.innerText = "환자: " + p.name;
+            patientImage.src = p.image;
+
+            // 환자별 이미지 위치 적용
+            patientImage.style.objectPosition = imagePositions[p.name] || "center 50%";
+
+            professorBriefing.innerHTML =
+                `<b>제박사님 브리핑</b><br>${p.introBriefing}<br><br>${p.stepHints[0]}`;
+            setPatientDialogue(p.name, "……");
+
+            queueDialogue([
+                {
+                    speaker: "나레이터",
+                    type: "narrator",
+                    text: `지우가 길을 걷던 중, <b>${p.name}</b>(을)를 마주쳤다.`
+                },
+                {
+                    speaker: "김지우",
+                    type: "jiwoo",
+                    text: "안녕하세요, 괜찮으세요? 많이 불안해 보이는데요."
+                },
+                {
+                    speaker: p.name,
+                    type: "patient",
+                    text: p.patientLines[0]
+                },
+                {
+                    speaker: p.name,
+                    type: "patient",
+                    text: p.patientLines[1]
+                },
+                {
+                    speaker: p.name,
+                    type: "patient",
+                    text: p.patientLines[2]
+                },
+                {
+                    speaker: "SYSTEM",
+                    type: "system",
+                    text: "가장 적절한 약물 전략을 선택하세요."
+                }
+            ]);
+        }
+
+        function useTreatment(selectedStep) {
+            const p = cases[currentCase];
+
+            if (selectedStep !== currentPatientStep) {
+                queueDialogue([
+                    {
+                        speaker: "제박사님",
+                        type: "professor",
+                        text: `지우야, 아직은 <b>${optionNames[currentPatientStep]}</b>를 평가해야 할 차례란다. 단계를 건너뛰지 말고 치료 반응을 순서대로 확인해보자.`
+                    }
+                ]);
+                return;
+            }
+
+            if (selectedStep === p.targetStep) {
+                severityBar.style.width = '0%';
+                severityBar.style.backgroundColor = '#2ecc71';
+                state = "BATTLE_END";
+
+                companions.push(p.name);
+                companionList.innerText = "동행 환자: " + companions.join(", ");
+
+                let successDialogue = [];
+
+                if (selectedStep === 1) {
+                    successDialogue = [
+                        {
+                            speaker: "SYSTEM",
+                            type: "system",
+                            text: `<b>${optionNames[selectedStep]}이(가) 효과를 보였다!</b> 양성증상이 빠르게 호전되고 불안도 줄어들기 시작했다!`
+                        },
+                        {
+                            speaker: "제박사님",
+                            type: "professor",
+                            text: p.successText
+                        }
+                    ];
+                } else if (selectedStep === 3) {
+                    successDialogue = [
+                        {
+                            speaker: "SYSTEM",
+                            type: "system",
+                            text: `<b>${optionNames[selectedStep]}이(가) 효과를 보였다!</b> 지속되던 환청과 망상이 눈에 띄게 감소했다!`
+                        },
+                        {
+                            speaker: "제박사님",
+                            type: "professor",
+                            text: `${p.successText}<br><span class="small-note">단, 이 약물은 시작 전 ANC 확인과 치료 중 WBC/ANC 모니터링이 필요해.</span>`
+                        }
+                    ];
+                } else if (selectedStep === 5) {
+                    successDialogue = [
+                        {
+                            speaker: "SYSTEM",
+                            type: "system",
+                            text: `<b>${optionNames[selectedStep]} 전략이 효과를 보였다!</b> 잔여 환청과 망상이 줄고 일상 기능도 조금씩 회복되기 시작했다!`
+                        },
+                        {
+                            speaker: "제박사님",
+                            type: "professor",
+                            text: p.successText
+                        }
+                    ];
+                }
+
+                queueDialogue([
+                    ...successDialogue,
+                    {
+                        speaker: "나레이터",
+                        type: "narrator",
+                        text: `${p.name}(은)는 안정을 되찾고 지우의 동행인이 되었다!`
+                    }
+                ]);
+            } else {
+                const currentWidth = parseInt(severityBar.style.width, 10) || 100;
+                severityBar.style.width = Math.max(20, currentWidth - 15) + '%';
+
+                currentPatientStep += 1;
+
+                if (p.stepHints[currentPatientStep - 1]) {
+                    professorBriefing.innerHTML =
+                        `<b>제박사님 브리핑</b><br>${p.introBriefing}<br><br>${p.stepHints[currentPatientStep - 1]}`;
+                }
+
+                let feedbackText = "";
+
+                if (selectedStep === 1) {
+                    feedbackText = `${optionNames[selectedStep]}으로 충분한 반응이 없구나. 다음 선택지를 고민해보자.`;
+                } else if (selectedStep === 2) {
+                    feedbackText = `두 번째 단일요법에도 충분한 반응이 없구나. 이제 다음 단계 치료를 생각할 시점이야.`;
+                } else if (selectedStep === 3) {
+                    feedbackText = `${optionNames[selectedStep]} 단독으로도 유의미한 개선이 부족했어. 이후 전략을 고민해보자.`;
+                } else if (selectedStep === 4) {
+                    feedbackText = `${optionNames[selectedStep]} 전략으로도 충분하지 않았어. 다른 병용 전략을 고려해보자.`;
+                }
+
+                queueDialogue([
+                    {
+                        speaker: "SYSTEM",
+                        type: "system",
+                        text: `<b>${optionNames[selectedStep]}</b>을(를) 시도했지만 충분한 반응을 보이지 않았다.`
+                    },
+                    {
+                        speaker: "제박사님",
+                        type: "professor",
+                        text: feedbackText
+                    },
+                    {
+                        speaker: "SYSTEM",
+                        type: "system",
+                        text: "업데이트된 브리핑을 참고해서 다음 치료 전략을 선택하세요."
+                    }
+                ]);
+            }
+        }
+
+        window.onload = () => {
+            queueDialogue([
+                {
+                    speaker: "제박사님",
+                    type: "professor",
+                    text: "안녕, 지우야! 오늘은 길에서 마주치는 환자들의 증상과 치료 반응을 바탕으로 적절한 약물 전략을 판단해보자."
+                },
+                {
+                    speaker: "지우",
+                    type: "jiwoo",
+                    text: "네, 박사님! 증상뿐 아니라 기능 저하와 이전 치료 반응도 같이 보겠습니다."
+                },
+                {
+                    speaker: "제박사님",
+                    type: "professor",
+                    text: "좋아. 정답을 바로 찍기보다, 어떤 단계에 와 있는 환자인지 차근차근 판단하는 게 중요하단다."
+                },
+                {
+                    speaker: "SYSTEM",
+                    type: "system",
+                    text: "화면을 클릭해 첫 번째 환자를 만나보세요."
+                }
+            ]);
+        };
+    </script>
+</body>
+</html>

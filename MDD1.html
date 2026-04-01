@@ -1,0 +1,302 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>RETRO MDD CLINIC: Pixel Hospital</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        /* 네오둥근모 (고전 게임 한글 폰트) 불러오기 */
+        @font-face {
+            font-family: 'NeoDunggeunmo';
+            src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.3/NeoDunggeunmo.woff') format('woff');
+            font-weight: normal;
+            font-style: normal;
+        }
+
+        :root { --bg: #050510; --green: #00FF41; --blue: #00D9FF; --red: #FF3131; --yellow: #FFD700; --panel-bg: rgba(0,0,0,0.85); }
+        body { background: var(--bg); color: white; font-family: 'NeoDunggeunmo', sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; overflow: hidden; }
+        
+        /* 메인 게임 틀: 병원 로비 스타일 */
+        #game-box { 
+            width: 850px; border: 4px solid #fff; padding: 25px; 
+            background-color: #f0f0f0; 
+            box-shadow: 0 0 30px var(--blue); position: relative; overflow: hidden; 
+            image-rendering: pixelated;
+        }
+        #game-box::before {
+            content: ""; position: absolute; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: repeating-linear-gradient(45deg, #ccc, #ccc 10px, #ddd 10px, #ddd 20px);
+            z-index: 1;
+        }
+
+        /* 상단 UI */
+        .ui-top { font-family: 'NeoDunggeunmo', sans-serif; display: flex; justify-content: space-between; font-size: 16px; margin-bottom: 15px; color: #333; position: relative; z-index: 5; }
+        
+        /* 시각적 회복 영역 (이모지 캐릭터 기반) */
+        #visual-stage { width: 100%; height: 220px; background: #e0f0f0; border: 4px solid #333; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; z-index: 5;}
+        #char-visual { font-size: 80px; transition: 0.8s ease-in-out; }
+        #weather-visual { position: absolute; top: 10px; font-size: 40px; }
+        #status-label { font-family: 'NeoDunggeunmo', sans-serif; font-size: 14px; margin-top: 10px; color: var(--blue); text-shadow: 1px 1px 0 #000; }
+
+        /* 사례 및 문제 영역 */
+        #scenario-card { background: var(--panel-bg); border: 2px solid #555; padding: 20px; margin-bottom: 20px; position: relative; z-index: 5; }
+        .label { font-family: 'NeoDunggeunmo', sans-serif; font-size: 18px; color: var(--blue); margin-bottom: 12px; }
+        #text-content { font-size: 18px; line-height: 1.6; color: var(--green); word-break: keep-all; }
+        
+        /* 선지 버튼 */
+        .btn-container { display: grid; grid-template-columns: 1fr; gap: 10px; position: relative; z-index: 5; }
+        button { background: black; color: white; border: 2px solid white; padding: 15px; font-family: 'NeoDunggeunmo', sans-serif; font-size: 16px; cursor: pointer; text-align: left; transition: 0.2s; line-height: 1.4; }
+        button:hover:not(:disabled) { background: #222; color: var(--blue); }
+        .correct { background: var(--green) !important; color: black !important; }
+        .wrong { background: var(--red) !important; color: white !important; }
+        
+        #progress-bar { width: 100%; height: 8px; background: #333; margin-top: 20px; border: 1px solid #444; position: relative; z-index: 5; }
+        #progress-fill { width: 0%; height: 100%; background: var(--green); transition: width 0.4s; }
+
+        /* 화면을 덮는 피드백 팝업창 */
+        #feedback-overlay {
+            display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.92); flex-direction: column; justify-content: center; align-items: center; z-index: 50; padding: 40px; box-sizing: border-box; text-align: center; backdrop-filter: blur(5px);
+        }
+        #feedback-msg { font-family: 'Press Start 2P', cursive; font-size: 35px; margin-bottom: 20px; text-shadow: 0 0 10px currentColor; }
+        #feedback-desc { font-family: 'NeoDunggeunmo', sans-serif; font-size: 18px; line-height: 1.6; color: white; margin-bottom: 35px; word-break: keep-all; padding: 0 20px; }
+        #next-btn { text-align: center; font-size: 18px; padding: 15px 30px; border-color: var(--yellow); }
+
+        /* 게임 종료 전체 화면 오버레이 */
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); flex-direction: column; justify-content: center; align-items: center; z-index: 100; font-family: 'Press Start 2P', cursive; }
+        #overlay h1 { color:var(--red); font-size: 40px; margin-bottom: 30px; }
+        #overlay button { font-family: 'NeoDunggeunmo', sans-serif; text-align: center; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+<audio id="bgm" loop><source src="bgm.mp3" type="audio/mpeg"></audio>
+<audio id="sound-correct"><source src="correct.mp3" type="audio/mpeg"></audio>
+<audio id="sound-wrong"><source src="wrong.mp3" type="audio/mpeg"></audio>
+
+<div id="game-box">
+    <div class="ui-top">
+        <div>담당 환자: <span id="case-name">로딩중...</span></div>
+        <div>의료 자원: <span id="hp">❤️❤️❤️</span></div>
+        <div>진행 단계: <span id="step-num">0</span>/10</div>
+    </div>
+
+    <div id="visual-stage">
+        <div id="weather-visual">☁️🌧️</div>
+        <div id="char-visual">👤☂️</div>
+        <div id="status-label">환자 상태: 심각한 우울 증상</div>
+    </div>
+
+    <div id="scenario-card">
+        <div class="label" id="phase-label">입원 환자 정보</div>
+        <div id="text-content">환자를 배정받으려면 아래 버튼을 누르세요.</div>
+    </div>
+
+    <div class="btn-container" id="btns">
+        <button onclick="initGame()" style="text-align: center;">진료 시작 (START CLINIC)</button>
+    </div>
+
+    <div id="progress-bar"><div id="progress-fill"></div></div>
+
+    <div id="feedback-overlay">
+        <div id="feedback-msg">SUCCESS!</div>
+        <div id="feedback-desc">해설이 이곳에 나타납니다.</div>
+        <button id="next-btn" onclick="nextStep()">다음 단계로 (NEXT) >>></button>
+    </div>
+</div>
+
+<div id="overlay">
+    <h1 id="overlay-title">TERMINATED</h1>
+    <button onclick="location.reload()">새로운 환자 진료하기 (RETRY)</button>
+</div>
+
+<script>
+    const casePool = [
+        {
+            name: "김OO 씨 (54/남성)",
+            intro: "김OO 씨(54세)가 입원했습니다. 2개월간 체중 8kg 감소, 극심한 불면증 호소. 과거 TCA 복용 시 구갈과 변비로 고통받은 적이 있습니다.",
+            steps: [
+                { l: "1단계: 진단 기준", q: "우울감, 불면, 체중 감소 증상을 호소합니다. MDD로 확진하기 위해 증상이 지속되어야 하는 최소 기간은?", a: ["1주", "2주", "1개월", "3개월"], c: 1, f: "DSM-5 기준, 9가지 증상 중 5가지 이상이 '2주' 이상 지속되어야 MDD로 진단합니다." },
+                { l: "2단계: 초기 평가", q: "진료실에서 김OO 씨의 우울증상을 객관적으로 평가하기 위해 환자가 직접 체크하도록 하는 도구는?", a: ["HAM-D", "PHQ-9", "CGI", "MADRS"], c: 1, f: "PHQ-9은 환자가 스스로 작성하여 점수를 매기는(Self-rated) 대표적인 우울증 평가 도구입니다." },
+                { l: "3단계: 약물 기전 분석", q: "과거 김OO 씨를 괴롭힌 구갈(입마름), 변비 부작용은 TCA의 어떤 수용체 차단 때문에 발생합니까?", a: ["Muscarinic receptor", "Alpha-1 receptor", "Histamine receptor", "5-HT3 receptor"], c: 0, f: "TCA의 Muscarinic receptor(무스카린 수용체) 차단 작용이 입마름, 변비, 시야 흐림 등의 항콜린 부작용을 유발합니다." },
+                { l: "4단계: 약물 선택", q: "TCA의 부작용을 피하기 위해 김OO 씨에게 권장되는 1차 치료제 계열은?", a: ["TCA 저용량", "SSRI (예: Escitalopram)", "MAOI", "비타민 요법"], c: 1, f: "TCA의 항콜린 및 심혈관계 부작용을 피하기 위해 안전성이 높은 SSRI, SNRI 등이 1차로 추천됩니다." },
+                { l: "5단계: 복약 지도", q: "약을 먹었는데 바로 기분이 좋아지지 않는다고 합니다. 항우울제 효과 발현(Lag time)에 보통 2~4주가 걸리는 이유는?", a: ["약물 흡수가 느려서", "수용체 민감도 조절에 시간이 걸려서", "위약 효과라서", "도파민이 고갈되어서"], c: 1, f: "수용체 가설에 따르면, 시냅스 후 수용체가 정상 개수와 민감도로 적응하는 데 보통 2~4주가 소요됩니다." },
+                { l: "6단계: 치료 목표 설정", q: "치료 8주 차입니다. 현재 급성기 치료의 가장 우선적인 목표는 무엇입니까?", a: ["단순 증상 완화", "부작용 적응", "관해 (Remission)", "즉각적인 약물 중단"], c: 2, f: "급성기(6~12주) 치료의 일차적 목표는 우울 증상을 완전히 소멸시키는 '관해(Remission)' 상태에 도달하는 것입니다." },
+                { l: "7단계: 부작용 대응", q: "SSRI 복용 후 우울감은 호전되었으나 심각한 '성기능 장애'를 호소합니다. 대안으로 적절한 약물은?", a: ["Paroxetine", "Sertraline", "Bupropion", "Venlafaxine"], c: 2, f: "Bupropion(NDRI)은 타 항우울제 대비 성기능 장애 발생 빈도가 매우 낮아 대안으로 흔히 쓰입니다." },
+                { l: "8단계: 치료 전략 변경", q: "최대 용량으로 충분한 기간 치료했으나 무반응(점수 감소 25% 미만)입니다. 올바른 조치는?", a: ["같은 약물 계속 유지", "다른 기전의 항우울제로 교체(Switching)", "치료 포기", "수면제만 처방"], c: 1, f: "충분한 용량과 기간에도 무반응일 경우, 다른 기전(Class)의 항우울제로 교체하는 것이 가이드라인 원칙입니다." },
+                { l: "9단계: 심화 치료 (TRD)", q: "2개 이상의 약물 조합에도 실패한 치료저항성 우울증(TRD)입니다. 병용이 고려되는 비강 분무 신약은?", a: ["리도카인", "인슐린", "에스케타민 (스프라바토)", "펜타닐"], c: 2, f: "치료저항성 우울증에는 NMDA 수용체 차단제인 에스케타민(Esketamine) 나잘스프레이가 사용됩니다." },
+                { l: "10단계: 유지 치료 결정", q: "김OO 씨는 과거 우울증 삽화가 이번을 포함해 3회 발생했습니다. 향후 유지기 치료 기간은?", a: ["관해 즉시 중단", "1개월", "1년 이상", "2주"], c: 2, f: "우울증 에피소드가 3회 이상 발생하여 재발 위험이 높은 환자는 1년 이상의 유지기 치료가 필수적입니다." }
+            ]
+        },
+        {
+            name: "박OO 씨 (29/여성)",
+            intro: "박OO 씨(29세)가 내원했습니다. 임신 2분기이며, 주로 가을과 겨울에만 우울해지고 폭식을 하는 계절성 양상을 보입니다.",
+            steps: [
+                { l: "1단계: 비약물 치료", q: "계절성 우울증 양상을 보이는 박OO 씨에게 약물 전 혹은 병행하여 시도할 수 있는 치료법은?", a: ["전기충격요법", "밝은 빛 치료(Bright Light Therapy)", "미주신경자극술", "수면 박탈"], c: 1, f: "10,000 lux 정도의 밝은 빛을 쬐는 빛 치료는 계절성 양상을 동반한 우울증에 특히 효과적입니다." },
+                { l: "2단계: 임신부 약물 선택", q: "증상이 심해져 약물이 필요합니다. 임신 2분기 임신부에게 1차로 비교적 안전하게 권고되는 SSRI는?", a: ["Lithium", "Paroxetine", "Sertraline", "Valproate"], c: 2, f: "Sertraline은 다른 약물에 비해 태반 통과율과 모유 이행률이 낮아 임신/수유부에게 비교적 안전하게 선택됩니다." },
+                { l: "3단계: 수용체 부작용", q: "SSRI 복용 초기, 환자가 심한 구역질과 식욕부진(GI Upset)을 겪습니다. 원인이 되는 수용체는?", a: ["5-HT3 receptor", "Muscarinic receptor", "Alpha-1 receptor", "H1 receptor"], c: 0, f: "소화기계(위장관)에 많이 분포하는 5-HT3 수용체가 자극되면 구역, 구토, 설사 등의 부작용이 발생합니다." },
+                { l: "4단계: 치료 반응 평가", q: "치료 4주 차, 우울 척도 점수가 처음 대비 50% 이상 감소했습니다. 이 상태를 일컫는 용어는?", a: ["무반응", "부분 반응", "반응 (Response)", "관해 (Remission)"], c: 2, f: "우울 평가 척도 점수가 기준선 대비 50% 이상 감소한 경우를 임상적으로 '반응(Response)'이라고 합니다." },
+                { l: "5단계: 상호작용 경고", q: "효과를 높이려고 편의점에서 '성요한풀(St. John's wort)'을 사서 같이 먹으려 합니다. 발생 가능한 위험은?", a: ["저혈당 쇼크", "세로토닌 증후군", "추체외로 증후군", "스티븐스-존슨 증후군"], c: 1, f: "성요한풀은 세로토닌 농도를 높이므로 SSRI와 병용 시 치명적인 '세로토닌 증후군'을 유발할 수 있습니다." },
+                { l: "6단계: 세로토닌 증후군", q: "만약 세로토닌 증후군이 발생한다면 환자에게 나타날 수 있는 전형적인 증상은?", a: ["극심한 서맥과 저체온증", "초조, 발열, 발한, 근육 경련", "전신 마비", "혈변"], c: 1, f: "세로토닌 증후군은 자율신경 흥분(발열, 발한, 빈맥)과 신경근육 이상(경련, 떨림)이 특징입니다." },
+                { l: "7단계: 효소 상호작용", q: "많은 항우울제가 간의 이 효소에 의해 대사되어 약물 상호작용을 일으킵니다. 대표적인 효소는?", a: ["CYP3A4", "MAO", "COMT", "아밀라아제"], c: 0, f: "사용하는 약물의 약 70%가 CYP3A4에 의해 대사되므로, 효소 억제제/유도제 병용 시 주의가 필요합니다." },
+                { l: "8단계: 연장기 치료 목적", q: "드디어 증상이 완전히 사라진 '관해'에 도달했습니다. 이어지는 연장기 치료의 핵심 목적은?", a: ["내성 방지", "새로운 질환 예방", "재발 (Relapse) 예방", "체중 감량"], c: 2, f: "관해 도달 후 약물을 일찍 끊으면 동일 삽화가 다시 나타나는 재발(Relapse)이 흔하므로 연장기 치료가 필수입니다." },
+                { l: "9단계: 연장기 기간", q: "재발(Relapse) 방지를 위한 일반적인 연장기 치료 유지 기간은 얼마나 됩니까?", a: ["1~2주", "4~9개월", "3년", "평생"], c: 1, f: "관해 상태를 유지하고 재발을 막기 위해 최소 4~9개월간은 동일 용량으로 약물을 유지해야 합니다." },
+                { l: "10단계: 약물 중단 방법", q: "연장기 치료가 무사히 끝나고 약을 끊으려 합니다. 가장 안전한 단약 방법은?", a: ["당일 즉시 중단", "용량을 2배로 올렸다가 중단", "수주에 걸쳐 서서히 감량(Tapering)", "다른 약으로 바꾸고 중단"], c: 2, f: "금단 증상과 재발 위험을 최소화하기 위해 수주에서 수개월에 걸쳐 용량을 서서히 줄여가는(Tapering) 방법이 권장됩니다." }
+            ]
+        },
+        {
+            name: "이OO 씨 (65/여성)",
+            intro: "이OO 씨(65세)가 내원했습니다. 고혈압 약을 복용 중이며 최근 무기력증, 심한 식욕 부진, 불면으로 체중이 급감했습니다.",
+            steps: [
+                { l: "1단계: 노인 우울증 평가", q: "노인인 이OO 씨의 우울증상을 평가할 때 흔히 사용되는 15문항짜리 척도는 무엇입니까?", a: ["PHQ-9", "GDS (Geriatric Depression Scale)", "HAM-D", "CGI"], c: 1, f: "노인 환자의 특성을 반영하여 개발된 GDS(Geriatric Depression Scale)가 널리 사용됩니다." },
+                { l: "2단계: 기저질환 고려", q: "이OO 씨는 고혈압 환자입니다. 혈압 상승 부작용이 있어 투여 시 모니터링이 필요한 SNRI 약물은?", a: ["Fluoxetine", "Sertraline", "Venlafaxine", "Mirtazapine"], c: 2, f: "Venlafaxine은 노르에피네프린(NE) 재흡수 억제 작용으로 인해 용량 의존적인 혈압 상승을 유발할 수 있습니다." },
+                { l: "3단계: 노인 맞춤 약물", q: "심한 불면과 식욕 부진을 겪고 있습니다. 진정 작용과 식욕 촉진 효과가 있어 유리한 약물은?", a: ["Mirtazapine", "Bupropion", "Fluoxetine", "Venlafaxine"], c: 0, f: "Mirtazapine은 H1 수용체 차단 작용이 있어 수면을 돕고 식욕을 돋워 노인 환자에게 매우 유용합니다." },
+                { l: "4단계: 약물 교체(Wash-out)", q: "과거에 먹던 Fluoxetine을 끊고 MAOI를 시작하려 합니다. 치명적 부작용 방지를 위한 휴약 기간은?", a: ["1일", "1주일", "5주", "즉시 교체"], c: 2, f: "Fluoxetine은 반감기가 매우 길어 몸에서 다 빠져나가려면 최소 5주의 휴약 기간이 필요합니다." },
+                { l: "5단계: MAOI 식이 주의", q: "MAOI 복용 시 심각한 고혈압 위기(Hypertensive crisis)를 유발할 수 있어 피해야 하는 식품 성분은?", a: ["오메가-3", "타이라민 (치즈, 와인 등 발효식품)", "비타민 B", "칼슘"], c: 1, f: "MAOI 복용 중 타이라민 함유 식품을 먹으면 분해되지 못한 타이라민이 교감신경을 과도하게 흥분시켜 혈압이 치솟습니다." },
+                { l: "6단계: 중증 병용 요법", q: "증상이 심해져 환각 등 정신병적 양상을 동반합니다. 한국형 알고리듬에 따른 1차 치료 전략은?", a: ["항우울제 단독 투여", "항우울제 + 비전형 항정신병약(AAP) 병용", "즉시 퇴원", "수면제 단독 투여"], c: 1, f: "정신병적 양상을 동반한 중증 주요우울장애는 처음부터 항우울제와 비전형 항정신병약(AAP)을 병용 투여합니다." },
+                { l: "7단계: 증강 요법 약물", q: "우울증 치료 시 약효를 부스팅(증강)하기 위해 항우울제와 병용할 수 있는 2세대 항정신병약(AAP)은?", a: ["Aripiprazole", "Haloperidol", "Chlorpromazine", "Diazepam"], c: 0, f: "Aripiprazole, Quetiapine 등의 2세대(비전형) 항정신병약이 증강 요법으로 흔히 추천됩니다." },
+                { l: "8단계: 물리적 신경 치료", q: "극심한 자살 충동이 동반되어 약물 효과를 기다리기 어렵습니다. 신속한 효과를 기대할 수 있는 치료법은?", a: ["미술 치료", "운동 요법", "ECT (전기경련요법)", "빛 치료"], c: 2, f: "ECT(전기경련요법)는 자살 위험이 임박했거나 약물 반응이 없는 중증 환자에게 빠르고 확실한 효과를 보입니다." },
+                { l: "9단계: 최신 기기 치료", q: "약물 2개 이상에 실패한 TRD 환자입니다. 쇄골 아래 기기를 심어 뇌 신경을 자극하는 치료법은?", a: ["VNS (미주신경자극술)", "rTMS", "DBS", "MRI"], c: 0, f: "VNS(미주신경자극술)는 펄스 발생기를 통해 미주신경을 자극하여 우울증을 치료하는 요법입니다." },
+                { l: "10단계: 유지 및 종료", q: "치료가 성공하여 1년 이상 유지기까지 마쳤습니다. 완전히 치료가 종료되어 우울증 삽화가 끝난 상태를 뜻하는 용어는?", a: ["반응", "관해", "재발", "완치 (Recovery)"], c: 3, f: "관해 상태가 수개월 이상 안정적으로 지속되어 해당 우울증 에피소드가 완전히 종료된 상태를 '완치(Recovery)'라고 합니다." }
+            ]
+        }
+    ];
+
+    let currentCase = null;
+    let stepIdx = 0, lives = 3;
+
+    function initGame() {
+        document.getElementById('bgm').play().catch(() => {}); 
+        
+        currentCase = casePool[Math.floor(Math.random() * casePool.length)];
+        stepIdx = 0; 
+        lives = 3;
+
+        document.getElementById('case-name').innerText = currentCase.name;
+        document.getElementById('phase-label').innerText = "환자 입원 및 차트 확인";
+        document.getElementById('text-content').innerText = currentCase.intro;
+        document.getElementById('hp').innerText = "❤️❤️❤️";
+        
+        document.getElementById('char-visual').innerText = "👤☂️"; 
+        document.getElementById('weather-visual').innerText = "☁️🌧️";
+        document.getElementById('status-label').innerText = "상태: 심각한 우울 증상 (SEVERE)";
+        document.getElementById('status-label').style.color = "var(--red)";
+        
+        const btns = document.getElementById('btns');
+        btns.innerHTML = `<button onclick="loadStep()" style="text-align: center;">환자 진료 시작하기</button>`;
+    }
+
+    function loadStep() {
+        if (stepIdx >= currentCase.steps.length) return winGame();
+        
+        const step = currentCase.steps[stepIdx];
+        document.getElementById('step-num').innerText = stepIdx + 1;
+        document.getElementById('phase-label').innerText = step.l;
+        document.getElementById('text-content').innerText = step.q;
+        
+        const btns = document.getElementById('btns');
+        btns.innerHTML = "";
+        step.a.forEach((txt, i) => {
+            const b = document.createElement('button');
+            b.innerText = `${i+1}. ${txt}`;
+            b.onclick = () => check(i);
+            btns.appendChild(b);
+        });
+        updateProgress();
+    }
+
+    function check(choice) {
+        const step = currentCase.steps[stepIdx];
+        const isCorrect = (choice === step.c);
+        
+        const overlay = document.getElementById('feedback-overlay');
+        const msg = document.getElementById('feedback-msg');
+        const desc = document.getElementById('feedback-desc');
+        const nextBtn = document.getElementById('next-btn');
+        
+        desc.innerText = step.f;
+        
+        if (isCorrect) {
+            document.getElementById('sound-correct').play().catch(() => {});
+            updateVisual(true);
+            msg.innerText = "SUCCESS!";
+            msg.style.color = "var(--green)";
+            
+            nextBtn.innerText = "다음 단계로 진행하기 >>>";
+            nextBtn.onclick = () => { overlay.style.display = 'none'; stepIdx++; loadStep(); };
+        } else {
+            lives--;
+            document.getElementById('sound-wrong').play().catch(() => {});
+            updateVisual(false);
+            document.getElementById('hp').innerText = "❤️".repeat(lives) + "🖤".repeat(3-lives);
+            
+            msg.innerText = "FAIL...";
+            msg.style.color = "var(--red)";
+            
+            if (lives <= 0) {
+                nextBtn.innerText = "진료 실패 (GAME OVER)";
+                nextBtn.onclick = () => { overlay.style.display = 'none'; gameOver(); };
+            } else {
+                nextBtn.innerText = "해설 확인 후 다시 도전 >>>";
+                nextBtn.onclick = () => { overlay.style.display = 'none'; stepIdx++; loadStep(); };
+            }
+        }
+        
+        const buttons = document.querySelectorAll('#btns button');
+        buttons.forEach((b, i) => {
+            b.disabled = true;
+            if (i === step.c) b.classList.add('correct');
+            else if (i === choice) b.classList.add('wrong');
+        });
+
+        overlay.style.display = 'flex';
+    }
+
+    function updateVisual(isCorrect) {
+        const char = document.getElementById('char-visual');
+        const weather = document.getElementById('weather-visual');
+        const label = document.getElementById('status-label');
+
+        if (isCorrect) {
+            if (stepIdx <= 2) { 
+                char.innerText = "👤☂️"; weather.innerText = "☁️🌧️"; 
+                label.innerText = "상태: 진단 및 초기 치료 중"; label.style.color = "var(--blue)";
+            } else if (stepIdx <= 5) { 
+                char.innerText = "🚶‍♂️"; weather.innerText = "☁️"; 
+                label.innerText = "상태: 호전 중 (IMPROVING...)"; label.style.color = "var(--yellow)";
+            } else if (stepIdx <= 8) { 
+                char.innerText = "😊"; weather.innerText = "⛅"; 
+                label.innerText = "상태: 증상 소멸 (관해 도달!)"; label.style.color = "var(--green)";
+            } else { 
+                char.innerText = "🙋‍♂️"; weather.innerText = "☀️"; 
+                label.innerText = "상태: 안정적 유지 및 완치!"; label.style.color = "var(--green)";
+            }
+        } else {
+            char.style.transform = "rotate(20deg)";
+            setTimeout(() => char.style.transform = "rotate(0deg)", 500);
+        }
+    }
+
+    function updateProgress() {
+        const progress = (stepIdx / currentCase.steps.length) * 100;
+        document.getElementById('progress-fill').style.width = progress + "%";
+    }
+
+    function gameOver() {
+        document.getElementById('bgm').pause();
+        document.getElementById('overlay').style.display = "flex";
+    }
+
+    function winGame() {
+        document.getElementById('progress-fill').style.width = "100%";
+        document.getElementById('char-visual').innerText = "🌞";
+        document.getElementById('weather-visual').innerText = "✨";
+        document.getElementById('status-label').innerText = "최종 완치 (RECOVERY COMPLETE)";
+        document.getElementById('overlay').style.display = "flex";
+        document.getElementById('overlay-title').innerText = "RECOVERY COMPLETE!";
+        document.getElementById('overlay-title').style.color = "var(--green)";
+    }
+</script>
+
+</body>
+</html>
