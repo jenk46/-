@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>조현병, '8번 출구'를 찾아라</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Malgun Gothic', sans-serif; background-color: #000; }
+        #ui-layer { position: absolute; top: 20px; left: 20px; color: #333; background: rgba(255,255,255,0.9); padding: 15px; border-radius: 8px; z-index: 10; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-left: 5px solid #e67e22; }
+        #ui-layer h1 { margin: 0 0 10px 0; font-size: 1.5em; color: #e67e22; }
+        #ui-layer p { margin: 0; font-size: 0.9em; line-height: 1.5; font-weight: bold; }
+        
+        #crosshair { position: absolute; top: 50%; left: 50%; width: 6px; height: 6px; background: rgba(0,0,0,0.5); border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; z-index: 10; }
+        
+        #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; cursor: pointer; }
+        #start-screen h1 { font-family: '궁서', 'Gungsuh', '돋움', serif; font-size: 4em; color: #8b0000; text-shadow: 2px 2px 10px rgba(255,0,0,0.6); margin-bottom: 20px; letter-spacing: 2px; }
+        #start-screen .subtitle { font-size: 2em; color: #333; font-weight: bold; margin-bottom: 30px; text-shadow: 1px 1px 2px rgba(0,0,0,0.1); }
+
+        .controls-box { background: rgba(128, 128, 128, 0.85); color: #fff; padding: 15px 30px; border-radius: 10px; margin-bottom: 30px; font-size: 1.2em; border: 2px solid #a0a0a0; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .key-btn { display: inline-block; background: #f1f2f6; color: #2f3640; padding: 5px 10px; border-radius: 5px; font-weight: bold; font-family: Arial, sans-serif; margin: 0 2px; box-shadow: inset 0 -3px 0 #dcdde1, 0 2px 2px rgba(0,0,0,0.2); }
+
+        #quiz-overlay, #explanation-overlay { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255, 255, 255, 0.98); color: #333; padding: 30px; border-radius: 15px; text-align: center; z-index: 100; box-shadow: 0 10px 40px rgba(0,0,0,0.6); width: 550px; }
+        #quiz-overlay { border: 4px solid #2ecc71; }
+        #explanation-overlay { border: 4px solid #3498db; }
+        
+        #quiz-overlay h2 { margin-top: 0; color: #27ae60; font-size: 1.8em; }
+        #quiz-desc { font-size: 1.1em; font-weight: bold; margin-bottom: 20px; word-break: keep-all; line-height: 1.4; }
+        
+        .btn { display: block; width: 100%; margin: 10px 0; padding: 15px; background: #3498db; color: white; border: none; border-radius: 8px; font-size: 1.05em; cursor: pointer; transition: 0.2s; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn:hover { background: #2980b9; transform: translateY(-2px); }
+        .btn-correct { background: #27ae60 !important; }
+        .btn-wrong { background: #e74c3c !important; }
+
+        #exp-title { font-size: 2em; margin-top: 0; }
+        #exp-answer { font-size: 1.2em; font-weight: bold; color: #2980b9; margin-bottom: 15px; }
+        #exp-text { text-align: left; font-size: 1em; line-height: 1.6; background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 5px solid #34495e; margin-bottom: 20px; word-break: keep-all; }
+        
+        #glitch-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; opacity: 0; pointer-events: none; z-index: 5; mix-blend-mode: saturation; transition: opacity 2s; }
+        #end-screen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); flex-direction: column; justify-content: center; align-items: center; z-index: 200; }
+        #end-screen h1 { font-size: 5em; color: #f1c40f; text-shadow: 0 0 30px rgba(241,196,15,0.8); margin: 0; }
+        #end-screen p { font-size: 2em; color: #fff; margin-top: 20px; }
+        .highlight-uturn { background-color: #f1c40f; color: #c0392b; padding: 2px 10px; border-radius: 5px; font-size: 1.2em; font-weight: 900; text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen">
+        <h1>[조현병, '8번 출구'를 찾아라]</h1>
+        <div class="subtitle">화면을 클릭하여 탈출을 시작하세요</div>
+        <div class="controls-box">🎮 <span class="key-btn">W</span><span class="key-btn">A</span><span class="key-btn">S</span><span class="key-btn">D</span> : 이동 &nbsp;&nbsp;&nbsp;|&nbsp;&nbsp;&nbsp; 🖱️ <b>마우스</b> : 시점 회전 (저감도 모드)</div>
+        <p style="font-size: 1.3em; margin-top: 10px; color:#e74c3c; font-weight: bold;">바닥의 파란 유도선 방향이 '전진'입니다. <span class="highlight-uturn">조현병 발병 시 후퇴</span>하세요.</p>
+        <p style="font-size: 1.3em; color:#2980b9; font-weight: bold; margin-top: 10px;">올바른 경로를 찾으면 퀴즈가 나옵니다.</p>
+        <p style="font-size: 1.5em; margin-top: 25px; color:#27ae60; font-weight: 900;">8번 출구를 찾아 탈출하세요.</p>
+    </div>
+
+    <div id="ui-layer">
+        <h1 id="floor-display">출구 0</h1>
+        <p>전진(화살표 방향): 정상 복도<br>후퇴: 이상 징후 발병 시</p>
+    </div>
+    <div id="crosshair"></div>
+    <div id="glitch-overlay"></div>
+
+    <div id="quiz-overlay">
+        <h2>✅ 경로 파악 성공</h2>
+        <p id="quiz-desc"></p>
+        <div id="options-container"></div>
+    </div>
+
+    <div id="explanation-overlay">
+        <h2 id="exp-title"></h2>
+        <div id="exp-answer"></div>
+        <div id="exp-text"></div>
+        <button class="btn" id="btn-next-exp" onclick="proceedAfterExplanation()">확인하고 넘어가기</button>
+    </div>
+
+    <div id="end-screen">
+        <h1>🏆 조현병 Master 🏆</h1>
+        <p>ㅋㅋㅋ 약물치료학 A+ 확정 ㅋㅋㅋ</p>
+        <button class="btn" onclick="location.reload()" style="width: 200px; font-size: 1.2em; margin-top: 30px;">다시 플레이</button>
+    </div>
+
+    <script type="importmap">
+        { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js", "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { PointerLockControls } from 'three/addons/controls/PointerLockControls.js';
+
+        // --- 14문제 퀴즈 데이터 ---
+        const originalQuizzes = [
+            { desc: "[도파민 경로] 환각, 망상 등 조현병의 '양성 증상'을 유발하는 원인 경로는?", options: ["Mesocortical pathway", "Mesolimbic pathway", "Nigrostriatal pathway", "Tuberoinfundibular pathway"], correct: 1, explanation: "도파민 과활성으로 인한 양성 증상(환각, 망상)은 VTA에서 Nucleus accumbens로 이어지는 <b>Mesolimbic pathway(중변연계 경로)</b>와 관련이 있습니다." },
+            { desc: "[부작용 모니터링] Clozapine 투여 시 무과립구증을 예방하기 위해 모니터링 해야 하는 수치는?", options: ["AST/ALT", "ANC (절대호중구수)", "HbA1c", "PT/INR"], correct: 1, explanation: "Clozapine은 치명적인 혈액 부작용인 <b>호중구 감소증/무과립구증</b>을 유발할 수 있습니다. 따라서 치료 시작 전과 복용 중 주기적인 <b>ANC(절대호중구수)</b> 모니터링이 필수적입니다." },
+            { desc: "[약물 선택] 두 가지 이상의 항정신병 약물을 충분히 사용했음에도 효과가 없는 '치료 저항성 조현병' 상태일 때 사용해야하는 약물은?", options: ["Risperidone", "Quetiapine", "Clozapine", "Aripiprazole"], correct: 2, explanation: "2가지 이상의 항정신병약(적절한 용량/기간)에 반응하지 않는 치료불감응성 조현병(Stage 3)의 경우, <b>Clozapine 단독요법</b>이 권고됩니다." },
+            { desc: "[EPS 관리] 항정신병 약물 복용 후 수 시간 뒤 아관긴급, 설연축, 안검경련 등의 '급성 근긴장이상증 (Acute dystonia)'가 발생했을 때 1차로 투여해야 하는 약물은?", options: ["Dantrolene", "Benztropine", "Propranolol", "Amantadine"], correct: 1, explanation: "급성 근긴장이상증은 수 시간~수일 내 발생하는 강력한 근육 연축입니다. 치료를 위해 항콜린제인 <b>Benztropine</b>이나 항히스타민제(Diphenhydramine)를 우선 투여합니다." },
+            { desc: "[도파민 경로] 항정신병 약물의 부작용 중 결절누두 경로(Tuberoinfundibular pathway)의 도파민 수용체가 차단되어 나타나는 부작용은?", options: ["지연이상운동증", "고프로락틴혈증", "신경이완제악성증후군", "운동완만"], correct: 1, explanation: "시상하부에서 뇌하수체 전엽으로 이어지는 <b>결절누두 경로</b>의 D2 수용체가 차단되면, 프로락틴 억제 효과가 사라져 <b>고프로락틴혈증(여성형 유방, 유즙분비 등)</b>이 발생합니다." },
+            { desc: "[EPS 관리] 약물 복용 2주 차, 가만히 있지 못하고 서성거리는 '좌불안석(Akathisia)'이 발생했을 때 1차로 투여를 고려하는 약물은?", options: ["Benztropine", "Propranolol", "Diphenhydramine", "Haloperidol"], correct: 1, explanation: "좌불안석(Akathisia)은 내면의 불안과 가만히 있지 못하는 증상입니다. 약물 치료로는 <b>B-blocker인 Propranolol</b>을 가장 먼저 시도합니다." },
+            { desc: "[응급 부작용] 고열, 근육 강직, 의식 변화를 동반하는 치명적인 '신경이완제악성증후군(NMS)'에서 지지요법만으로 치료되지 않을 때 투여할 수 있는 약물은?", options: ["Aripiprazole", "Clozapine", "Dantrolene", "Sulpiride"], correct: 2, explanation: "신경이완제악성증후군(NMS)은 사망률 10%의 초응급 상황입니다. 약물을 즉시 중단하고 지지요법을 시행하며, 심한 경우 근육 이완제인 <b>Dantrolene</b>이나 Bromocriptine을 투여합니다." },
+            { desc: "[도파민 경로] 정동둔마, 무의욕증 등 조현병의 '음성 증상 및 인지 증상'을 유발하는 도파민 원인 경로는?", options: ["Mesocortical pathway", "Mesolimbic pathway", "Nigrostriatal pathway", "Tuberoinfundibular pathway"], correct: 0, explanation: "음성 증상(무의욕, 정동둔마) 및 인지 장애는 VTA에서 피질로 이어지는 <b>Mesocortical pathway(중피질계 경로)</b>의 도파민 기능 저하와 연관이 있습니다." },
+            { desc: "[진단 기준] 조현병의 DSM-5 진단 기준에 따르면, 환각이나 망상 등의 활성기 증상을 포함하여 징후가 지속되어야 하는 최소 기간은 얼마인가?", options: ["1개월 이상", "3개월 이상", "6개월 이상", "1년 이상"], correct: 2, explanation: "조현병의 DSM-5 진단 기준: 특징적 증상(망상, 환각 등)이 1개월 중 상당 기간 존재해야 하며, <b>전체 징후는 최소 6개월 이상 지속</b>되어야 합니다." },
+            { desc: "[증상 분류] 다음 중 조현병의 '음성 증상(Negative symptoms)'에 속하는 것은?", options: ["환청 (Hallucinations)", "피해망상 (Delusions)", "무언어증 (Alogia)", "개념 와해 (Conceptual disorganization)"], correct: 2, explanation: "무언어증(Alogia), 무의욕증(Avolition), 감정둔마 등은 환자의 정상적인 기능이 결핍되어 나타나는 <b>음성 증상</b>입니다." },
+            { desc: "[약물 기전] 2세대 비정형 항정신병약물(SGA)이 1세대(FGA)와 구별되는 주요 약리학적 기전은 D2 수용체 길항 작용 외에 어떤 수용체를 추가로 강력하게 차단하는가?", options: ["5-HT2A 수용체", "Muscarinic M1 수용체", "Histamine H1 수용체", "Alpha-1 adrenergic 수용체"], correct: 0, explanation: "대부분의 2세대 항정신병약물(SGA)은 D2 수용체 길항 작용뿐만 아니라 <b>5-HT2A 수용체에 대한 강력한 길항 작용(Antagonist)</b>을 통해 음성 증상을 개선하고 EPS 위험을 낮춥니다." },
+            { desc: "[약물 전환] 1개월 지속형 주사제인 '인베가 서스티나'에서 3개월 지속형인 '인베가 트린자'로 전환할 때, 트린자의 유지 용량은 서스티나 마지막 투여 용량의 몇 배로 계산하는가?", options: ["1.5배", "2.0배", "3.5배", "5.0배"], correct: 2, explanation: "3개월 장기지속형 주사제인 <b>인베가 트린자(Invega Trinza)</b>의 투여 용량은 직전에 투여한 1개월 지속형 <b>인베가 서스티나 마지막 용량의 3.5배</b>로 계산하여 투여합니다." },
+            { desc: "[EPS 기전] 수년간 약물을 복용한 환자에게서 입술을 씹거나 혀를 날름거리는 비가역적 '지연이상운동증(Tardive dyskinesia)'이 발생했다. 주된 원인 기전은?", options: ["D2 수용체의 상향조절", "5-HT2A 수용체의 과도한 차단", "기저핵의 아세틸콜린 결핍", "시상하부의 도파민 고갈"], correct: 0, explanation: "지연이상운동증(Tardive Dyskinesia)은 장기간의 도파민 수용체 차단에 대한 보상 작용으로 <b>D2 수용체의 상향조절(Up-regulation)</b> 및 과민성이 발생하여 나타나는 비가역적인 부작용입니다." }
+        ];
+
+        let availableQuizzes = [];
+        function initQuizzes() { availableQuizzes = [...originalQuizzes]; availableQuizzes.sort(() => Math.random() - 0.5); }
+        initQuizzes();
+
+        let floorPlan = [];
+        function initFloorPlan() {
+            let anomalies = [1, 2, 3, 4, 5, 6];
+            let restFloors = [...anomalies, 0]; restFloors.sort(() => Math.random() - 0.5); 
+            floorPlan = [0, ...restFloors]; 
+        }
+
+        let currentFloor = 0; let anomalyType = 0; let activeQuiz = null; let isQuizCorrect = false;
+
+        initFloorPlan();
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0xdadada);
+        scene.fog = new THREE.Fog(0xdadada, 20, 120);
+
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // 💡 마우스 감도(Sensitivity)를 낮춘 컨트롤러 설정
+        const controls = new PointerLockControls(camera, document.body);
+        controls.pointerSpeed = 0.3; 
+
+        document.getElementById('start-screen').addEventListener('click', () => { controls.lock(); });
+        controls.addEventListener('lock', () => { document.getElementById('start-screen').style.display = 'none'; });
+        controls.addEventListener('unlock', () => {
+            if (document.getElementById('quiz-overlay').style.display !== 'block' && document.getElementById('explanation-overlay').style.display !== 'block' && document.getElementById('end-screen').style.display !== 'flex') {
+                document.getElementById('start-screen').style.display = 'flex';
+                document.getElementById('start-screen').innerHTML = `<h1 style="font-family:'궁서',serif; font-size:4em; color:#8b0000; text-shadow:2px 2px 10px rgba(255,0,0,0.6); margin-bottom:20px;">[조현병, '8번 출구'를 찾아라]</h1><div class="subtitle" style="color: #e74c3c; font-size: 2.5em; font-weight:bold;">일시정지</div><p style="font-size: 1.5em; font-weight: bold; margin-top: 20px; color:#fff;">화면을 클릭하여 계속하기</p>`;
+            }
+        });
+
+        // 텍스처 생성기 (부산대역 타일)
+        function createTileTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#fdfdfd'; ctx.fillRect(0,0,512,512); ctx.strokeStyle = '#cccccc'; ctx.lineWidth = 4;
+            for(let i=0; i<=512; i+=128) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, 512); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(512, i); ctx.stroke(); }
+            ctx.fillStyle = '#e67e22'; ctx.fillRect(0, 220, 512, 72);
+            const tex = new THREE.CanvasTexture(canvas); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex;
+        }
+
+        function createFloorTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 512; canvas.height = 512;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#c0c0c0'; ctx.fillRect(0,0,512,512); 
+            for(let i=0; i<3000; i++) { ctx.fillStyle = Math.random() > 0.5 ? '#a0a0a0' : '#d0d0d0'; ctx.fillRect(Math.random()*512, Math.random()*512, 3, 3); }
+            ctx.strokeStyle = '#999999'; ctx.lineWidth = 2;
+            for(let i=0; i<=512; i+=128) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,512); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,i); ctx.lineTo(512,i); ctx.stroke(); }
+            ctx.fillStyle = '#f1c40f'; ctx.fillRect(280, 0, 64, 512); ctx.strokeStyle = '#d4ac0d'; ctx.lineWidth = 2;
+            for(let i=0; i<=512; i+=32) { ctx.beginPath(); ctx.moveTo(280,i); ctx.lineTo(344,i); ctx.stroke(); }
+            ctx.fillStyle = '#3498db'; ctx.fillRect(170, 0, 60, 512); ctx.fillStyle = '#ffffff';
+            for(let i=64; i<512; i+=128) { ctx.beginPath(); ctx.moveTo(200, i - 40); ctx.lineTo(175, i + 10); ctx.lineTo(185, i + 15); ctx.lineTo(200, i - 15); ctx.lineTo(215, i + 15); ctx.lineTo(225, i + 10); ctx.fill(); }
+            const tex = new THREE.CanvasTexture(canvas); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex;
+        }
+
+        function createCeilingTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#eeeeee'; ctx.fillRect(0,0,256,256); ctx.strokeStyle = '#dddddd'; ctx.lineWidth = 2; ctx.strokeRect(0,0,256,256);
+            const tex = new THREE.CanvasTexture(canvas); tex.wrapS = THREE.RepeatWrapping; tex.wrapT = THREE.RepeatWrapping; return tex;
+        }
+
+        function createOverheadSignTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 600; canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#2c3e50'; ctx.fillRect(0, 0, 600, 200); ctx.fillStyle = '#e67e22'; ctx.fillRect(0, 180, 600, 20);
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 50px Malgun Gothic'; ctx.textAlign = 'left'; ctx.fillText("나가는 곳 Exit", 30, 70);
+            ctx.font = 'bold 70px Malgun Gothic'; ctx.textAlign = 'right'; ctx.fillText("부산대역", 570, 140);
+            ctx.font = 'bold 30px Malgun Gothic'; ctx.fillStyle = '#f1c40f'; ctx.fillText("Pusan Nat'l Univ.", 570, 80);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        // 💡 깜빡거림(Z-fighting) 방지를 위해 캔버스에 직접 액자 테두리를 그리는 광고판 생성기
+        function createBillboardTexture(brand, generic, desc, bgColor, pillColor, isSquarePill) {
+            const canvas = document.createElement('canvas'); canvas.width = 600; canvas.height = 300;
+            const ctx = canvas.getContext('2d');
+            
+            let grad = ctx.createLinearGradient(0, 0, 600, 300);
+            grad.addColorStop(0, bgColor); grad.addColorStop(1, '#2c3e50');
+            ctx.fillStyle = grad; ctx.fillRect(0,0,600,300);
+            
+            // 검은색 액자 테두리 (Z-fighting 해결의 핵심!)
+            ctx.lineWidth = 16;
+            ctx.strokeStyle = '#222222';
+            ctx.strokeRect(8, 8, 584, 284);
+            
+            ctx.fillStyle = pillColor;
+            if(isSquarePill) { ctx.fillRect(480, 120, 60, 60); } 
+            else { ctx.beginPath(); ctx.ellipse(510, 150, 40, 25, Math.PI/4, 0, Math.PI*2); ctx.fill(); }
+            
+            ctx.fillStyle = '#ffffff'; ctx.textAlign = 'left';
+            ctx.font = 'bold 45px Malgun Gothic'; ctx.fillText(brand, 40, 70);
+            ctx.font = 'italic 22px Arial'; ctx.fillStyle = '#f1c40f'; ctx.fillText(generic, 40, 110);
+            
+            ctx.fillStyle = '#ffffff'; ctx.font = 'bold 22px Malgun Gothic';
+            const lines = desc.split('\n');
+            for(let i=0; i<lines.length; i++) { ctx.fillText(lines[i], 40, 160 + (i * 35)); }
+
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createPosterTexture(title, text, bgColor, textColor) {
+            const canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = 400; 
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = bgColor; ctx.fillRect(0,0,300,400); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 8; ctx.strokeRect(10, 10, 280, 380);
+            ctx.fillStyle = textColor; ctx.font = 'bold 34px Malgun Gothic'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; ctx.fillText(title, 150, 40);
+            ctx.beginPath(); ctx.moveTo(30, 90); ctx.lineTo(270, 90); ctx.lineWidth = 3; ctx.stroke();
+            ctx.font = 'bold 24px Malgun Gothic'; const lines = text.split('\n');
+            for(let i=0; i<lines.length; i++) { ctx.fillText(lines[i], 150, 130 + (i * 45)); }
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        function createGhostTexture() {
+            const canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = 400; 
+            const ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#000000'; ctx.fillRect(0,0,300,400);
+            ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.arc(100, 150, 20, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(200, 150, 20, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#ff0000'; ctx.beginPath(); ctx.arc(100, 150, 8, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(200, 150, 8, 0, Math.PI*2); ctx.fill();
+            ctx.fillRect(95, 150, 10, 80); ctx.fillRect(195, 150, 10, 100);
+            ctx.strokeStyle = '#ff0000'; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(100, 280); ctx.quadraticCurveTo(150, 350, 200, 280); ctx.stroke();
+            ctx.fillStyle = '#ff0000'; ctx.font = 'bold 40px 궁서'; ctx.textAlign = 'center'; ctx.fillText("찾았다", 150, 50);
+            return new THREE.CanvasTexture(canvas);
+        }
+
+        const corridorGroup = new THREE.Group(); scene.add(corridorGroup);
+        const tileTex = createTileTexture(); tileTex.repeat.set(50, 2);
+        const floorTex = createFloorTexture(); floorTex.repeat.set(4, 40);
+        const ceilTex = createCeilingTexture(); ceilTex.repeat.set(10, 100);
+
+        const floorGeo = new THREE.PlaneGeometry(20, 200);
+        const floor = new THREE.Mesh(floorGeo, new THREE.MeshStandardMaterial({ map: floorTex }));
+        floor.rotation.x = -Math.PI / 2; corridorGroup.add(floor);
+        const ceiling = new THREE.Mesh(floorGeo, new THREE.MeshStandardMaterial({ map: ceilTex }));
+        ceiling.rotation.x = Math.PI / 2; ceiling.position.y = 10; corridorGroup.add(ceiling);
+
+        const wallGeo = new THREE.PlaneGeometry(200, 10);
+        const wallMat = new THREE.MeshStandardMaterial({ map: tileTex });
+        const wallL = new THREE.Mesh(wallGeo, wallMat); wallL.rotation.y = Math.PI / 2; wallL.position.set(-10, 5, 0); corridorGroup.add(wallL);
+        const wallR = new THREE.Mesh(wallGeo, wallMat); wallR.rotation.y = -Math.PI / 2; wallR.position.set(10, 5, 0); corridorGroup.add(wallR);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+        const lights = [];
+        for(let z = -90; z <= 90; z += 20) {
+            const pl = new THREE.PointLight(0xffffff, 0.7, 30); pl.position.set(0, 9, z); scene.add(pl); lights.push(pl);
+            const fl = new THREE.Mesh(new THREE.BoxGeometry(4, 0.2, 1), new THREE.MeshBasicMaterial({ color: 0xffffff })); fl.position.set(0, 9.9, z); scene.add(fl);
+        }
+
+        const overheadSignTex = createOverheadSignTexture();
+        for(let z of [-50, 50]) {
+            const signMesh = new THREE.Mesh(new THREE.PlaneGeometry(6, 2), new THREE.MeshBasicMaterial({map: overheadSignTex})); signMesh.position.set(0, 8.5, z); scene.add(signMesh);
+            const signMeshBack = new THREE.Mesh(new THREE.PlaneGeometry(6, 2), new THREE.MeshBasicMaterial({map: overheadSignTex})); signMeshBack.position.set(0, 8.5, z - 0.01); signMeshBack.rotation.y = Math.PI; scene.add(signMeshBack);
+        }
+
+        const normalPostersData = [
+            createPosterTexture("폐의약품 수거", "유통기한이 지난\n약은 반드시\n약국 수거함으로!", "#2ecc71", "#ffffff"),
+            createPosterTexture("마약 예방 캠페인", "단 한 번의\n호기심이 당신의\n일상을 파괴합니다", "#8e44ad", "#ffffff"),
+            createPosterTexture("PNU 약대 응원", "부산대학교 약대\n선배님들의 국시\n전원합격 기원!", "#e67e22", "#ffffff"),
+            createPosterTexture("의약품 오남용", "처방받은 약은\n임의로 중단말고\n끝까지 복용하세요", "#3498db", "#ffffff"),
+            createPosterTexture("정신건강 상담", "마음의 감기,\n혼자 앓지 말고\n전문의와 상담하세요", "#16a085", "#ffffff"),
+            createPosterTexture("나의 단골약국", "안전한 약 복용,\n가까운 단골약국\n약사님과 함께!", "#e74c3c", "#ffffff")
+        ];
+        
+        const wordSaladPostersData = [
+            createPosterTexture("ㅈㅎㅅㄷ", "ㄷㅅㅇ ㄱㅋ\nㅎㅈㄱ ㅇㄴㄴㄷ\n1577", "#2ecc71", "#ffffff"),
+            createPosterTexture("ㅅㄹㅇ", "ㅁㄱㅇ ㅂㄷㅅ\nㅈㅇㅇㄱ", "#3498db", "#ffffff"),
+            createPosterTexture("ㄱㅇㄱㅇ", "ㅎㅇ ㅅ\nㄱㅌㄹ ㅂㄱ", "#e67e22", "#ffffff"),
+            createPosterTexture("ㅇㅅㅂ ㅂㄹ", "ㄴㅇㅇ ㅍㅇ\nㅈㄹㄹ ㅇㅂ", "#e74c3c", "#ffffff"),
+            createPosterTexture("ㅍㅇㅇㅍ ㅅㄱ", "ㅇㅌㄱㅎㅇ ㅈㄴ\nㅇㅇ ㅂㄷㅅ\nㅇㄱ ㅅㄱㅎㅇㄹ!", "#16a085", "#ffffff"),
+            createPosterTexture("ㄴㅇ ㄷㄱㅇㄱ", "ㅇㅈㅎ ㅇ ㅂㅇ,\nㄱㄲㅇ ㄷㄱㅇㄱ\nㅇㅅㄴㄱ ㅎㄲ!", "#e74c3c", "#ffffff")
+        ];
+        const ghostPosterTex = createGhostTexture();
+
+        const posterMeshes = []; 
+        const posterZPositions = [-55, -15, 25, -55, -15, 25]; 
+        for (let i = 0; i < 6; i++) {
+            const pMesh = new THREE.Mesh(new THREE.PlaneGeometry(3, 4), new THREE.MeshBasicMaterial({map: normalPostersData[i]}));
+            if (i < 3) { pMesh.position.set(-9.9, 5, posterZPositions[i]); pMesh.rotation.y = Math.PI / 2; } 
+            else { pMesh.position.set(9.9, 5, posterZPositions[i]); pMesh.rotation.y = -Math.PI / 2; }
+            scene.add(pMesh); posterMeshes.push(pMesh);
+        }
+
+        const billboardData = [
+            createBillboardTexture("아빌리파이정", "Aripiprazole", "도파민 부분효능제로 뇌 균형 조절\n체중 증가 및 대사부작용 위험 최저\n정좌불능증(Akathisia) 부작용 주의", "#2980b9", "#82ccdd", false),
+            createBillboardTexture("자이프렉사정", "Olanzapine", "양성 및 음성증상에 강력한 효과\n주의: 체중증가 등 대사증후군 모니터링\n1세대 약물보다 EPS 발생 위험 낮음", "#d35400", "#f5f6fa", false),
+            createBillboardTexture("인베가 서스티나", "Paliperidone palmitate", "매일 약 먹기 힘들다면?\n1개월 1회 투여 장기지속형 주사제(LAI)\n리스페리돈의 활성 대사체", "#27ae60", "#dcdde1", true),
+            createBillboardTexture("클로자릴정", "Clozapine", "치료 저항성 조현병의 최후의 보루\n무과립구증 위험으로 혈액검사 필수\n자살 위험 감소 효과가 입증된 유일한 약물", "#c0392b", "#f5f6fa", false),
+            createBillboardTexture("리스페달정", "Risperidone", "뚜렷한 양성 증상 감소 효과\nEPS 및 고프로락틴혈증 발생 위험 높음\n용량 의존적으로 부작용 증가", "#8e44ad", "#f5f6fa", false),
+            createBillboardTexture("쎄로켈정", "Quetiapine", "강력한 항히스타민 작용으로 진정/수면 효과\nEPS와 고프로락틴혈증 위험이\n가장 낮은 약물 중 하나", "#16a085", "#f1c40f", false),
+            createBillboardTexture("할돌정", "Haloperidol", "대표적인 1세대 정형 항정신병 약물\nD2 수용체 강력 차단으로 양성 증상 억제\nEPS 및 지연이상운동증 위험 매우 높음", "#2c3e50", "#ffffff", false),
+            createBillboardTexture("젤독스캡슐", "Ziprasidone", "식사와 함께 복용해야 체내 흡수율 증가\n심전도상 QTc 연장 부작용 주의\n체중 증가 위험이 비교적 낮음", "#f39c12", "#dcdde1", true)
+        ];
+        
+        const billboardZPositions = [-70, -30, 10, 50, -70, -30, 10, 50]; 
+        for (let i=0; i<8; i++) {
+            // 💡 3D 액자(프레임)를 삭제하여 깜빡거림(Z-fighting) 완벽 제거
+            const bMesh = new THREE.Mesh(new THREE.PlaneGeometry(8, 4), new THREE.MeshBasicMaterial({map: billboardData[i]}));
+            if (i < 4) { bMesh.position.set(-9.9, 4.5, billboardZPositions[i]); bMesh.rotation.y = Math.PI / 2; } 
+            else { bMesh.position.set(9.9, 4.5, billboardZPositions[i]); bMesh.rotation.y = -Math.PI / 2; }
+            scene.add(bMesh);
+        }
+
+        const wallObstacle = new THREE.Mesh(new THREE.BoxGeometry(10, 10, 4), new THREE.MeshStandardMaterial({color: 0x333333}));
+        wallObstacle.position.set(0, 5, 0); scene.add(wallObstacle); wallObstacle.visible = false;
+        const shadowGhost = new THREE.Mesh(new THREE.BoxGeometry(2, 8, 1), new THREE.MeshBasicMaterial({color: 0x000000}));
+        shadowGhost.position.set(-15, 4, -20); scene.add(shadowGhost); shadowGhost.visible = false;
+
+        const moveState = { forward: false, backward: false, left: false, right: false };
+        const velocity = new THREE.Vector3(); const direction = new THREE.Vector3();
+        let speedMultiplier = 1; 
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'KeyW') moveState.forward = true; if (e.code === 'KeyS') moveState.backward = true;
+            if (e.code === 'KeyA') moveState.left = true; if (e.code === 'KeyD') moveState.right = true;
+        });
+        document.addEventListener('keyup', (e) => {
+            if (e.code === 'KeyW') moveState.forward = false; if (e.code === 'KeyS') moveState.backward = false;
+            if (e.code === 'KeyA') moveState.left = false; if (e.code === 'KeyD') moveState.right = false;
+        });
+
+        function resetRound() {
+            camera.position.set(0, 5, 60); controls.getObject().rotation.y = 0; camera.rotation.z = 0; 
+            velocity.set(0, 0, 0); moveState.forward = false; moveState.backward = false; moveState.left = false; moveState.right = false;
+
+            anomalyType = floorPlan[currentFloor];
+            document.getElementById('floor-display').innerText = `출구 ${currentFloor}`;
+            document.getElementById('glitch-overlay').style.opacity = '0';
+            speedMultiplier = 1; wallObstacle.visible = false; shadowGhost.visible = false;
+            
+            for(let i=0; i<6; i++) posterMeshes[i].material.map = normalPostersData[i];
+
+            switch(anomalyType) {
+                case 1: for(let i=0; i<6; i++) posterMeshes[i].material.map = wordSaladPostersData[i]; break; 
+                case 2: wallObstacle.visible = true; break; 
+                case 3: break; 
+                case 4: shadowGhost.visible = true; shadowGhost.position.x = -15; break; 
+                case 5: for(let i=0; i<6; i++) posterMeshes[i].material.map = ghostPosterTex; break; 
+                case 6: document.getElementById('glitch-overlay').style.opacity = '1'; speedMultiplier = 0.3; break; 
+            }
+        }
+
+        function triggerQuiz() {
+            controls.unlock();
+            if(availableQuizzes.length === 0) initQuizzes();
+            activeQuiz = availableQuizzes.pop(); 
+            
+            const overlay = document.getElementById('quiz-overlay');
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+            
+            document.getElementById('quiz-desc').innerText = activeQuiz.desc;
+            activeQuiz.options.forEach((opt, i) => {
+                const btn = document.createElement('button'); btn.className = 'btn'; btn.innerText = opt;
+                btn.onclick = () => checkAnswer(i, btn); container.appendChild(btn);
+            });
+            overlay.style.display = 'block';
+        }
+
+        window.checkAnswer = function(idx, btnElement) {
+            const isCorrect = (idx === activeQuiz.correct);
+            isQuizCorrect = isCorrect; 
+            
+            btnElement.classList.add(isCorrect ? 'btn-correct' : 'btn-wrong');
+            
+            setTimeout(() => {
+                document.getElementById('quiz-overlay').style.display = 'none';
+                
+                const expTitle = document.getElementById('exp-title');
+                const expAnswer = document.getElementById('exp-answer');
+                
+                if(isCorrect) {
+                    expTitle.innerText = "⭕ 정답입니다!"; expTitle.style.color = "#27ae60";
+                } else {
+                    expTitle.innerText = "❌ 오답입니다!"; expTitle.style.color = "#e74c3c";
+                }
+                
+                expAnswer.innerText = "정답: " + activeQuiz.options[activeQuiz.correct];
+                document.getElementById('exp-text').innerHTML = activeQuiz.explanation;
+                
+                document.getElementById('explanation-overlay').style.display = 'block';
+            }, 500); 
+        };
+
+        window.proceedAfterExplanation = function() {
+            document.getElementById('explanation-overlay').style.display = 'none';
+            
+            if (isQuizCorrect) {
+                currentFloor++;
+                if(currentFloor >= 8) {
+                    document.getElementById('end-screen').style.display = 'flex';
+                    return;
+                }
+            } else {
+                currentFloor = 0; initFloorPlan(); 
+                alert("퀴즈를 틀려 무한 루프에 빠집니다. 0번 출구로 돌아갑니다.");
+            }
+            resetRound(); controls.lock();
+        };
+
+        function evaluateAction(door) {
+            let success = false;
+            if (door === 'front' && anomalyType === 0) success = true; 
+            if (door === 'back' && anomalyType > 0) success = true;    
+
+            velocity.set(0, 0, 0);
+
+            if (success) { triggerQuiz(); } 
+            else {
+                controls.unlock();
+                currentFloor = 0; initFloorPlan(); 
+                alert("🚨 판단 오류! 이상 징후를 놓쳤거나 잘못 봤습니다. 무한 루프에 빠져 0번 출구로 돌아갑니다.");
+                resetRound();
+                controls.lock();
+            }
+        }
+
+        let prevTime = performance.now();
+        function animate() {
+            requestAnimationFrame(animate);
+            const time = performance.now();
+
+            if (controls.isLocked === true) {
+                const delta = (time - prevTime) / 1000;
+                
+                velocity.x -= velocity.x * 10.0 * delta;
+                velocity.z -= velocity.z * 10.0 * delta;
+
+                // 💡 3. 앞뒤(W/S) 조작이 반대로 작동하던 문제 해결을 위해 방향 반전 적용
+                direction.z = Number(moveState.forward) - Number(moveState.backward);
+                direction.x = Number(moveState.right) - Number(moveState.left); 
+                direction.normalize();
+
+                const speed = 400.0 * speedMultiplier;
+                // 💡 W가 정확히 '전진(앞)' 방향으로 가도록 부호를 재수정했습니다.
+                if (moveState.forward || moveState.backward) velocity.z += direction.z * speed * delta;
+                if (moveState.left || moveState.right) velocity.x -= direction.x * speed * delta;
+
+                if (anomalyType === 3) { camera.rotation.z = Math.sin(time * 0.05) * 0.05; } 
+                else { camera.rotation.z = 0; }
+
+                if (anomalyType === 4 && shadowGhost.visible) {
+                    shadowGhost.position.x += 30 * delta; 
+                    if (shadowGhost.position.x > 15) { shadowGhost.position.x = -15; }
+                }
+
+                // 💡 Z축(앞뒤)에 velocity를 적용하는 방식을 정상화
+                controls.moveRight(-velocity.x * delta); 
+                controls.moveForward(velocity.z * delta);
+
+                if (camera.position.x < -8) camera.position.x = -8; if (camera.position.x > 8) camera.position.x = 8;
+
+                if (camera.position.z < -85) { evaluateAction('front'); }
+                if (camera.position.z > 85) { evaluateAction('back'); }
+            }
+            prevTime = time; renderer.render(scene, camera);
+        }
+
+        resetRound(); animate();
+        
+        window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); }, false);
+    </script>
+</body>
+</html>
