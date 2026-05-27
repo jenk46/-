@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>같은 약, 다른 운명 | 임상약물유전체학</title>
+  <meta name="description" content="클로피도그렐과 CYP2C19 유전자 변이 — 실제 논문 기반 인터랙티브 스토리">
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--accent:#e63946;--safe:#00b894;--gold:#d4a373;--blue:#2d6cdf;--glow:#00b4d8;--sans:'Noto Sans KR',system-ui,sans-serif}
+html{-webkit-font-smoothing:antialiased}
+body{font-family:var(--sans);color:#111;background:#f5f5f7;overflow-x:hidden;line-height:1.7}
+.progress{position:fixed;top:0;left:0;height:3px;width:0%;background:linear-gradient(90deg,var(--safe),var(--glow),var(--accent));z-index:9999}
+
+/* Sticky */
+.sticky-section{position:relative}
+.sticky-wrap{position:sticky;top:0;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+
+/* HERO */
+#hero{height:250vh}
+#hero .sticky-wrap{background:#f5f5f7;flex-direction:column;text-align:center}
+#heroDna{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.hero-overtitle{font-size:clamp(.75rem,1.2vw,.9rem);font-weight:500;letter-spacing:3px;text-transform:uppercase;color:#999;margin-bottom:16px;opacity:0;transform:translateY(20px);animation:fu .8s .3s forwards;z-index:2;position:relative}
+.hero-title{font-size:clamp(2.4rem,7vw,5rem);font-weight:900;line-height:1.1;letter-spacing:-2px;margin-bottom:24px;opacity:0;transform:translateY(30px);animation:fu .8s .5s forwards;position:relative;z-index:2}
+.hero-title .em{background:linear-gradient(135deg,var(--accent),#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:clamp(1rem,2vw,1.3rem);font-weight:300;color:#555;max-width:520px;line-height:1.9;opacity:0;transform:translateY(20px);animation:fu .8s .7s forwards;position:relative;z-index:2}
+.hero-sub .gene-em{font-weight:700;background:linear-gradient(135deg,var(--blue),var(--glow));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-scroll{position:absolute;bottom:40px;font-size:.75rem;letter-spacing:3px;color:#999;display:flex;flex-direction:column;align-items:center;gap:8px;opacity:0;animation:fu .8s 1.2s forwards;z-index:2}
+.hero-scroll span{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes fu{to{opacity:1;transform:translateY(0)}}
+
+/* SEAMLESS SECTIONS - gradient transitions */
+.full-text{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:120px 24px;text-align:center;position:relative;overflow:hidden}
+.full-text-inner{max-width:800px;position:relative;z-index:2}
+.sec-intro1{background:linear-gradient(180deg,#f5f5f7 0%,#efefef 60%,#e8e8ea 100%)}
+.sec-intro2{background:linear-gradient(180deg,#e8e8ea 0%,#ddd 50%,#bbb 100%)}
+.sec-todark{background:linear-gradient(180deg,#555 0%,#1a1a20 40%,#0a0a0f 100%);color:#e8e6e3}
+.big-text{font-size:clamp(1.6rem,4vw,2.6rem);font-weight:700;line-height:1.6;letter-spacing:-.5px}
+.big-text .hl{color:var(--accent)}.big-text .sf{color:var(--safe)}
+.sub-text{font-size:clamp(.9rem,1.5vw,1.05rem);color:#555;margin-top:24px;line-height:2;font-weight:300}
+.note-text{font-size:clamp(.78rem,1.2vw,.88rem);color:rgba(0,0,0,.4);margin-top:20px;line-height:1.9;font-weight:300;max-width:600px;margin-left:auto;margin-right:auto;text-align:center}
+.sec-todark .note-text{color:rgba(255,255,255,.35)}
+.intro-bg{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.intro-dot{position:absolute;border-radius:50%;opacity:.08;animation:floatDot 12s ease-in-out infinite}
+@keyframes floatDot{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.1)}}
+.drug-name{font-size:clamp(1.2rem,3vw,1.6rem);font-weight:900;color:#111;display:inline-block;padding:4px 0;border-bottom:3px solid var(--accent)}
+.sec-todark .drug-name{color:#e8e6e3}
+
+/* ECG */
+#ecgSection{height:350vh;background:#0a0a0f}
+#ecgSection .sticky-wrap{flex-direction:column}
+#ecgCanvas{position:absolute;inset:0;width:100%;height:100%}
+.ecg-overlay{position:relative;z-index:2;text-align:center;padding:0 24px;max-width:700px;opacity:0;transition:all .5s}
+.ecg-overlay h2{font-size:clamp(1.8rem,5vw,3.2rem);font-weight:900;line-height:1.3;color:#e8e6e3;margin-bottom:16px}
+.ecg-overlay p{font-size:clamp(.9rem,1.5vw,1.05rem);color:#888;line-height:1.9}
+.ecg-overlay .hl{color:var(--accent)}
+.emergency-flash{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .15s;z-index:1;background:radial-gradient(ellipse at center,rgba(230,57,70,.25) 0%,rgba(230,57,70,.08) 50%,transparent 80%)}
+
+/* COMPARE — Glassmorphism + Center Axis */
+#compareSection{height:480vh;background:#0d0d14}
+.compare-sticky{position:sticky;top:0;height:100vh;display:flex;overflow:hidden}
+/* Mesh gradient BG */
+.cmp-mesh{position:absolute;inset:0;z-index:0;background:
+  radial-gradient(ellipse at 20% 40%,rgba(0,184,148,.18),transparent 55%),
+  radial-gradient(ellipse at 80% 60%,rgba(230,57,70,.14),transparent 55%),
+  radial-gradient(ellipse at 50% 20%,rgba(0,180,216,.08),transparent 60%),
+  linear-gradient(135deg,#0d1117 0%,#161b22 100%);animation:meshShift 8s ease-in-out infinite alternate}
+@keyframes meshShift{0%{background-position:0% 0%}100%{background-position:100% 100%}}
+/* Center badge */
+.cmp-center-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:10;display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:rgba(20,20,30,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px 22px;
+  box-shadow:0 8px 32px rgba(0,0,0,.4);transition:all .5s}
+.cmp-badge-icon{font-size:1.4rem}
+.cmp-badge-text{font-size:.72rem;font-weight:700;letter-spacing:2px;color:#ccc;text-transform:uppercase}
+/* Halves */
+.cmp-half{flex:1;display:flex;align-items:center;justify-content:center;padding:24px;position:relative;z-index:1}
+/* Glass card */
+.cmp-glass{width:100%;max-width:380px;background:rgba(255,255,255,.06);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border:1px solid rgba(255,255,255,.1);border-radius:24px;padding:40px 28px;
+  box-shadow:0 8px 40px rgba(0,0,0,.2);transition:transform .5s,box-shadow .5s;transform:perspective(800px) rotateY(0deg);position:relative;overflow:hidden}
+.cmp-glass:hover{transform:perspective(800px) rotateY(2deg) translateY(-4px);box-shadow:0 16px 48px rgba(0,0,0,.35)}
+.cmp-glass.danger:hover{transform:perspective(800px) rotateY(-2deg) translateY(-4px)}
+.cmp-group-label{font-size:1rem;font-weight:900;margin-bottom:2px;text-align:center}
+.cmp-group-label.safe{color:var(--safe)}.cmp-group-label.danger{color:var(--accent)}
+.cmp-group-sub{font-size:.7rem;color:rgba(255,255,255,.4);text-align:center;margin-bottom:20px}
+/* Cards area inside glass */
+.cmp-glass .cmp-cards-area{position:relative;min-height:200px}
+.data-group{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;opacity:0;visibility:hidden;transform:translateY(16px) scale(.96);transition:all .5s cubic-bezier(.4,0,.2,1);pointer-events:none}
+.data-group.active{opacity:1;visibility:visible;transform:translateY(0) scale(1);pointer-events:auto}
+.stat-big{font-size:clamp(1.4rem,3vw,2.2rem);font-weight:900;line-height:1.2;margin-bottom:8px;transition:all .4s}
+.stat-big.safe{color:var(--safe)}.stat-big.danger{color:var(--accent);text-shadow:0 0 20px rgba(230,57,70,.3)}
+.data-desc{font-size:.82rem;line-height:1.8;color:rgba(255,255,255,.5);max-width:260px}
+.data-desc strong{color:rgba(255,255,255,.85)}
+.badge{display:inline-block;padding:6px 16px;border-radius:20px;font-size:.82rem;font-weight:700;margin-top:10px}
+.badge-s{background:rgba(0,184,148,.15);color:var(--safe)}.badge-d{background:rgba(230,57,70,.15);color:var(--accent)}
+.danger-overlay{position:absolute;inset:0;pointer-events:none;transition:all .8s;z-index:2;background:transparent;border-radius:24px}
+.cmp-slide-indicator{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);font-size:.72rem;font-weight:700;color:rgba(255,255,255,.3);letter-spacing:3px;z-index:10}
+.risk-bar-wrap{width:100%;max-width:200px;margin:10px auto 0}
+.risk-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden}
+.risk-bar-fill{height:100%;border-radius:3px;transition:width 1.2s ease}
+.risk-bar-fill.safe{background:var(--safe)}.risk-bar-fill.danger{background:var(--accent)}
+
+/* Gene blank (clickable ?) */
+.gene-blank{display:inline-block;cursor:pointer;position:relative;min-width:120px;text-align:center;transition:all .5s}
+.gene-q{display:inline-block;font-size:clamp(2rem,5vw,3rem);font-weight:900;color:var(--accent);background:rgba(230,57,70,.12);border:2px dashed rgba(230,57,70,.4);border-radius:12px;padding:4px 24px;animation:qPulse 2s ease-in-out infinite;line-height:1.3}
+@keyframes qPulse{0%,100%{box-shadow:0 0 0 0 rgba(230,57,70,.2)}50%{box-shadow:0 0 20px 4px rgba(230,57,70,.15)}}
+.gene-answer{display:none;font-weight:900;background:linear-gradient(135deg,var(--accent),#ff6b6b);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;opacity:0}
+.gene-answer small{font-size:.6em;-webkit-text-fill-color:var(--glow);opacity:.7}
+.gene-blank.revealed .gene-q{display:none}
+.gene-blank.revealed .gene-answer{display:inline;opacity:1;animation:geneAppear 1.2s cubic-bezier(.25,.46,.45,.94) forwards}
+@keyframes geneAppear{0%{opacity:0;transform:scale(.7) translateY(8px);filter:blur(6px)}60%{opacity:1;transform:scale(1.05) translateY(-2px);filter:blur(0)}100%{opacity:1;transform:scale(1) translateY(0);filter:blur(0)}}
+.gene-blank.revealed{border:none;background:none}
+.gene-hint{font-size:.8rem;color:#666;margin-top:16px;text-align:center;animation:qPulse 2s ease-in-out infinite}
+
+/* Dark section */
+.dark-s{background:#0a0a0f;color:#e8e6e3;padding:120px 24px;position:relative;overflow:hidden}
+.dark-s .sub-text{color:#888}
+#dnaCanvas{position:absolute;inset:0;width:100%;height:100%;opacity:.7;pointer-events:none}
+
+/* Pathway */
+.pw-box{max-width:800px;margin:48px auto;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:40px;backdrop-filter:blur(10px)}
+.pw-toggle{display:flex;justify-content:center;gap:12px;margin-bottom:32px}
+.pw-btn{padding:12px 28px;border-radius:10px;border:1px solid rgba(255,255,255,.15);background:transparent;color:#aaa;font-family:var(--sans);font-size:.9rem;cursor:pointer;transition:all .3s}
+.pw-btn.on-s{border-color:var(--safe);color:var(--safe);background:rgba(0,184,148,.1)}
+.pw-btn.on-d{border-color:var(--accent);color:var(--accent);background:rgba(230,57,70,.1)}
+.pw-flow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:16px 0}
+.pw-step{padding:16px 20px;border-radius:14px;font-size:.85rem;font-weight:500;text-align:center;min-width:110px;transition:all .6s;background:rgba(255,255,255,.06);color:#ccc;position:relative}
+.pw-arrow{font-size:1.2rem;color:#444;transition:all .6s}
+.pw-flow.nm .pw-enz{background:rgba(45,108,223,.2);color:var(--blue);border:1px solid rgba(45,108,223,.3)}
+.pw-flow.nm .pw-met{background:rgba(0,184,148,.15);color:var(--safe);border:1px solid rgba(0,184,148,.3)}
+.pw-flow.nm .pw-res{background:rgba(0,184,148,.2);color:var(--safe)}
+.pw-flow.nm .pw-arrow{color:var(--safe)}
+.pw-flow.pm .pw-enz{background:rgba(230,57,70,.2);color:var(--accent);border:1px solid rgba(230,57,70,.3)}
+.pw-flow.pm .pw-met{opacity:.2;border:1px dashed rgba(230,57,70,.3);color:var(--accent);transform:scale(.9)}
+.pw-flow.pm .pw-res{background:rgba(230,57,70,.15);color:var(--accent);animation:shakeX .5s ease}
+.pw-flow.pm .pw-res-inner{text-decoration:line-through;opacity:.4}
+.pw-flow.pm .pw-fail{display:block !important;color:var(--accent);font-weight:700;font-size:.9rem;margin-top:4px}
+.pw-fail{display:none}
+.pw-flow.pm .pw-arrow{color:var(--accent)}.pw-flow.pm .pw-arrow.ar3{opacity:.3}
+.pw-desc{text-align:center;font-size:.9rem;color:#888;margin-top:24px;line-height:1.8}
+@keyframes shakeX{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+
+/* Isotype */
+.isotype-section{max-width:700px;margin:48px auto;text-align:center}
+.isotype-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:4px;margin:24px auto;max-width:500px}
+.iso-person{width:28px;height:28px;transition:all .6s}.iso-person svg{width:100%;height:100%}
+.iso-person.normal svg path{fill:#444}.iso-person.im svg path{fill:var(--gold)}.iso-person.pm svg path{fill:var(--accent)}
+.iso-legend{display:flex;justify-content:center;gap:24px;margin-top:16px;font-size:.8rem;color:#888}
+.iso-legend span{display:flex;align-items:center;gap:6px}
+.iso-dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+
+/* Simulator */
+.sim-box{max-width:700px;margin:48px auto;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:20px;padding:40px}
+.sim-box h3{text-align:center;font-size:1.2rem;margin-bottom:24px;color:#e8e6e3}
+.sim-slider-wrap{text-align:center;margin-bottom:24px}
+.sim-slider{-webkit-appearance:none;width:100%;max-width:500px;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--safe),var(--gold),var(--accent));outline:none;cursor:pointer}
+.sim-slider::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:#fff;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+.sim-labels{display:flex;justify-content:space-between;max-width:500px;margin:8px auto 0;font-size:.7rem;color:#666}
+.sim-result{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:24px}
+.sim-card{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:20px;text-align:center;transition:all .3s}
+.sim-val{font-size:1.8rem;font-weight:900;margin-bottom:4px;transition:color .3s}
+.sim-lbl{font-size:.75rem;color:#777}
+.sim-bar{height:8px;border-radius:4px;background:#222;margin-top:8px;overflow:hidden}
+.sim-bar-fill{height:100%;border-radius:4px;transition:width .5s,background .5s}
+
+/* What-if carousel */
+.whatif-box{max-width:700px;margin:48px auto;background:rgba(0,184,148,.06);border:1px solid rgba(0,184,148,.15);border-radius:20px;padding:48px;position:relative;overflow:hidden}
+.whatif-box h3{font-size:1.4rem;color:var(--safe);margin-bottom:24px;text-align:center}
+.wf-carousel{position:relative;min-height:260px;overflow:hidden}
+.wf-slide{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;transform:translateX(60px);transition:all .5s cubic-bezier(.4,0,.2,1);pointer-events:none;padding:20px}
+.wf-slide.active{opacity:1;transform:translateX(0);pointer-events:auto}
+.wf-slide.exit-left{opacity:0;transform:translateX(-60px)}
+.wf-icon{font-size:3.5rem;margin-bottom:16px;filter:drop-shadow(0 4px 12px rgba(0,0,0,.2))}
+.wf-slide-step{font-size:.7rem;font-weight:700;letter-spacing:3px;color:var(--glow);margin-bottom:8px}
+.wf-slide-title{font-size:clamp(1rem,2.5vw,1.3rem);font-weight:700;color:#e8e6e3;line-height:1.6;margin-bottom:12px}
+.wf-slide-desc{font-size:.88rem;color:#888;line-height:1.8}
+.wf-nav{display:flex;align-items:center;justify-content:center;gap:20px;margin-top:20px}
+.wf-arrow{width:44px;height:44px;border-radius:50%;border:1px solid rgba(0,184,148,.3);background:transparent;color:var(--safe);font-size:1.2rem;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;font-family:var(--sans)}
+.wf-arrow:hover:not(:disabled){background:rgba(0,184,148,.15);box-shadow:0 0 16px rgba(0,184,148,.2);transform:scale(1.1)}
+.wf-arrow:disabled{opacity:.3;cursor:default}
+.wf-dots{display:flex;gap:8px}
+.wf-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .3s}
+.wf-dot.active{background:var(--safe);box-shadow:0 0 8px rgba(0,184,148,.4);transform:scale(1.3)}
+
+/* CPIC */
+.cpic-section{max-width:800px;margin:0 auto;padding:0 24px 80px}
+.cpic-section h3{text-align:center;font-size:1.4rem;color:#e8e6e3;margin-bottom:8px}
+.cpic-disclaimer{text-align:center;font-size:.75rem;color:#666;margin-bottom:24px;padding:8px 16px;background:rgba(255,255,255,.03);border-radius:8px;display:inline-block;width:100%}
+.cpic-search{display:flex;gap:12px;margin-bottom:16px}
+.cpic-input{flex:1;padding:14px 20px;border-radius:12px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.04);color:#e8e6e3;font-family:var(--sans);font-size:.95rem;outline:none;transition:border-color .3s}
+.cpic-input:focus{border-color:var(--glow)}.cpic-input::placeholder{color:#555}
+.cpic-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:24px}
+.cpic-tag{padding:8px 16px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);color:#888;font-size:.82rem;cursor:pointer;transition:all .3s}
+.cpic-tag:hover{border-color:var(--glow);color:var(--glow)}
+.cpic-result{display:none;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:32px;animation:fu .4s ease}
+.cpic-result.show{display:block}
+.cpic-drug-name{font-size:1.3rem;font-weight:900;color:var(--glow);margin-bottom:4px}
+.cpic-gene{font-size:.9rem;color:var(--gold);margin-bottom:16px}
+.cpic-table{width:100%;border-collapse:collapse;font-size:.85rem}
+.cpic-table th{text-align:left;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.1);color:#888;font-weight:500}
+.cpic-table td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.05);color:#bbb}
+.cpic-table .ph-pm{color:var(--accent)}.cpic-table .ph-im{color:var(--gold)}.cpic-table .ph-nm{color:var(--safe)}.cpic-table .ph-um{color:var(--glow)}
+.cpic-no{text-align:center;color:#666;padding:24px;font-size:.9rem}
+
+/* Quiz */
+.quiz-s{background:#0a0a0f;color:#e8e6e3;padding:120px 24px}
+.quiz-wrap{max-width:640px;margin:0 auto}
+.quiz-q{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:28px;margin-bottom:16px}
+.quiz-q p{font-size:1rem;font-weight:500;margin-bottom:14px}
+.quiz-opts{display:flex;gap:12px}
+.q-btn{flex:1;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#888;font-family:var(--sans);font-size:.9rem;cursor:pointer;transition:all .3s}
+.q-btn:hover{border-color:var(--glow);color:var(--glow)}
+.q-btn.sy{border-color:var(--gold);background:rgba(212,163,115,.12);color:var(--gold)}
+.q-btn.sn{background:rgba(255,255,255,.03);color:#666}
+.quiz-submit{display:block;width:100%;padding:18px;border-radius:14px;border:none;background:linear-gradient(135deg,var(--glow),var(--blue));color:#fff;font-family:var(--sans);font-size:1rem;font-weight:700;cursor:pointer;margin-top:24px;transition:transform .2s,box-shadow .2s}
+.quiz-submit:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,180,216,.3)}
+.quiz-result{display:none;background:rgba(255,255,255,.04);border-radius:16px;padding:40px;margin-top:28px;text-align:center;border:1px solid rgba(255,255,255,.08)}
+.quiz-result.show{display:block;animation:fu .6s ease}
+.rs{font-size:3rem;font-weight:900;margin-bottom:8px}.rl{font-size:1.1rem;font-weight:700;margin-bottom:16px}.rd{font-size:.95rem;color:#888;line-height:1.9}
+
+/* CTA + PGx callout */
+.cta-text{font-size:clamp(1.3rem,3vw,1.8rem);text-align:center;line-height:2;color:#e8e6e3;margin:64px auto;max-width:600px}
+.cta-text em{font-style:normal;color:var(--gold)}
+.pgx-callout{max-width:700px;margin:60px auto;padding:48px 40px;border-radius:20px;text-align:center;background:linear-gradient(135deg,rgba(0,180,216,.08),rgba(45,108,223,.08));border:1px solid rgba(0,180,216,.2);position:relative;overflow:hidden}
+.pgx-callout::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 30% 50%,rgba(0,180,216,.06),transparent 70%);pointer-events:none}
+.pgx-callout .pgx-quote{font-size:clamp(1.2rem,3vw,1.6rem);font-weight:700;line-height:1.8;color:#e8e6e3;position:relative;z-index:1}
+.pgx-callout .pgx-quote em{font-style:normal;color:var(--glow);font-weight:900}
+.pgx-callout .pgx-source{font-size:.78rem;color:#666;margin-top:16px;position:relative;z-index:1}
+.share{text-align:center;margin-top:48px}.share p{font-size:.8rem;color:#555;margin-bottom:12px}
+.share-btns{display:flex;justify-content:center;gap:10px}
+.share-btn{padding:10px 20px;border-radius:8px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#888;font-family:var(--sans);font-size:.82rem;cursor:pointer;transition:all .3s}
+.share-btn:hover{border-color:var(--glow);color:var(--glow)}
+
+/* Refs & Footer */
+.refs{max-width:100%;margin:0;padding:80px 24px;background:#0a0a0f;color:#e8e6e3}
+.refs-inner{max-width:800px;margin:0 auto}
+.refs h4{font-size:1rem;margin-bottom:20px;color:#888}
+.refs ol{padding-left:20px;color:#555;font-size:.78rem;line-height:2.2}
+.refs a{color:var(--glow);text-decoration:none}
+footer{text-align:center;padding:40px 24px 60px;color:#444;font-size:.78rem;background:#0a0a0f}
+
+/* Reveal */
+.reveal{opacity:0;transform:translateY(60px);transition:opacity .8s cubic-bezier(.25,.46,.45,.94),transform .8s cubic-bezier(.25,.46,.45,.94)}
+.reveal.vis{opacity:1;transform:translateY(0)}
+.rd1{transition-delay:.1s}.rd2{transition-delay:.2s}.rd3{transition-delay:.3s}
+
+@media(max-width:768px){
+  .compare-sticky{flex-direction:column}
+  .cmp-half{padding:12px}
+  .cmp-glass{padding:24px 16px;max-width:100%}
+  .cmp-center-badge{top:auto;bottom:16px;transform:translateX(-50%)}
+  .cmp-slide-indicator{bottom:auto;top:12px}
+  .pw-flow{flex-direction:column}.pw-arrow{transform:rotate(90deg)}
+  .sim-result{grid-template-columns:1fr}
+  .cpic-search{flex-direction:column}
+  .pgx-callout{padding:32px 24px}
+}
+  </style>
+</head>
+<body>
+<div class="progress"></div>
+
+<!-- HERO: subtle DNA bg + 유전자 emphasis -->
+<section id="hero" class="sticky-section" style="height:250vh">
+  <div class="sticky-wrap">
+    <canvas id="heroDna"></canvas>
+    <p class="hero-overtitle">Clinical Pharmacogenomics</p>
+    <h1 class="hero-title">같은 약,<br>다른 <span class="em">운명</span></h1>
+    <p class="hero-sub">같은 약을 복용한 수천 명의 환자.<br>그러나 결과는 극적으로 달랐다.<br>그 차이를 만든 것은, <span class="gene-em">유전자</span> 하나였다.</p>
+    <div class="hero-scroll"><span>SCROLL</span>
+      <svg width="16" height="24" fill="none"><path d="M8 4v12m0 0l-4-4m4 4l4-4" stroke="#999" stroke-width="1.5"/></svg>
+    </div>
+  </div>
+</section>
+
+<!-- INTRO: 3D particle bg + paragraph spacing -->
+<section class="full-text sec-intro1" style="position:relative">
+  <canvas id="introParticles" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;opacity:.5"></canvas>
+  <div class="full-text-inner" style="position:relative;z-index:2">
+    <p class="big-text reveal">2009년,</p>
+    <p class="big-text reveal rd1" style="margin-top:16px"><em>New England Journal of Medicine</em>에<br>연이어 두 편의 논문이 실렸다.</p>
+    <p class="sub-text reveal rd1" style="margin-top:48px">CYP2C19 유전자 변이를 가진 환자에서<br>Clopidogrel(클로피도그렐)의 항혈소판 효과가<br>유의하게 감소한다.</p>
+    <p class="sub-text reveal rd2" style="margin-top:32px">그리고 그 변이는,<br>심혈관 사건의 위험 증가와 직결되어 있었다.</p>
+    <p class="sub-text reveal rd3" style="margin-top:48px;font-weight:500;color:#111;font-size:clamp(1rem,2vw,1.15rem)">이것은 수천 명의 환자 데이터가 증명한,<br>유전자에 따른 명백한 결과의 차이다.</p>
+  </div>
+</section>
+
+<!-- STUDY CONTEXT -->
+<section class="full-text sec-intro2">
+  <div class="intro-bg">
+    <div class="intro-dot" style="width:280px;height:280px;background:radial-gradient(circle,rgba(230,57,70,.05),transparent);top:20%;right:10%;animation-delay:2s"></div>
+  </div>
+  <div class="full-text-inner">
+    <p class="big-text reveal">급성 관상동맥증후군(ACS) 환자 수천 명.<br>관상동맥 스텐트 삽입 후 퇴원.</p>
+    <p class="note-text reveal rd1">※ 급성 관상동맥증후군은 심장 혈관이 막혀 생명이 위급한 상태를 말하며,<br>스텐트 시술 후에는 혈관이 다시 막히지 않도록 항혈소판제를 반드시 복용해야 합니다.</p>
+    <p class="sub-text reveal rd2" style="margin-top:40px">공통 처방:</p>
+    <p class="reveal rd2" style="text-align:center;margin-top:16px">
+      <span class="drug-name">Clopidogrel(클로피도그렐) 75mg</span>
+    </p>
+    <p class="sub-text reveal rd2" style="margin-top:16px">1일 1회 · Aspirin(아스피린) 100mg 병용 · 이중항혈소판요법(DAPT)</p>
+    <p class="sub-text reveal rd3" style="margin-top:40px">모든 환자가 동일한 처방을 빠짐없이 복용했다.<br>그런데 결과는, <strong style="color:var(--accent)">유전자형에 따라 극적으로 갈렸다.</strong></p>
+  </div>
+</section>
+
+<!-- ECG -->
+<section id="ecgSection" class="sticky-section" style="height:350vh;background:#0a0a0f">
+  <div class="sticky-wrap">
+    <canvas id="ecgCanvas"></canvas>
+    <div class="emergency-flash"></div>
+    <div class="ecg-overlay">
+      <h2>같은 약을 복용했지만,<br><span class="hl">일부는 응급실에 실려왔다.</span></h2>
+      <p>스텐트 혈전증 — 스텐트가 피떡(혈전)으로 막히는 초응급 질환.<br>연구 대상 중 <strong style="color:var(--accent)">2.6%</strong>의 환자가<br>이로 인해 실제로 응급실에 실려오거나 생명을 위협받았다.</p>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE: Center-axis glassmorphism -->
+<section id="compareSection" class="sticky-section" style="height:480vh">
+  <div class="compare-sticky">
+    <div class="cmp-mesh"></div>
+    <div class="cmp-center-badge" id="cmpBadge"><span class="cmp-badge-icon">📋</span><span class="cmp-badge-text">연구 대상</span></div>
+    <div class="cmp-slide-indicator" id="cmpIndicator">1 / 4</div>
+    <div class="cmp-half cmp-half-safe">
+      <div class="cmp-glass" id="glassLeft">
+        <p class="cmp-group-label safe">정상 대사형 그룹</p>
+        <p class="cmp-group-sub">CYP2C19 정상 기능</p>
+        <div class="cmp-cards-area">
+          <div class="data-group active">
+            <p class="stat-big safe">기준군</p>
+            <p class="data-desc">CYP2C19 기능이 정상인 환자군.<br>약이 <strong>설계대로 작동</strong>한다.</p>
+          </div>
+          <div class="data-group">
+            <p class="stat-big safe">기준 위험도</p>
+            <p class="data-desc">사망 · 심근경색 · 뇌졸중<br>발생률의 기준점.</p>
+            <div class="risk-bar-wrap"><div class="risk-bar"><div class="risk-bar-fill safe" style="width:0%" data-target="35"></div></div></div>
+          </div>
+          <div class="data-group">
+            <p class="stat-big safe ctr" data-end="0.8" data-suffix="%" data-decimals="1">0</p>
+            <p class="data-desc">스텐트 혈전증 발생률.<br>약이 정상적으로 혈소판을 억제.</p>
+          </div>
+          <div class="data-group">
+            <p class="stat-big safe">약이 작동했다</p>
+            <p class="data-desc">표준 치료의 혜택을 받은 그룹.</p>
+            <span class="badge badge-s">✓ 정상 약효</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="cmp-half cmp-half-danger">
+      <div class="cmp-glass danger" id="glassRight">
+        <div class="danger-overlay"></div>
+        <p class="cmp-group-label danger" style="position:relative;z-index:3">기능저하 대사형 그룹</p>
+        <p class="cmp-group-sub" style="position:relative;z-index:3">CYP2C19 *2 기능소실 변이</p>
+        <div class="cmp-cards-area" style="position:relative;z-index:3">
+          <div class="data-group active">
+            <p class="stat-big danger">⚠️ 위험군</p>
+            <p class="data-desc">동일한 약을 복용했지만,<br>유전적으로 약이 <strong>활성화되지 않는</strong> 환자군.</p>
+          </div>
+          <div class="data-group">
+            <p class="stat-big danger ctr" data-end="53" data-prefix="+" data-suffix="%">0</p>
+            <p class="data-desc">사망 · 심근경색 · 뇌졸중 위험이<br>정상 대비 <strong>53% 증가.</strong></p>
+            <div class="risk-bar-wrap"><div class="risk-bar"><div class="risk-bar-fill danger" style="width:0%" data-target="70"></div></div></div>
+          </div>
+          <div class="data-group">
+            <p class="stat-big danger ctr" data-end="3.09" data-prefix="×" data-decimals="2">0</p>
+            <p class="data-desc">⚠️ 스텐트 혈전증 위험이<br>정상 대비 <strong>3.09배.</strong></p>
+          </div>
+          <div class="data-group">
+            <p class="stat-big danger">약이 작동하지 않았다</p>
+            <p class="data-desc">유전자 때문에<br><strong>치료 자체가 실패</strong>한 그룹.</p>
+            <span class="badge badge-d">✕ 치료 실패</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRANSITION: clickable ? reveal -->
+<section class="full-text sec-todark">
+  <div class="full-text-inner">
+    <p class="big-text reveal" style="color:#e8e6e3">그들은 약을 빠뜨리지 않았다.</p>
+    <p class="big-text reveal rd1" style="color:#e8e6e3;margin-top:12px">처방도, 용량도, 복약 이행도도 동일했다.</p>
+    <p class="big-text reveal rd2" style="color:#e8e6e3;margin-top:48px">유일한 차이는<br><span class="gene-blank" id="geneBlank">
+      <span class="gene-q">?</span>
+      <span class="gene-answer">유전자<small>(CYP2C19)</small></span>
+    </span>였다.</p>
+    <p class="gene-hint" id="geneHint">터치하여 답을 확인하세요</p>
+  </div>
+</section>
+
+<!-- DNA / MECHANISM -->
+<section class="dark-s" style="position:relative;min-height:100vh">
+  <canvas id="dnaCanvas" style="position:absolute;inset:0;width:100%;height:100%;opacity:.7;pointer-events:none"></canvas>
+  <div style="position:relative;z-index:2;max-width:800px;margin:0 auto">
+    <p class="big-text reveal" style="text-align:center;color:#e8e6e3">CYP2C19과 Prodrug(프로드럭)의 함정</p>
+    <p class="sub-text reveal rd1" style="text-align:center;max-width:640px;margin:24px auto 0">Clopidogrel(클로피도그렐)은 <strong style="color:#ddd">Prodrug(프로드럭)</strong>이다.<br>간에서 CYP2C19 효소에 의해 활성 대사체로 전환되어야<br>비로소 혈소판 응집을 억제한다.</p>
+    <p class="sub-text reveal rd2" style="text-align:center;max-width:640px;margin:20px auto 0">CYP2C19에 기능소실 변이(*2, *3 등)가 있으면,<br>약을 복용해도 <strong style="color:#ddd">약효가 발현되지 않는다</strong>.</p>
+    <div class="pw-box reveal rd3">
+      <p style="text-align:center;font-size:.82rem;color:#666;margin-bottom:16px">두 그룹의 약물 대사 경로를 비교해보세요</p>
+      <div class="pw-toggle">
+        <button class="pw-btn on-s" data-type="nm">정상 대사형 그룹</button>
+        <button class="pw-btn" data-type="pm">기능저하 대사형 그룹</button>
+      </div>
+      <div class="pw-flow nm">
+        <div class="pw-step">💊 클로피도그렐<br><small style="color:#888">(프로드럭)</small></div>
+        <span class="pw-arrow">→</span>
+        <div class="pw-step pw-enz">🧬 CYP2C19<br><small>(대사 효소)</small></div>
+        <span class="pw-arrow ar3">→</span>
+        <div class="pw-step pw-met">⚗️ 활성 대사체</div>
+        <span class="pw-arrow ar3">→</span>
+        <div class="pw-step pw-res"><span class="pw-res-inner">🩸 혈소판 억제</span><span class="pw-fail">❌ 억제 실패</span></div>
+      </div>
+      <p id="pwDesc" class="pw-desc"><span style="color:var(--safe)">✓ 정상 대사형</span> — CYP2C19 정상 작동. 활성 대사체 생성 → 혈소판 응집 억제 성공.</p>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section class="dark-s" style="padding-top:40px">
+  <div style="max-width:800px;margin:0 auto">
+    <p class="big-text reveal" style="text-align:center;color:#e8e6e3">한국인의 <span class="hl">절반 이상</span>이<br>CYP2C19 기능 변이 보유자다.</p>
+    <div class="isotype-section reveal rd1">
+      <p style="font-size:.9rem;color:#888;margin-bottom:16px">한국인 100명 중 CYP2C19 표현형 분포 (근사치)</p>
+      <div class="isotype-grid" id="isotypeGrid"></div>
+      <div class="iso-legend">
+        <span><span class="iso-dot" style="background:#444"></span> 정상 (~35%)</span>
+        <span><span class="iso-dot" style="background:var(--gold)"></span> 중간 (~50%)</span>
+        <span><span class="iso-dot" style="background:var(--accent)"></span> 기능저하 (~15%)</span>
+      </div>
+    </div>
+    <div class="sim-box reveal rd2">
+      <h3>표현형 시뮬레이터</h3>
+      <p style="text-align:center;font-size:.85rem;color:#888;margin-bottom:20px">슬라이더를 움직여 CYP2C19 표현형에 따른 클로피도그렐 반응을 확인하세요</p>
+      <div class="sim-slider-wrap">
+        <input type="range" min="0" max="3" value="1" class="sim-slider" id="simSlider">
+        <div class="sim-labels"><span>UM</span><span>NM</span><span>IM</span><span>PM</span></div>
+      </div>
+      <p style="text-align:center;font-size:1rem;font-weight:700;margin:16px 0 20px" id="simType">Normal Metabolizer</p>
+      <div class="sim-result">
+        <div class="sim-card"><div class="sim-val" id="simEnzyme" style="color:var(--safe)">100%</div><div class="sim-lbl">효소 활성도</div><div class="sim-bar"><div class="sim-bar-fill" id="simEnzBar" style="width:75%;background:var(--safe)"></div></div></div>
+        <div class="sim-card"><div class="sim-val" id="simDrug" style="color:var(--safe)">정상 활성화</div><div class="sim-lbl">약물 전환</div><div class="sim-bar"><div class="sim-bar-fill" id="simDrgBar" style="width:75%;background:var(--safe)"></div></div></div>
+        <div class="sim-card"><div class="sim-val" id="simRisk" style="color:var(--safe)">정상</div><div class="sim-lbl">임상 위험도</div><div class="sim-bar"><div class="sim-bar-fill" id="simRskBar" style="width:10%;background:var(--safe)"></div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHAT IF: carousel -->
+<section class="dark-s" style="padding-top:40px">
+  <div style="max-width:800px;margin:0 auto">
+    <p class="big-text reveal" style="text-align:center;color:#e8e6e3">처방 전에 <span class="sf">유전자 검사</span>를 했다면?</p>
+    <div class="whatif-box reveal rd1">
+      <h3>대안 시나리오: 기능저하 대사형 환자</h3>
+      <div class="wf-carousel" id="wfCarousel">
+        <div class="wf-slide active">
+          <div class="wf-icon">🧪</div>
+          <p class="wf-slide-step">STEP 1</p>
+          <p class="wf-slide-title">시술 전 CYP2C19 유전형 검사 시행</p>
+          <p class="wf-slide-desc">간단한 혈액검사 또는 구강세포 채취로<br>유전자 변이를 확인합니다.</p>
+        </div>
+        <div class="wf-slide">
+          <div class="wf-icon">🧬</div>
+          <p class="wf-slide-step">STEP 2</p>
+          <p class="wf-slide-title">CYP2C19 *2/*2 — Poor Metabolizer 확인</p>
+          <p class="wf-slide-desc">이 환자는 Clopidogrel(클로피도그렐)을<br>활성화할 수 없는 유전형입니다.</p>
+        </div>
+        <div class="wf-slide">
+          <div class="wf-icon">💊</div>
+          <p class="wf-slide-step">STEP 3</p>
+          <p class="wf-slide-title">CPIC 가이드라인에 따라 약물 변경</p>
+          <p class="wf-slide-desc">Prasugrel(프라수그렐) 또는<br>Ticagrelor(티카그렐러)로 대체 처방합니다.</p>
+        </div>
+        <div class="wf-slide">
+          <div class="wf-icon" style="font-size:3rem">✅</div>
+          <p class="wf-slide-step">RESULT</p>
+          <p class="wf-slide-title" style="color:var(--safe)">정상 회복, 스텐트 혈전증 없음</p>
+          <p class="wf-slide-desc">유전자 검사 한 번이<br>Stent thrombosis(스텐트 혈전증)를 예방할 수 있었습니다.</p>
+        </div>
+      </div>
+      <div class="wf-nav">
+        <button class="wf-arrow" id="wfPrev" disabled>←</button>
+        <span class="wf-dots" id="wfDots">
+          <span class="wf-dot active"></span><span class="wf-dot"></span><span class="wf-dot"></span><span class="wf-dot"></span>
+        </span>
+        <button class="wf-arrow" id="wfNext">→</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CPIC LOOKUP -->
+<section class="dark-s" style="padding-top:40px;padding-bottom:40px">
+  <div class="cpic-section">
+    <h3 class="reveal">💊 PGx 약물 정보 검색</h3>
+    <p class="cpic-disclaimer reveal rd1">⚠ 교육 목적으로 제작된 간이 데이터베이스입니다. 의학적 판단 자료로 사용하지 마세요.</p>
+    <div class="cpic-search reveal rd1"><input type="text" class="cpic-input" id="cpicInput" placeholder="약물 이름을 입력하세요 (예: clopidogrel, 와파린)"></div>
+    <div class="cpic-tags reveal rd2">
+      <button class="cpic-tag">Clopidogrel</button><button class="cpic-tag">Codeine</button><button class="cpic-tag">Warfarin</button>
+      <button class="cpic-tag">Carbamazepine</button><button class="cpic-tag">Abacavir</button><button class="cpic-tag">Simvastatin</button>
+      <button class="cpic-tag">Tamoxifen</button><button class="cpic-tag">Omeprazole</button><button class="cpic-tag">Fluorouracil</button><button class="cpic-tag">Allopurinol</button>
+    </div>
+    <div class="cpic-result" id="cpicResult"></div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section class="quiz-s">
+  <div style="max-width:800px;margin:0 auto">
+    <p class="big-text reveal" style="text-align:center;color:#e8e6e3;margin-bottom:12px">자가 체크리스트</p>
+    <p class="sub-text reveal rd1" style="text-align:center;margin-bottom:40px">약물유전체 검사, 나에게도 필요할까?</p>
+    <div class="quiz-wrap">
+      <div class="quiz-q reveal" data-q="1"><p>1. 현재 정기적으로 복용 중인 처방약이 있습니까?</p><div class="quiz-opts"><button class="q-btn" data-v="yes">예</button><button class="q-btn" data-v="no">아니오</button></div></div>
+      <div class="quiz-q reveal" data-q="2"><p>2. 약물 복용 후 예상치 못한 부작용을 경험한 적이 있습니까?</p><div class="quiz-opts"><button class="q-btn" data-v="yes">예</button><button class="q-btn" data-v="no">아니오</button></div></div>
+      <div class="quiz-q reveal" data-q="3"><p>3. 가족 중 약물 부작용 또는 알레르기 경험자가 있습니까?</p><div class="quiz-opts"><button class="q-btn" data-v="yes">예</button><button class="q-btn" data-v="no">아니오</button></div></div>
+      <div class="quiz-q reveal" data-q="4"><p>4. 심혈관질환, 뇌졸중, 암 등 만성질환 가족력이 있습니까?</p><div class="quiz-opts"><button class="q-btn" data-v="yes">예</button><button class="q-btn" data-v="no">아니오</button></div></div>
+      <div class="quiz-q reveal" data-q="5"><p>5. 2개 이상의 진료과에서 약물을 처방받고 있습니까?</p><div class="quiz-opts"><button class="q-btn" data-v="yes">예</button><button class="q-btn" data-v="no">아니오</button></div></div>
+      <button class="quiz-submit" id="quizSubmit">결과 확인</button>
+      <div class="quiz-result" id="quizResult"><p class="rs" id="resScore"></p><p class="rl" id="resLevel"></p><p class="rd" id="resDesc"></p></div>
+    </div>
+    <p class="cta-text reveal" style="margin-top:140px">동일한 약이 누군가에겐 <em>치료</em>가 되고,<br>누군가에겐 <em>위험</em>이 될 수 있다.<br><br>당신의 유전자를 아는 것.<br>그것이 정밀의료의 시작이다.</p>
+
+    <!-- PGx 중요성 강조 -->
+    <div class="pgx-callout reveal" style="margin-top:100px">
+      <p class="pgx-quote" style="font-size:clamp(1.1rem,2.2vw,1.5rem);font-weight:600;line-height:1.7;color:#e8e6e3">평균을 위한 의학에서,<br><span style="background:linear-gradient(135deg,var(--glow),var(--safe));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">당신만을 위한 의학으로.</span></p>
+      <p style="font-size:clamp(.85rem,1.4vw,1rem);font-weight:300;color:rgba(255,255,255,.45);margin-top:16px">그 중심에 <em style="font-weight:500;color:rgba(255,255,255,.7)">약물유전체학</em>이 있습니다.</p>
+      <p class="pgx-source">— 약물유전체학(Pharmacogenomics)은 환자 개인의 유전 정보를 기반으로<br>최적의 약물과 용량을 선택하는 정밀의료(Precision Medicine)의 핵심 분야입니다.</p>
+    </div>
+
+    <div class="share reveal"><p>이 콘텐츠를 공유하세요</p><div class="share-btns"><button class="share-btn" data-share="twitter">𝕏 공유</button><button class="share-btn" data-share="facebook">Facebook</button><button class="share-btn" data-share="copy">🔗 링크 복사</button></div></div>
+  </div>
+</section>
+
+<!-- REFS: full-width dark bg -->
+<div class="refs">
+  <div class="refs-inner">
+    <h4>참고문헌</h4>
+    <ol>
+      <li>Mega JL, et al. Cytochrome P-450 Polymorphisms and Response to Clopidogrel. <em>N Engl J Med.</em> 2009;360(4):354-362.</li>
+      <li>Simon T, et al. Genetic Determinants of Response to Clopidogrel and Cardiovascular Events. <em>N Engl J Med.</em> 2009;360(4):363-375.</li>
+      <li>Lee CR, et al. CPIC Guideline for CYP2C19 Genotype and Clopidogrel Therapy: 2022 Update. <em>Clin Pharmacol Ther.</em> 2022;112(5):959-967.</li>
+      <li>PharmGKB. Clopidogrel Pathway. <a href="https://www.pharmgkb.org/pathway/PA154424674" target="_blank">pharmgkb.org</a></li>
+      <li>Joo HJ, et al. Impact of CYP2C19 Polymorphisms in Korean Patients. <em>Korean Circ J.</em> 2012;42(7):464-470.</li>
+    </ol>
+  </div>
+</div>
+<footer><p>본 자료는 교육 목적으로 제작되었으며, 의학적 진단이나 처방을 대체하지 않습니다.</p></footer>
+
+<script>
+const grid=document.getElementById('isotypeGrid');
+if(grid){const svg='<svg viewBox="0 0 24 24"><path d="M12 4a2.5 2.5 0 100 5 2.5 2.5 0 000-5zM8 11a2 2 0 00-2 2v4h2v5h8v-5h2v-4a2 2 0 00-2-2H8z"/></svg>';
+for(let i=0;i<100;i++){const d=document.createElement('div');d.className='iso-person '+(i<35?'normal':i<85?'im':'pm');d.innerHTML=svg;grid.appendChild(d)}}
+</script>
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+const prog=document.querySelector('.progress');
+window.addEventListener('scroll',()=>{prog.style.width=(scrollY/(document.documentElement.scrollHeight-innerHeight))*100+'%'},{passive:true});
+const rio=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis')})},{threshold:.15,rootMargin:'0px 0px -60px 0px'});
+document.querySelectorAll('.reveal').forEach(el=>rio.observe(el));
+
+// ===== HERO DNA BACKGROUND =====
+const heroDna=document.getElementById('heroDna');
+let hdCtx,hdTime=0;
+if(heroDna){
+  hdCtx=heroDna.getContext('2d');
+  function rHd(){heroDna.width=heroDna.offsetWidth;heroDna.height=heroDna.offsetHeight}
+  rHd();window.addEventListener('resize',rHd);
+  function drawHeroDna(){
+    if(!hdCtx)return;
+    const W=heroDna.width,H=heroDna.height,cx=W/2;
+    hdCtx.clearRect(0,0,W,H);
+    hdTime+=0.008;
+    for(let i=0;i<50;i++){
+      const y=((i*(H/35)-hdTime*15)%H+H)%H;
+      const x1=cx+Math.sin(i*0.35+hdTime)*160;
+      const x2=cx-Math.sin(i*0.35+hdTime)*160;
+      const d=Math.cos(i*0.35+hdTime);
+      const a=0.04+d*0.02;
+      hdCtx.beginPath();hdCtx.moveTo(x1,y);hdCtx.lineTo(x2,y);
+      hdCtx.strokeStyle=`rgba(67,97,238,${a*0.5})`;hdCtx.lineWidth=1;hdCtx.stroke();
+      const sz=1.5+d;
+      hdCtx.beginPath();hdCtx.arc(x1,y,Math.max(.5,sz),0,Math.PI*2);
+      hdCtx.fillStyle=`rgba(67,97,238,${a+0.03})`;hdCtx.fill();
+      hdCtx.beginPath();hdCtx.arc(x2,y,Math.max(.5,sz),0,Math.PI*2);
+      hdCtx.fillStyle=`rgba(0,180,216,${a+0.03})`;hdCtx.fill();
+    }
+    requestAnimationFrame(drawHeroDna);
+  }
+  drawHeroDna();
+}
+
+// ===== INTRO PARTICLES =====
+const introC=document.getElementById('introParticles');
+if(introC){
+  const ictx=introC.getContext('2d');
+  function rI(){introC.width=introC.offsetWidth;introC.height=introC.offsetHeight}
+  rI();window.addEventListener('resize',rI);
+  const pts=[];for(let i=0;i<40;i++)pts.push({x:Math.random(),y:Math.random(),vx:(Math.random()-.5)*.0003,vy:(Math.random()-.5)*.0003,r:Math.random()*2+1});
+  function drawIntro(){
+    if(!ictx)return;
+    const W=introC.width,H=introC.height;ictx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.x+=p.vx;p.y+=p.vy;
+      if(p.x<0||p.x>1)p.vx*=-1;if(p.y<0||p.y>1)p.vy*=-1;
+      ictx.beginPath();ictx.arc(p.x*W,p.y*H,p.r,0,Math.PI*2);
+      ictx.fillStyle='rgba(67,97,238,0.08)';ictx.fill();
+    });
+    // Connect nearby
+    for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+      const dx=(pts[i].x-pts[j].x)*W,dy=(pts[i].y-pts[j].y)*H,d=Math.sqrt(dx*dx+dy*dy);
+      if(d<120){ictx.beginPath();ictx.moveTo(pts[i].x*W,pts[i].y*H);ictx.lineTo(pts[j].x*W,pts[j].y*H);ictx.strokeStyle=`rgba(67,97,238,${0.04*(1-d/120)})`;ictx.stroke()}
+    }
+    requestAnimationFrame(drawIntro);
+  }
+  drawIntro();
+}
+
+// ===== HERO PARALLAX =====
+function heroFx(){
+  const sec=document.getElementById('hero');if(!sec)return;
+  const r=sec.getBoundingClientRect(),t=sec.offsetHeight-innerHeight;
+  const s=Math.max(0,Math.min(1,-r.top/t));
+  const title=document.querySelector('.hero-title'),sub=document.querySelector('.hero-sub');
+  const over=document.querySelector('.hero-overtitle'),scr=document.querySelector('.hero-scroll');
+  const wrap=sec.querySelector('.sticky-wrap');
+  if(title){title.style.transform=`scale(${1+s*.5})`;title.style.opacity=Math.max(0,1-s*2);title.style.filter=`blur(${s*10}px)`}
+  if(sub)sub.style.opacity=Math.max(0,.8-s*2);
+  if(over)over.style.opacity=Math.max(0,.9-s*2);
+  if(scr)scr.style.opacity=Math.max(0,1-s*3);
+  if(wrap){const bg=Math.round(245-s*100);wrap.style.background=`rgb(${bg},${bg},${bg+2})`}
+}
+
+// ===== ECG =====
+const ecgCanvas=document.getElementById('ecgCanvas');
+let ecgCtx;
+if(ecgCanvas){ecgCtx=ecgCanvas.getContext('2d');function rE(){ecgCanvas.width=ecgCanvas.offsetWidth;ecgCanvas.height=ecgCanvas.offsetHeight}rE();window.addEventListener('resize',rE)}
+
+function drawECG(p){
+  if(!ecgCtx)return;
+  const W=ecgCanvas.width,H=ecgCanvas.height;
+  ecgCtx.clearRect(0,0,W,H);
+  // Grid
+  ecgCtx.strokeStyle='rgba(0,180,100,0.06)';ecgCtx.lineWidth=1;
+  for(let y=0;y<H;y+=20){ecgCtx.beginPath();ecgCtx.moveTo(0,y);ecgCtx.lineTo(W,y);ecgCtx.stroke()}
+  for(let x=0;x<W;x+=20){ecgCtx.beginPath();ecgCtx.moveTo(x,0);ecgCtx.lineTo(x,H);ecgCtx.stroke()}
+  const numL=3,sp=H/(numL+1);
+  for(let l=0;l<numL;l++){
+    const by=sp*(l+1);
+    ecgCtx.beginPath();
+    ecgCtx.strokeStyle=l===1?`rgba(230,57,70,${0.4+p*0.5})`:`rgba(0,180,100,${0.3-p*0.25})`;
+    ecgCtx.lineWidth=l===1?2.5:1.5;
+    for(let x=0;x<W;x++){
+      const t=(x/W)*12+performance.now()*0.002;
+      let y=by;
+      if(p<0.35){
+        const c=t%2;
+        if(c>.8&&c<.85)y-=8*(1-p*2.5);
+        else if(c>.9&&c<.92)y+=15*(1-p*2.5);
+        else if(c>.92&&c<.98)y-=50*(1-p*2.5);
+        else if(c>.98&&c<1.02)y+=20*(1-p*2.5);
+        else if(c>1.1&&c<1.25)y-=6*(1-p*2.5);
+        y+=Math.sin(t*3+l)*p*20;
+      }else{
+        const fp=(p-0.35)/0.3;
+        const bl=Math.sin(t*0.5)*3*(1-Math.min(1,fp));
+        y+=bl;
+      }
+      if(x===0)ecgCtx.moveTo(x,y);else ecgCtx.lineTo(x,y);
+    }
+    ecgCtx.stroke();
+  }
+  // Flash - much more dramatic, starts earlier
+  const flash=document.querySelector('.emergency-flash');
+  if(flash){
+    if(p>0.25){
+      const intensity=Math.sin(performance.now()*0.008)*0.4*Math.min(1,(p-0.25)*3);
+      flash.style.opacity=Math.max(0,intensity);
+    }else{flash.style.opacity=0}
+  }
+  // Alert text
+  if(p>0.5){
+    ecgCtx.save();
+    const a=Math.min(1,(p-0.5)*4);
+    ecgCtx.font=`bold ${16+p*8}px 'Noto Sans KR'`;
+    ecgCtx.fillStyle=`rgba(230,57,70,${a*(.5+Math.sin(performance.now()*0.005)*.5)})`;
+    ecgCtx.textAlign='center';
+    ecgCtx.fillText('⚠ STENT THROMBOSIS',W/2,H-50);
+    ecgCtx.restore();
+  }
+}
+
+function ecgFx(){
+  const sec=document.getElementById('ecgSection');if(!sec)return;
+  const r=sec.getBoundingClientRect(),t=sec.offsetHeight-innerHeight;
+  const s=Math.max(0,Math.min(1,-r.top/t));
+  drawECG(s);
+  const ov=sec.querySelector('.ecg-overlay');
+  if(ov){
+    // Text appears AFTER the flatline
+    let a=0;
+    if(s>0.5&&s<0.85)a=Math.min(1,(s-0.5)*4);
+    if(s>0.85)a=Math.max(0,1-(s-0.85)*8);
+    ov.style.opacity=a;
+    ov.style.transform=`translateY(${(1-a)*30}px)`;
+  }
+}
+function ecgLoop(){
+  const sec=document.getElementById('ecgSection');
+  if(sec){const r=sec.getBoundingClientRect();if(r.top<innerHeight&&r.bottom>0){const t=sec.offsetHeight-innerHeight;drawECG(Math.max(0,Math.min(1,-r.top/t)))}}
+  requestAnimationFrame(ecgLoop);
+}
+ecgLoop();
+
+// ===== COMPARE: Glassmorphism + Center Badge =====
+const badgeData=[{icon:'📋',text:'연구 대상'},{icon:'💔',text:'심혈관 사건'},{icon:'🩸',text:'스텐트 혈전증'},{icon:'📊',text:'결론'}];
+let prevCmpIdx=-1;
+function animateCounters(parent){
+  parent.querySelectorAll('.ctr').forEach(el=>{
+    if(el.dataset.animated)return;el.dataset.animated='1';
+    const end=parseFloat(el.dataset.end),dec=parseInt(el.dataset.decimals||'0'),pre=el.dataset.prefix||'',suf=el.dataset.suffix||'';
+    let start=0;const dur=900,t0=performance.now();
+    function tick(now){const p=Math.min(1,(now-t0)/dur);const ease=1-Math.pow(1-p,3);const v=start+(end-start)*ease;
+      el.textContent=pre+v.toFixed(dec)+suf;if(p<1)requestAnimationFrame(tick)}
+    requestAnimationFrame(tick);
+  });
+  parent.querySelectorAll('.risk-bar-fill[data-target]').forEach(bar=>{
+    if(bar.dataset.animated)return;bar.dataset.animated='1';
+    setTimeout(()=>{bar.style.width=bar.dataset.target+'%'},100);
+  });
+}
+function compareFx(){
+  const sec=document.getElementById('compareSection');if(!sec)return;
+  const r=sec.getBoundingClientRect(),t=sec.offsetHeight-innerHeight;
+  const s=Math.max(0,Math.min(1,-r.top/t));
+  const safeGroups=sec.querySelectorAll('.cmp-half-safe .data-group');
+  const dangerGroups=sec.querySelectorAll('.cmp-half-danger .data-group');
+  const total=safeGroups.length;const per=0.95/total;
+  let activeIdx=Math.min(total-1,Math.floor(s/per));
+  if(s<0.05)activeIdx=-1;
+  safeGroups.forEach((g,i)=>{g.classList.toggle('active',i===activeIdx)});
+  dangerGroups.forEach((g,i)=>{g.classList.toggle('active',i===activeIdx)});
+  // Center badge
+  const badge=document.getElementById('cmpBadge');
+  if(badge&&activeIdx>=0&&activeIdx<badgeData.length){
+    const bd=badgeData[activeIdx];
+    badge.querySelector('.cmp-badge-icon').textContent=bd.icon;
+    badge.querySelector('.cmp-badge-text').textContent=bd.text;
+  }
+  // Indicator
+  const ind=document.getElementById('cmpIndicator');
+  if(ind&&activeIdx>=0)ind.textContent=`${activeIdx+1} / ${total}`;
+  // Counter animation on card change
+  if(activeIdx!==prevCmpIdx&&activeIdx>=0){
+    prevCmpIdx=activeIdx;
+    animateCounters(safeGroups[activeIdx]);animateCounters(dangerGroups[activeIdx]);
+  }
+  // Danger overlay
+  const dov=sec.querySelector('.danger-overlay');
+  if(dov){const dp=Math.max(0,s/0.95);dov.style.background=`rgba(230,57,70,${dp*0.12})`;dov.style.boxShadow=`inset 0 0 ${dp*60}px rgba(230,57,70,${dp*0.08})`}
+}
+
+// ===== GENE BLANK (clickable ?) =====
+const geneBlank=document.getElementById('geneBlank');
+const geneHint=document.getElementById('geneHint');
+if(geneBlank){geneBlank.addEventListener('click',()=>{geneBlank.classList.add('revealed');if(geneHint)geneHint.style.display='none'})}
+
+// ===== DNA CANVAS =====
+const dnaC=document.getElementById('dnaCanvas');
+let dnaCtx,dnaTime=0;
+if(dnaC){
+  dnaCtx=dnaC.getContext('2d');
+  function rD(){dnaC.width=dnaC.offsetWidth;dnaC.height=dnaC.offsetHeight}
+  rD();window.addEventListener('resize',rD);
+  function drawDna(){
+    if(!dnaCtx)return;
+    const W=dnaC.width,H=dnaC.height,cx=W/2;
+    dnaCtx.clearRect(0,0,W,H);dnaTime+=0.015;
+    for(let i=0;i<40;i++){
+      const y=((i*(H/30)-dnaTime*20)%H+H)%H;
+      const x1=cx+Math.sin(i*0.4+dnaTime)*120;
+      const x2=cx-Math.sin(i*0.4+dnaTime)*120;
+      const d=Math.cos(i*0.4+dnaTime);
+      const a=0.2+d*0.12;
+      dnaCtx.beginPath();dnaCtx.moveTo(x1,y);dnaCtx.lineTo(x2,y);
+      dnaCtx.strokeStyle=`rgba(0,180,216,${a*0.4})`;dnaCtx.lineWidth=1;dnaCtx.stroke();
+      const sz=2+d*1.5;
+      dnaCtx.beginPath();dnaCtx.arc(x1,y,Math.max(1,sz),0,Math.PI*2);dnaCtx.fillStyle=`rgba(0,180,216,${a+0.1})`;dnaCtx.fill();
+      dnaCtx.beginPath();dnaCtx.arc(x2,y,Math.max(1,sz),0,Math.PI*2);dnaCtx.fillStyle=`rgba(230,57,70,${a+0.1})`;dnaCtx.fill();
+    }
+    requestAnimationFrame(drawDna);
+  }
+  drawDna();
+}
+
+// ===== PATHWAY =====
+const pwBtns=document.querySelectorAll('.pw-btn'),pwFlow=document.querySelector('.pw-flow'),pwDesc=document.getElementById('pwDesc');
+pwBtns.forEach(btn=>{btn.addEventListener('click',()=>{
+  pwBtns.forEach(b=>b.classList.remove('on-s','on-d'));
+  if(btn.dataset.type==='nm'){btn.classList.add('on-s');pwFlow.className='pw-flow nm';pwDesc.innerHTML='<span style="color:var(--safe)">✓ 정상 대사형</span> — CYP2C19 정상 작동. 활성 대사체 생성 → 혈소판 응집 억제 성공.'}
+  else{btn.classList.add('on-d');pwFlow.className='pw-flow pm';pwDesc.innerHTML='<span style="color:var(--accent)">✕ 기능저하 대사형 (CYP2C19 *2/*2)</span> — 효소 기능 소실 → 활성 대사체 부족 → <strong style="color:var(--accent)">혈소판 억제 실패</strong>'}
+})});
+
+// ===== PHENOTYPE SIM =====
+const sSldr=document.getElementById('simSlider'),sType=document.getElementById('simType');
+const sEnz=document.getElementById('simEnzyme'),sDrg=document.getElementById('simDrug'),sRsk=document.getElementById('simRisk');
+const sEB=document.getElementById('simEnzBar'),sDB=document.getElementById('simDrgBar'),sRB=document.getElementById('simRskBar');
+const phs=[{n:'Ultra-rapid Metabolizer',e:'150%+',d:'과다 활성화',r:'출혈 위험 ↑',ep:100,dp:100,rp:30,c:'var(--glow)',rc:'var(--gold)'},
+{n:'Normal Metabolizer',e:'100%',d:'정상 활성화',r:'정상',ep:75,dp:75,rp:10,c:'var(--safe)',rc:'var(--safe)'},
+{n:'Intermediate Metabolizer',e:'~50%',d:'부분 활성화',r:'효과 감소',ep:45,dp:45,rp:55,c:'var(--gold)',rc:'var(--gold)'},
+{n:'Poor Metabolizer',e:'<10%',d:'활성화 실패',r:'혈전 위험 ↑↑',ep:10,dp:10,rp:95,c:'var(--accent)',rc:'var(--accent)'}];
+if(sSldr)sSldr.addEventListener('input',()=>{
+  const p=phs[parseInt(sSldr.value)];
+  sType.textContent=p.n;sType.style.color=p.c;
+  sEnz.textContent=p.e;sEnz.style.color=p.c;sDrg.textContent=p.d;sDrg.style.color=p.c;
+  sRsk.textContent=p.r;sRsk.style.color=p.rc;
+  sEB.style.width=p.ep+'%';sEB.style.background=p.c;
+  sDB.style.width=p.dp+'%';sDB.style.background=p.c;
+  sRB.style.width=p.rp+'%';sRB.style.background=p.rc;
+});
+
+// ===== WHAT-IF CAROUSEL =====
+let wfIdx=0;
+const wfSlides=document.querySelectorAll('.wf-slide');
+const wfDots=document.querySelectorAll('.wf-dot');
+const wfPrev=document.getElementById('wfPrev');
+const wfNext=document.getElementById('wfNext');
+function showSlide(n){
+  wfSlides.forEach((s,i)=>{s.classList.remove('active','exit-left');if(i<n)s.classList.add('exit-left');if(i===n)s.classList.add('active')});
+  wfDots.forEach((d,i)=>d.classList.toggle('active',i===n));
+  if(wfPrev)wfPrev.disabled=n===0;
+  if(wfNext)wfNext.disabled=n===wfSlides.length-1;
+  wfIdx=n;
+}
+wfPrev?.addEventListener('click',()=>{if(wfIdx>0)showSlide(wfIdx-1)});
+wfNext?.addEventListener('click',()=>{if(wfIdx<wfSlides.length-1)showSlide(wfIdx+1)});
+
+// ===== CPIC DB =====
+const cpicDB=[
+  {drug:'Clopidogrel (클로피도그렐)',gene:'CYP2C19',rows:[{ph:'Poor Metabolizer',cl:'ph-pm',rec:'대체 항혈소판제 사용 (프라수그렐, 티카그렐로)'},{ph:'Intermediate Metabolizer',cl:'ph-im',rec:'대체 항혈소판제 고려'},{ph:'Normal Metabolizer',cl:'ph-nm',rec:'표준 용량 사용'},{ph:'Ultra-rapid Metabolizer',cl:'ph-um',rec:'표준 용량 사용'}]},
+  {drug:'Codeine (코데인)',gene:'CYP2D6',rows:[{ph:'Ultra-rapid Metabolizer',cl:'ph-um',rec:'코데인 회피 — 모르핀 과다 전환, 호흡억제 위험'},{ph:'Normal Metabolizer',cl:'ph-nm',rec:'표준 용량 사용'},{ph:'Poor Metabolizer',cl:'ph-pm',rec:'코데인 회피 — 진통 효과 불충분, 대체 진통제 사용'}]},
+  {drug:'Warfarin (와파린)',gene:'CYP2C9 / VKORC1',rows:[{ph:'CYP2C9 PM + VKORC1 A/A',cl:'ph-pm',rec:'표준 용량의 20~40%로 시작, 출혈 위험 ↑↑'},{ph:'CYP2C9 IM',cl:'ph-im',rec:'용량 감량 고려'},{ph:'Normal Metabolizer',cl:'ph-nm',rec:'표준 용량으로 시작'}]},
+  {drug:'Carbamazepine (카르바마제핀)',gene:'HLA-B*1502',rows:[{ph:'HLA-B*1502 양성',cl:'ph-pm',rec:'카르바마제핀 금기 — Stevens-Johnson 증후군 위험'},{ph:'HLA-B*1502 음성',cl:'ph-nm',rec:'표준 처방 가능'}]},
+  {drug:'Abacavir (아바카비르)',gene:'HLA-B*5701',rows:[{ph:'HLA-B*5701 양성',cl:'ph-pm',rec:'아바카비르 금기 — 과민반응 위험'},{ph:'HLA-B*5701 음성',cl:'ph-nm',rec:'표준 처방 가능'}]},
+  {drug:'Simvastatin (심바스타틴)',gene:'SLCO1B1',rows:[{ph:'SLCO1B1 기능저하',cl:'ph-pm',rec:'심바스타틴 저용량 또는 대체 스타틴. 근병증 위험 ↑'},{ph:'정상 기능',cl:'ph-nm',rec:'표준 용량 사용'}]},
+  {drug:'Tamoxifen (타목시펜)',gene:'CYP2D6',rows:[{ph:'Poor Metabolizer',cl:'ph-pm',rec:'대체 내분비 치료 고려'},{ph:'Intermediate Metabolizer',cl:'ph-im',rec:'효과 감소 가능, 모니터링 강화'},{ph:'Normal/UM',cl:'ph-nm',rec:'표준 용량 사용'}]},
+  {drug:'Omeprazole (오메프라졸)',gene:'CYP2C19',rows:[{ph:'Ultra-rapid Metabolizer',cl:'ph-um',rec:'용량 증량 또는 대체 PPI — 효과 감소'},{ph:'Normal Metabolizer',cl:'ph-nm',rec:'표준 용량'},{ph:'Poor Metabolizer',cl:'ph-pm',rec:'용량 감량 — 약물 노출 증가'}]},
+  {drug:'Fluorouracil / 5-FU',gene:'DPYD',rows:[{ph:'DPYD 완전 결핍',cl:'ph-pm',rec:'5-FU / 카페시타빈 금기 — 치명적 독성'},{ph:'DPYD 부분 결핍',cl:'ph-im',rec:'50% 용량 감량'},{ph:'정상 활성',cl:'ph-nm',rec:'표준 용량 사용'}]},
+  {drug:'Allopurinol (알로푸리놀)',gene:'HLA-B*5801',rows:[{ph:'HLA-B*5801 양성',cl:'ph-pm',rec:'알로푸리놀 금기 — 중증 피부반응. 페북소스타트 고려'},{ph:'HLA-B*5801 음성',cl:'ph-nm',rec:'표준 처방 가능'}]}
+];
+const cpicInput=document.getElementById('cpicInput'),cpicResult=document.getElementById('cpicResult');
+function searchCPIC(q){
+  q=q.trim().toLowerCase();
+  if(!q){cpicResult.classList.remove('show');cpicResult.innerHTML='';return}
+  const f=cpicDB.find(d=>d.drug.toLowerCase().includes(q));
+  if(!f){cpicResult.innerHTML='<p class="cpic-no">해당 약물의 PGx 정보를 찾을 수 없습니다.</p>';cpicResult.classList.add('show');return}
+  let h=`<p class="cpic-drug-name">${f.drug}</p><p class="cpic-gene">관련 유전자: ${f.gene}</p><table class="cpic-table"><thead><tr><th>표현형</th><th>CPIC 권고</th></tr></thead><tbody>`;
+  f.rows.forEach(r=>{h+=`<tr><td class="${r.cl}">${r.ph}</td><td>${r.rec}</td></tr>`});
+  h+='</tbody></table>';cpicResult.innerHTML=h;cpicResult.classList.add('show');
+}
+cpicInput?.addEventListener('input',e=>searchCPIC(e.target.value));
+document.querySelectorAll('.cpic-tag').forEach(t=>{t.addEventListener('click',()=>{cpicInput.value=t.textContent;searchCPIC(t.textContent)})});
+
+// ===== QUIZ =====
+const qa={};
+document.querySelectorAll('.q-btn').forEach(b=>{b.addEventListener('click',()=>{const q=b.closest('.quiz-q');q.querySelectorAll('.q-btn').forEach(x=>x.classList.remove('sy','sn'));b.classList.add(b.dataset.v==='yes'?'sy':'sn');qa[q.dataset.q]=b.dataset.v})});
+document.getElementById('quizSubmit')?.addEventListener('click',()=>{
+  if(Object.keys(qa).length<5){alert('모든 질문에 답해주세요.');return}
+  const sc=Object.values(qa).filter(v=>v==='yes').length;
+  const r=document.getElementById('quizResult'),s=document.getElementById('resScore'),l=document.getElementById('resLevel'),d=document.getElementById('resDesc');
+  s.textContent=sc+' / 5';
+  if(sc<=1){s.style.color='var(--safe)';l.style.color='var(--safe)';l.textContent='💚 관심 단계';d.innerHTML='즉각적인 검사 필요성은 낮습니다.<br>약물유전체 정보는 미래 약물 치료의 참고 자료가 됩니다.'}
+  else if(sc<=3){s.style.color='var(--gold)';l.style.color='var(--gold)';l.textContent='🟡 고려 단계';d.innerHTML='약물유전체 검사를 고려할 수 있는 상황입니다.<br>주치의와 상담해보세요.'}
+  else{s.style.color='var(--accent)';l.style.color='var(--accent)';l.textContent='🔴 적극 권장';d.innerHTML='약물유전체 검사가 적극 권장되는 상황입니다.<br>가까운 대학병원에 문의하세요.'}
+  r.classList.add('show');r.scrollIntoView({behavior:'smooth',block:'center'});
+});
+
+// Share
+document.querySelectorAll('.share-btn').forEach(b=>{b.addEventListener('click',()=>{const t=b.dataset.share,u=encodeURIComponent(location.href);if(t==='twitter')window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent('같은 약, 다른 운명')}&url=${u}`,'_blank');else if(t==='facebook')window.open(`https://www.facebook.com/sharer/sharer.php?u=${u}`,'_blank');else if(t==='copy'){navigator.clipboard.writeText(location.href);b.textContent='✓ 복사됨';setTimeout(()=>b.textContent='🔗 링크 복사',2000)}})});
+
+// ===== SCROLL LOOP =====
+function onScroll(){heroFx();ecgFx();compareFx()}
+window.addEventListener('scroll',onScroll,{passive:true});
+onScroll();
+});
+</script>
+</body>
+</html>

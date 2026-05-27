@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PharmGx Hub - 임상약물유전체학 플랫폼</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Noto+Sans+KR:wght@300;400;500;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<!-- Chart.js for PK Visualizer -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #04080f;
+    --surface: #0a1628;
+    --surface2: #0f1f3d;
+    --accent: #00e5ff;
+    --accent2: #7b2fff;
+    --accent3: #ff2d78;
+    --gold: #ffd700;
+    --text: #e8f4fd;
+    --text-muted: #7a9bbf;
+    --success: #00ff9d;
+    --danger: #ff2d78;
+    --border: rgba(0,229,255,0.2);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Noto Sans KR',sans-serif;
+    background:var(--bg); color:var(--text);
+    min-height:100vh; overflow-x:hidden;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseGlow {
+    0% { box-shadow: 0 0 10px rgba(0,229,255,0.2); }
+    50% { box-shadow: 0 0 25px rgba(0,229,255,0.6); }
+    100% { box-shadow: 0 0 10px rgba(0,229,255,0.2); }
+  }
+  @keyframes priceBlink {
+    0% { color: var(--text); }
+    50% { color: var(--success); }
+    100% { color: var(--text); }
+  }
+
+  /* ── SCREENS ── */
+  .screen{display:none;min-height:100vh;position:relative;}
+  .screen.active{display:flex;flex-direction:column; animation: fadeIn 0.5s ease-out forwards;}
+
+  /* ── COMMON UI ELEMENTS ── */
+  .topbar {
+    background:rgba(10,22,40,0.95); border-bottom:1px solid var(--border);
+    padding:12px 24px; display:flex; align-items:center; gap:20px;
+    position:sticky; top:0; z-index:100; backdrop-filter:blur(10px);
+  }
+  .topbar-brand { font-family:'Orbitron',sans-serif; font-weight:700; color:var(--accent); cursor:pointer; }
+  .topbar-title { font-family:'Share Tech Mono',monospace; color:var(--text-muted); margin-left:auto; }
+  .btn-back { background:transparent; border:1px solid var(--accent); color:var(--accent); padding:6px 12px; border-radius:4px; cursor:pointer; font-family:'Orbitron'; font-size:12px; transition: 0.3s;}
+  .btn-back:hover { background:rgba(0,229,255,0.15); box-shadow: 0 0 10px var(--accent); }
+
+  .content-wrapper { max-width:1200px; margin:0 auto; width:100%; padding:32px 24px; display:flex; flex-direction:column; gap:24px; flex:1; }
+  .section-title { font-family:'Orbitron',sans-serif; font-size:24px; color:var(--text); margin-bottom:16px; border-left:4px solid var(--accent); padding-left:12px; }
+
+  /* ── SPLASH SCREEN ── */
+  #screen-splash { align-items:center; justify-content:center; background: radial-gradient(ellipse at 50% 40%, #0a1a3a 0%, #04080f 70%); overflow:hidden; }
+  .splash-content { position:relative; z-index:10; text-align:center; display:flex; flex-direction:column; align-items:center; gap:24px; }
+  .splash-logo .pharm { font-family:'Orbitron'; font-size:clamp(36px,8vw,80px); background:linear-gradient(135deg, #00e5ff 0%, #7b2fff 50%, #ff2d78 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; filter:drop-shadow(0 0 30px rgba(0,229,255,0.5)); font-weight:900;}
+  .splash-logo .gx { font-family:'Orbitron'; font-size:clamp(20px,4vw,40px); color:var(--text-muted); letter-spacing:8px; font-weight:900;}
+  .splash-desc { max-width:520px; font-size:15px; line-height:1.8; color:rgba(232,244,253,0.7); }
+  .uni-badge { margin-top:20px; font-size:12px; color:var(--text-muted); border:1px solid rgba(255,255,255,0.2); padding:8px 16px; border-radius:20px; background:rgba(255,255,255,0.05); }
+
+  .btn-start {
+    padding:18px 56px; font-family:'Orbitron',sans-serif; font-size:16px; font-weight:700; letter-spacing:3px;
+    color:var(--bg); background:linear-gradient(135deg, var(--accent), var(--accent2));
+    border:none; border-radius:4px; cursor:pointer; transition:all 0.3s; box-shadow:0 0 30px rgba(0,229,255,0.4);
+  }
+  .btn-start:hover { transform:translateY(-2px) scale(1.05); box-shadow:0 0 50px rgba(0,229,255,0.8); }
+
+  /* ── MAIN MENU ── */
+  .menu-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(280px, 1fr)); gap:24px; width:100%; max-width:1000px; }
+  .menu-card {
+    background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:32px;
+    display:flex; flex-direction:column; gap:16px; cursor:pointer; transition:all 0.3s; position:relative; overflow:hidden;
+  }
+  .menu-card:hover { transform:translateY(-5px); border-color:var(--accent); box-shadow:0 10px 30px rgba(0,229,255,0.2); background:var(--surface2); }
+  .menu-icon { font-size:40px; }
+  .menu-title { font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; color:var(--text); }
+  .menu-desc { font-size:14px; color:var(--text-muted); line-height:1.6; }
+
+  /* ── MODULE 1: QUIZ ── */
+  .quiz-list { display:flex; flex-direction:column; gap:16px; }
+  .quiz-item { background:var(--surface); border:1px solid rgba(255,255,255,0.1); padding:20px; border-radius:8px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; transition:all 0.2s; }
+  .quiz-item:hover { border-color:var(--accent); background:var(--surface2); transform:translateX(5px); }
+  .quiz-item-title { font-size:18px; font-weight:bold; color:var(--text); margin-bottom:8px;}
+  .quiz-item-sub { font-family:'Share Tech Mono'; font-size:12px; color:var(--accent); }
+  
+  .patient-card { background:rgba(0,229,255,0.05); border-left:4px solid var(--accent); padding:20px; border-radius:4px; margin-bottom:20px; position:relative; }
+  .patient-card::after { content: 'CONFIDENTIAL'; position: absolute; right: 20px; top: 20px; font-family:'Orbitron'; font-size:24px; color:rgba(0,229,255,0.05); font-weight:900; pointer-events: none;}
+  .patient-card h3 { font-family:'Orbitron'; color:var(--accent); margin-bottom:12px; font-size:16px; }
+  .patient-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:14px; }
+  .patient-info-item span { color:var(--text-muted); display:block; font-size:11px; text-transform:uppercase; margin-bottom:4px; }
+  
+  .question-box { background:var(--surface); border:1px solid var(--border); padding:24px; border-radius:8px; margin-top:20px; }
+  .question-text { font-size:16px; font-weight:500; margin-bottom:20px; line-height:1.5; color:#fff;}
+  .opt-btn { display:block; width:100%; text-align:left; background:rgba(0,0,0,0.3); border:1px solid rgba(255,255,255,0.2); padding:14px 16px; margin-bottom:10px; color:var(--text); border-radius:6px; cursor:pointer; transition:0.2s; font-family:'Noto Sans KR'; font-size:14px; }
+  .opt-btn:hover:not(:disabled) { background:rgba(0,229,255,0.1); border-color:var(--accent); transform: translateX(5px); }
+  .opt-btn.correct { background:var(--success); color:var(--bg); font-weight:bold; border-color:var(--success); }
+  .opt-btn.wrong { background:var(--danger); color:white; border-color:var(--danger); text-decoration: line-through; opacity:0.8;}
+  
+  .feedback-box { margin-top:20px; padding:16px; border-radius:6px; display:none; font-size:14px; line-height:1.6; animation: fadeIn 0.4s; }
+  .feedback-box.correct { background:rgba(0,255,157,0.1); border:1px solid var(--success); }
+  .feedback-box.wrong { background:rgba(255,45,120,0.1); border:1px solid var(--danger); }
+  
+  .btn-next-case { display:none; margin-top:15px; padding:10px 20px; background:var(--accent); color:#000; border:none; border-radius:4px; font-weight:bold; cursor:pointer; font-family:'Orbitron'; transition:0.3s;}
+  .btn-next-case:hover { background: #fff; }
+
+  /* ── MODULE 2: CLINICAL SIMULATOR ── */
+  .sim-container { display:flex; gap:24px; flex-wrap:wrap; }
+  .sim-panel { flex:1; min-width:300px; background:var(--surface); border:1px solid var(--border); border-radius:8px; padding:24px; }
+  .form-group { margin-bottom:20px; }
+  .form-group label { display:block; font-size:12px; color:var(--text-muted); margin-bottom:8px; text-transform:uppercase; font-family:'Share Tech Mono'; }
+  .form-select { width:100%; padding:12px; background:rgba(0,0,0,0.5); border:1px solid var(--border); color:var(--accent); border-radius:4px; font-family:'Noto Sans KR'; outline:none; font-size:14px; font-weight:bold;}
+  .form-select:focus { border-color: var(--success); box-shadow: 0 0 8px rgba(0,255,157,0.3); }
+  .btn-simulate { width:100%; padding:14px; background:var(--accent); color:var(--bg); font-weight:bold; border:none; border-radius:4px; cursor:pointer; font-family:'Orbitron'; font-size:16px; transition:0.3s; }
+  .btn-simulate:hover { background:var(--text); transform: scale(1.02); }
+  
+  .sim-result-box { margin-top:20px; padding:20px; background:rgba(0,0,0,0.4); border:1px solid #333; border-radius:8px; display:none; animation: fadeIn 0.5s; }
+  .sim-result-title { font-family:'Orbitron'; margin-bottom:12px; font-size:20px; display:flex; align-items:center; gap:10px;}
+  .sim-result-text { line-height: 1.6; font-size: 15px;}
+  .cpic-badge { display:inline-block; background:rgba(255,215,0,0.2); color:var(--gold); border:1px solid var(--gold); padding:4px 8px; font-size:11px; border-radius:4px; margin-top:16px; }
+
+  /* ── MODULE 3: PK VISUALIZER ── */
+  .pk-controls { display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap; }
+  .pk-btn { background:var(--surface); border:1px solid var(--border); color:var(--text); padding:10px 20px; border-radius:20px; cursor:pointer; font-family:'Share Tech Mono'; transition:all 0.2s; font-size:14px;}
+  .pk-btn:hover { background:rgba(0,229,255,0.2); }
+  .pk-btn.active { background:var(--accent); color:var(--bg); font-weight:bold; box-shadow: 0 0 15px rgba(0,229,255,0.5);}
+  .chart-container { background:var(--surface); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:20px; height:450px; position:relative; }
+  .pk-info-box { margin-top:20px; padding:16px; background:rgba(0,0,0,0.3); border-left:4px solid var(--accent3); font-size:15px; line-height:1.6; }
+
+  /* ── MODULE 4: BIOTECH STOCK TRACKER ── */
+  .stock-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(300px, 1fr)); gap:20px; }
+  .stock-card { background:linear-gradient(135deg, var(--surface), #121a2f); border:1px solid rgba(255,255,255,0.1); border-radius:8px; padding:24px; position:relative; overflow:hidden;}
+  .stock-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:12px; }
+  .company-name { font-size:20px; font-weight:bold; color:var(--text); margin-bottom:4px;}
+  .ticker { font-family:'Share Tech Mono'; color:var(--accent2); background:rgba(123,47,255,0.1); padding:4px 8px; border-radius:4px; font-size:12px; display:inline-block;}
+  .live-price { font-family:'Orbitron'; font-size:22px; color:var(--success); text-align:right;}
+  .live-change { font-family:'Share Tech Mono'; font-size:13px; color:var(--success); text-align:right;}
+  
+  .stock-info { font-size:14px; color:var(--text-muted); line-height:1.6; margin-bottom:16px; }
+  .value-chain { font-size:12px; color:var(--accent); text-transform:uppercase; letter-spacing:1px; background:rgba(0,229,255,0.1); padding:6px 10px; border-radius:4px; display:inline-block;}
+  .market-status { font-family:'Orbitron'; font-size:12px; color:var(--success); position:absolute; top:24px; right:24px; animation: priceBlink 2s infinite;}
+</style>
+</head>
+<body>
+
+<!-- 0. SPLASH SCREEN -->
+<div class="screen active" id="screen-splash">
+  <div class="splash-content">
+    <div class="splash-logo">
+      <div class="pharm">PharmGx Hub</div>
+      <div class="gx">Precision Medicine</div>
+    </div>
+    <div class="splash-desc">
+      유전형(Genotype) 기반 맞춤 약물 치료 인터랙티브 환경<br>
+      환자 케이스 추리, 가이드라인 시뮬레이션, 약동학 시각화 데이터베이스에 접근합니다.
+    </div>
+    <div class="uni-badge">SYSTEM VERSION 2.0 | SECURE CONNECTION ESTABLISHED</div>
+    <button class="btn-start" onclick="showScreen('screen-menu')">INITIALIZE SYSTEM</button>
+  </div>
+</div>
+
+<!-- 1. MAIN MENU -->
+<div class="screen" id="screen-menu">
+  <div class="topbar">
+    <div class="topbar-brand">PharmGx Hub</div>
+    <div class="topbar-title">MAIN DASHBOARD</div>
+  </div>
+  <div class="content-wrapper" style="align-items:center; justify-content:center;">
+    <div class="menu-grid">
+      <div class="menu-card" onclick="initQuizList()">
+        <div class="menu-icon">🕵️‍♂️</div>
+        <div class="menu-title">Detective Game</div>
+        <div class="menu-desc">실제 임상 사례를 바탕으로 환자의 유전형을 추리하고 부작용의 원인을 찾아내는 시뮬레이션입니다.</div>
+      </div>
+      <div class="menu-card" onclick="initSimulator()">
+        <div class="menu-icon">💊</div>
+        <div class="menu-title">Clinical Simulator</div>
+        <div class="menu-desc">환자의 처방 약물과 유전형 데이터를 조합하여 CPIC 기반 맞춤형 처방 가이드를 산출합니다.</div>
+      </div>
+      <div class="menu-card" onclick="initPK()">
+        <div class="menu-icon">📈</div>
+        <div class="menu-title">PK Visualizer</div>
+        <div class="menu-desc">대사능(NM, PM, UM)에 따른 약물의 체내 농도 변화와 독성/유효 구간을 차트로 분석합니다.</div>
+      </div>
+      <div class="menu-card" onclick="initStock()">
+        <div class="menu-icon">🧬</div>
+        <div class="menu-title" style="color:var(--gold);">Biotech Market</div>
+        <div class="menu-desc">약물유전체학 관련 글로벌 제약/진단기기 기업의 라이브 동향과 밸류체인을 추적합니다.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2-A. QUIZ LIST SCREEN -->
+<div class="screen" id="screen-quiz-list">
+  <div class="topbar">
+    <button class="btn-back" onclick="showScreen('screen-menu')">&larr; BACK TO MENU</button>
+    <div class="topbar-brand">PharmGx Hub</div>
+    <div class="topbar-title">CASE FILES</div>
+  </div>
+  <div class="content-wrapper">
+    <div class="section-title">Case Files : 이상 반응 추적</div>
+    <p style="color:var(--text-muted);">미해결된 임상 케이스들입니다. 환자의 유전자 검사 리포트를 분석하여 정확한 원인을 진단하세요.</p>
+    <div class="quiz-list" id="quiz-list-container">
+      <!-- JS로 동적 생성됨 -->
+    </div>
+  </div>
+</div>
+
+<!-- 2-B. QUIZ DETAIL SCREEN -->
+<div class="screen" id="screen-quiz-detail">
+  <div class="topbar">
+    <button class="btn-back" onclick="showScreen('screen-quiz-list')">&larr; CASE LIST</button>
+    <div class="topbar-brand">PharmGx Hub</div>
+    <div class="topbar-title" id="qd-title">CASE DETAIL</div>
+  </div>
+  <div class="content-wrapper">
+    <h2 id="qd-case-title" style="color:var(--text); margin-bottom:10px; font-family:'Orbitron';"></h2>
+    <div id="qd-narrative" style="color:#b0c4de; line-height:1.7; margin-bottom:20px; font-size:16px; background:rgba(0,0,0,0.3); padding:20px; border-left:3px solid var(--accent2);"></div>
+    
+    <div class="patient-card">
+      <h3>PATIENT DOSSIER (EMR DATA)</h3>
+      <div class="patient-info-grid">
+        <div class="patient-info-item"><span>처방 약물</span><strong id="qd-drug"></strong></div>
+        <div class="patient-info-item"><span>타겟 유전자</span><strong id="qd-gene"></strong></div>
+        <div class="patient-info-item"><span>임상 증상</span><strong id="qd-symptom"></strong></div>
+        <div class="patient-info-item" style="color:var(--accent);"><span>유전자형 분석 결과</span><strong id="qd-result"></strong></div>
+      </div>
+    </div>
+
+    <div class="question-box">
+      <div class="question-text" id="qd-question"></div>
+      <div id="qd-options">
+        <!-- 버튼 동적 생성 -->
+      </div>
+      <div id="qd-feedback" class="feedback-box"></div>
+      <button id="btn-next-quiz" class="btn-next-case" onclick="nextQuiz()">▶ LOAD NEXT CASE</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3. CLINICAL SIMULATOR SCREEN -->
+<div class="screen" id="screen-simulator">
+  <div class="topbar">
+    <button class="btn-back" onclick="showScreen('screen-menu')">&larr; BACK TO MENU</button>
+    <div class="topbar-brand">PharmGx Hub</div>
+    <div class="topbar-title">CLINICAL SIMULATOR</div>
+  </div>
+  <div class="content-wrapper">
+    <div class="section-title">처방 적합성 시뮬레이터</div>
+    <p style="color:var(--text-muted);">CPIC(임상약물유전체학회) 가이드라인 데이터베이스와 연동된 모의 처방 시스템입니다.</p>
+    
+    <div class="sim-container">
+      <div class="sim-panel">
+        <div class="form-group">
+          <label>처방 약물 (Drug)</label>
+          <select class="form-select" id="sim-drug" onchange="updateGeneOptions()">
+            <option value="clopidogrel">Clopidogrel (항혈소판제)</option>
+            <option value="amitriptyline">Amitriptyline (삼환계 항우울제)</option>
+            <option value="carbamazepine">Carbamazepine (항경련제)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>관여 유전자 (Primary Gene)</label>
+          <select class="form-select" id="sim-gene" disabled>
+            <option>CYP2C19</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>환자 유전형/표현형 (Genotype)</label>
+          <select class="form-select" id="sim-phenotype">
+            <option value="NM">*1/*1 (Normal Metabolizer)</option>
+            <option value="PM">*2/*2 (Poor Metabolizer)</option>
+          </select>
+        </div>
+        <button class="btn-simulate" onclick="runSimulation()">ANALYZE DATA</button>
+      </div>
+
+      <div class="sim-panel" style="background:rgba(0,0,0,0.2);">
+        <div id="sim-result" class="sim-result-box">
+          <div class="sim-result-title" id="sim-result-title"></div>
+          <div class="sim-result-text" id="sim-result-text"></div>
+          <div class="cpic-badge">Data Source: CPIC Guidelines</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. PK VISUALIZER SCREEN -->
+<div class="screen" id="screen-pk">
+  <div class="topbar">
+    <button class="btn-back" onclick="showScreen('screen-menu')">&larr; BACK TO MENU</button>
+    <div class="topbar-brand">PharmGx Hub</div>
+    <div class="topbar-title">PK VISUALIZER</div>
+  </div>
+  <div class="content-wrapper">
+    <div class="section-title">약동학(PK) 프로파일 시각화</div>
+    <p style="color:var(--text-muted);">기준 약물: <strong>Metoprolol (베타차단제)</strong> / 타겟 효소: <strong>CYP2D6</strong><br>
+    <span style="font-size:13px; color:var(--danger);">■ 독성 한계선(MTC)</span> 및 <span style="font-size:13px; color:var(--success);">■ 최소 유효 농도선(MEC)</span>과 대사능의 상관관계를 확인하세요.</p>
+    
+    <div class="pk-controls" id="pk-controls">
+      <button class="pk-btn active" onclick="drawPKChart('NM', this)">*1/*1 (Normal - NM)</button>
+      <button class="pk-btn" onclick="drawPKChart('PM', this)">*4/*4 (Poor - PM)</button>
+      <button class="pk-btn" onclick="drawPKChart('UM', this)">*1/*2x2 (Ultra - UM)</button>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="pkChart"></canvas>
+    </div>
+    <div id="pk-info" class="pk-info-box"></div>
+  </div>
+</div>
+
+<!-- 5. BIOTECH STOCK TRACKER SCREEN -->
+<div class="screen" id="screen-stock">
+  <div class="topbar">
+    <button class="btn-back" onclick="showScreen('screen-menu')">&larr; BACK TO MENU</button>
+    <div class="topbar-brand">PharmGx Hub</div>
+    <div class="topbar-title">MARKET TRACKER</div>
+  </div>
+  <div class="content-wrapper">
+    <div class="section-title">유전체 산업 밸류체인 현황</div>
+    <p style="color:var(--text-muted);">맞춤의학 보급에 따른 핵심 수혜 기업들의 실시간 모의 시세 및 분석입니다.</p>
+    
+    <div class="stock-grid">
+      <div class="stock-card">
+        <div class="market-status">LIVE</div>
+        <div class="stock-header">
+          <div>
+            <div class="company-name">Illumina, Inc.</div>
+            <div class="ticker">NASDAQ: ILMN</div>
+          </div>
+          <div>
+            <div class="live-price" id="price-ilmn">$132.45</div>
+            <div class="live-change" id="change-ilmn">+1.24%</div>
+          </div>
+        </div>
+        <div class="stock-info">
+          세계 1위 차세대 염기서열 분석(NGS) 플랫폼 장비 독점 기업. 전장유전체 분석 단가 하락 시 가장 직접적인 매출 성장이 기대됨.
+        </div>
+        <div class="value-chain">Sector: Sequencing Platform</div>
+      </div>
+
+      <div class="stock-card">
+        <div class="market-status">LIVE</div>
+        <div class="stock-header">
+          <div>
+            <div class="company-name">Thermo Fisher</div>
+            <div class="ticker">NYSE: TMO</div>
+          </div>
+          <div>
+            <div class="live-price" id="price-tmo">$574.20</div>
+            <div class="live-change" id="change-tmo">+0.85%</div>
+          </div>
+        </div>
+        <div class="stock-info">
+          특정 약물 처방 전 진행되는 PCR 기반 동반진단(CDx) 키트 및 마이크로어레이 기술 보유. 병원 내 진단 솔루션 안정적 공급.
+        </div>
+        <div class="value-chain">Sector: Diagnostics (CDx)</div>
+      </div>
+
+      <div class="stock-card" style="border:1px solid var(--accent2);">
+        <div class="market-status" style="color:var(--accent2);">LIVE</div>
+        <div class="stock-header">
+          <div>
+            <div class="company-name">마크로젠</div>
+            <div class="ticker">KOSDAQ: 038290</div>
+          </div>
+          <div>
+            <div class="live-price" style="color:var(--accent2);" id="price-mac">₩21,450</div>
+            <div class="live-change" style="color:var(--accent2);" id="change-mac">+3.10%</div>
+          </div>
+        </div>
+        <div class="stock-info">
+          국내 1위 유전자 분석 서비스. 소비자 직접 의뢰(DTC) 규제 완화에 따른 약물 부작용 및 웰니스 유전자 검사 대중화 선도.
+        </div>
+        <div class="value-chain" style="background:rgba(123,47,255,0.2); color:var(--text);">Sector: KR Genomics Service</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// 0. NAVIGATION LOGIC
+// ==========================================
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// ==========================================
+// 1. QUIZ (DETECTIVE GAME) LOGIC
+// ==========================================
+const quizCases = [
+  {
+    id: 'CASE-001', title: '사라진 진통 효과', subtitle: 'Case 001 / CYP2D6',
+    narrative: '치과 수술 후 심한 통증으로 코데인(Codeine)을 처방받은 30세 여성. 정해진 용량을 복용했음에도 통증이 전혀 가라앉지 않는다고 호소합니다.',
+    drug: 'Codeine 30mg', gene: 'CYP2D6', symptom: '진통 효과 없음 (Lack of Efficacy)', result: '*4/*4 (PM)',
+    question: '코데인의 진통 효과가 나타나지 않은 가장 논리적인 유전적 원인은 무엇입니까?',
+    options: [
+      '[가설 A] 초고속 대사로 인해 약물이 효과를 내기 전 몸에서 모두 빠져나감',
+      '[가설 B] 코데인이 활성 대사체인 모르핀으로 전환되지 못함 (효소 결핍)',
+      '[가설 C] 간 기능 저하로 약물이 장에서 아예 흡수되지 않음',
+      '[가설 D] 코데인이 체내에 과도하게 축적되어 수용체가 둔감해짐'
+    ],
+    answer: 1, 
+    explanation: '정답입니다. 코데인은 전구약물(Prodrug)로, 체내의 CYP2D6 효소에 의해 모르핀으로 전환되어야 진통 효과가 발생합니다. 환자는 PM(대사결핍자)이므로 모르핀이 생성되지 않아 통증을 느끼는 것입니다.'
+  },
+  {
+    id: 'CASE-002', title: '시한폭탄이 된 스텐트', subtitle: 'Case 002 / CYP2C19',
+    narrative: '관상동맥 스텐트 시술 후 혈전 예방을 위해 클로피도그렐(Clopidogrel)을 복용하던 60세 남성. 투약 3개월 만에 치명적인 스텐트 혈전증으로 응급실에 실려왔습니다.',
+    drug: 'Clopidogrel 75mg', gene: 'CYP2C19', symptom: '스텐트 혈전증 (치료 실패)', result: '*2/*3 (PM)',
+    question: '이 환자의 생명을 구하기 위한 즉각적이고 올바른 임상적 판단은?',
+    options: [
+      '[조치 A] 약효가 부족하므로 클로피도그렐 용량을 2배로 증량한다.',
+      '[조치 B] 즉시 클로피도그렐을 중단하고 비타민 K를 주사한다.',
+      '[조치 C] CYP2C19 대사에 의존하지 않는 프라수그렐이나 티카그렐러로 즉각 약을 변경한다.',
+      '[조치 D] 간 독성 치료제를 병용 투여하여 효소 활성도를 높인다.'
+    ],
+    answer: 2,
+    explanation: '정확합니다. 클로피도그렐 역시 전구약물입니다. PM 환자의 경우 용량을 늘리는 것만으로는 혈전 억제 효과를 얻기 어려우므로, 대사 경로가 다른 대체 약물(Prasugrel, Ticagrelor)로 변경하는 것이 CPIC 가이드라인의 강력 권고사항입니다.'
+  },
+  {
+    id: 'CASE-003', title: '화상처럼 번진 발진', subtitle: 'Case 003 / HLA-B*15:02',
+    narrative: '삼차신경통으로 카바마제핀(Carbamazepine)을 처음 처방받은 45세 남성. 투약 10일 후, 전신에 심한 수포와 발진이 생기며 피부가 벗겨지기 시작했습니다.',
+    drug: 'Carbamazepine 200mg', gene: 'HLA-B*15:02', symptom: '스티븐스-존슨 증후군(SJS)', result: 'Positive (양성)',
+    question: '이러한 비극적인 의료 사고를 예방하기 위한 최선의 시스템적 접근은?',
+    options: [
+      '[규정 A] 항히스타민제를 항상 병용 처방하도록 가이드라인을 수정한다.',
+      '[규정 B] 한국인 등 동아시아인에게 처방 전 의무적으로 HLA-B*15:02 유전자 검사를 실시한다.',
+      '[규정 C] 첫 처방 시 무조건 기준 용량의 1/4만 투여하도록 제한한다.',
+      '[규정 D] 환자의 신장 기능(eGFR)을 처방 전 반드시 확인한다.'
+    ],
+    answer: 1,
+    explanation: '정답입니다. HLA-B*15:02 양성 환자에게 카바마제핀을 투여하면 치명적인 피부 괴사 반응(SJS/TEN) 발생 위험이 극도로 상승합니다. 특히 동아시아인에게 흔하므로 처방 전 스크리닝이 필수입니다.'
+  }
+];
+
+let currentQuizIndex = 0;
+
+function initQuizList() {
+  showScreen('screen-quiz-list');
+  const container = document.getElementById('quiz-list-container');
+  container.innerHTML = '';
+  quizCases.forEach((q, index) => {
+    container.innerHTML += `
+      <div class="quiz-item" onclick="openQuiz(${index})">
+        <div>
+          <div class="quiz-item-sub">${q.subtitle}</div>
+          <div class="quiz-item-title">${q.title}</div>
+        </div>
+        <div style="font-size:24px; color:var(--accent);">➔</div>
+      </div>
+    `;
+  });
+}
+
+function openQuiz(index) {
+  currentQuizIndex = index;
+  const q = quizCases[index];
+  document.getElementById('qd-case-title').innerText = q.title;
+  document.getElementById('qd-title').innerText = q.subtitle;
+  document.getElementById('qd-narrative').innerText = `"${q.narrative}"`;
+  document.getElementById('qd-drug').innerText = q.drug;
+  document.getElementById('qd-gene').innerText = q.gene;
+  document.getElementById('qd-symptom').innerText = q.symptom;
+  document.getElementById('qd-result').innerText = q.result;
+  document.getElementById('qd-question').innerText = `Q. ${q.question}`;
+  
+  const optContainer = document.getElementById('qd-options');
+  optContainer.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    optContainer.innerHTML += `<button class="opt-btn" onclick="checkAnswer(${i}, this)">${opt}</button>`;
+  });
+  
+  const fb = document.getElementById('qd-feedback');
+  fb.style.display = 'none';
+  fb.className = 'feedback-box';
+  document.getElementById('btn-next-quiz').style.display = 'none';
+  
+  showScreen('screen-quiz-detail');
+}
+
+function checkAnswer(selectedIndex, btnElement) {
+  const q = quizCases[currentQuizIndex];
+  const buttons = document.querySelectorAll('.opt-btn');
+  const fb = document.getElementById('qd-feedback');
+  
+  buttons.forEach(btn => btn.disabled = true); 
+  
+  if(selectedIndex === q.answer) {
+    btnElement.classList.add('correct');
+    fb.innerHTML = `<strong style="font-size:16px;">[CASE SOLVED - 진단 성공]</strong><br><br>${q.explanation}`;
+    fb.classList.add('correct');
+  } else {
+    btnElement.classList.add('wrong');
+    buttons[q.answer].classList.add('correct');
+    fb.innerHTML = `<strong style="font-size:16px;">[DIAGNOSIS FAILED - 오진]</strong><br><br>올바른 해설: ${q.explanation}`;
+    fb.classList.add('wrong');
+  }
+  fb.style.display = 'block';
+  
+  if(currentQuizIndex < quizCases.length - 1) {
+    document.getElementById('btn-next-quiz').style.display = 'block';
+  }
+}
+
+function nextQuiz() {
+  openQuiz(currentQuizIndex + 1);
+}
+
+// ==========================================
+// 2. CLINICAL SIMULATOR LOGIC
+// ==========================================
+const simData = {
+  clopidogrel: { gene: "CYP2C19", opts: [
+      {val: "NM", text: "*1/*1 (Normal Metabolizer)"},
+      {val: "PM", text: "*2/*2 또는 *2/*3 (Poor Metabolizer)"}
+    ] },
+  amitriptyline: { gene: "CYP2D6", opts: [
+      {val: "NM", text: "*1/*1 (Normal Metabolizer)"},
+      {val: "PM", text: "*4/*4 (Poor Metabolizer)"},
+      {val: "UM", text: "*1/*2x2 (Ultra-rapid)"}
+    ] },
+  carbamazepine: { gene: "HLA-B*15:02", opts: [
+      {val: "NEG", text: "Negative (음성)"},
+      {val: "POS", text: "Positive (양성)"}
+    ] }
+};
+
+function initSimulator() {
+  showScreen('screen-simulator');
+  updateGeneOptions();
+}
+
+function updateGeneOptions() {
+  const drug = document.getElementById('sim-drug').value;
+  document.getElementById('sim-gene').innerHTML = `<option>${simData[drug].gene}</option>`;
+  const phenoSelect = document.getElementById('sim-phenotype');
+  phenoSelect.innerHTML = simData[drug].opts.map(o => `<option value="${o.val}">${o.text}</option>`).join('');
+  document.getElementById('sim-result').style.display = 'none';
+}
+
+function runSimulation() {
+  const drug = document.getElementById('sim-drug').value;
+  const pheno = document.getElementById('sim-phenotype').value;
+  const resBox = document.getElementById('sim-result');
+  const resTitle = document.getElementById('sim-result-title');
+  const resText = document.getElementById('sim-result-text');
+
+  resBox.style.display = 'block';
+  resBox.style.borderColor = 'var(--success)';
+  resBox.style.background = 'rgba(0,255,157,0.05)';
+  resTitle.style.color = 'var(--success)';
+
+  if(drug === 'clopidogrel') {
+    if(pheno === 'NM') {
+      resTitle.innerHTML = "✅ 표준 처방 승인 (Standard Therapy)";
+      resText.innerHTML = "정상 대사 능력을 보유하고 있습니다. <strong>표준 용량(75mg/day)</strong>으로 클로피도그렐 처방을 진행하세요.";
+    } else {
+      resBox.style.borderColor = 'var(--danger)'; resBox.style.background = 'rgba(255,45,120,0.05)'; resTitle.style.color = 'var(--danger)';
+      resTitle.innerHTML = "⚠️ 대체 약물 권고 (Alternative Required)";
+      resText.innerHTML = "약물 활성화가 불가능하여 스텐트 혈전증 발생 위험이 매우 높습니다.<br><br><strong>조치:</strong> Prasugrel 또는 Ticagrelor로 처방을 변경하십시오.";
+    }
+  } else if (drug === 'carbamazepine') {
+    if(pheno === 'POS') {
+      resBox.style.borderColor = 'var(--danger)'; resBox.style.background = 'rgba(255,45,120,0.05)'; resTitle.style.color = 'var(--danger)';
+      resTitle.innerHTML = "❌ 절대 사용 금기 (Contraindicated)";
+      resText.innerHTML = "치명적인 피부 질환인 <strong>스티븐스-존슨 증후군(SJS)</strong> 발생 고위험군입니다.<br><br><strong>조치:</strong> 카바마제핀 계열 처방을 전면 취소하고 대체 항경련제를 탐색하십시오.";
+    } else {
+      resTitle.innerHTML = "✅ 처방 가능 (Low Risk)";
+      resText.innerHTML = "HLA-B*15:02 관련 중증 피부 부작용 위험이 낮습니다. 정상 처방을 진행하되 일반적인 모니터링은 유지하십시오.";
+    }
+  } else if (drug === 'amitriptyline') {
+    if(pheno === 'PM') {
+      resBox.style.borderColor = 'var(--danger)'; resBox.style.background = 'rgba(255,45,120,0.05)'; resTitle.style.color = 'var(--danger)';
+      resTitle.innerHTML = "⚠️ 감량 혹은 대체 (Dose Reduction)";
+      resText.innerHTML = "대사 지연으로 체내 약물이 과다 축적되어 <strong>부정맥(QTc 연장) 및 심한 진정작용</strong> 위험이 있습니다.<br><br><strong>조치:</strong> 용량을 50% 절반으로 줄이거나 대체 약물(SSRI)을 사용하세요.";
+    } else if (pheno === 'UM') {
+      resBox.style.borderColor = 'var(--accent2)'; resBox.style.background = 'rgba(123,47,255,0.05)'; resTitle.style.color = 'var(--accent2)';
+      resTitle.innerHTML = "⚠️ 치료 실패 예상 (Alternative Required)";
+      resText.innerHTML = "초고속 대사로 인해 약물이 효과를 내기 전 소실됩니다. 기준 용량으로는 우울증 치료 효과를 기대하기 어렵습니다.<br><br><strong>조치:</strong> 대사 경로가 다른 약물로 변경하세요.";
+    } else {
+      resTitle.innerHTML = "✅ 표준 처방 승인";
+      resText.innerHTML = "표준 시작 용량으로 치료를 시작하고 임상 반응을 관찰하십시오.";
+    }
+  }
+}
+
+// ==========================================
+// 3. PK VISUALIZER LOGIC (Chart.js)
+// ==========================================
+let pkChartObj = null;
+
+function initPK() {
+  showScreen('screen-pk');
+  drawPKChart('NM', document.querySelector('.pk-btn.active'));
+}
+
+function drawPKChart(phenotype, btnElement) {
+  document.querySelectorAll('.pk-btn').forEach(b => b.classList.remove('active'));
+  btnElement.classList.add('active');
+
+  const ctx = document.getElementById('pkChart').getContext('2d');
+  const infoBox = document.getElementById('pk-info');
+  
+  let Ke, infoText, lineColor;
+  if(phenotype === 'NM') { 
+    Ke = 0.15; 
+    infoText = "<strong>Normal Metabolizer (NM):</strong> 약물이 <span style='color:var(--success)'>최소 유효 농도(MEC)</span> 이상, <span style='color:var(--danger)'>독성 한계선(MTC)</span> 이하의 이상적인 치료 구간에 머무릅니다."; 
+    lineColor = '#00e5ff'; 
+  } else if(phenotype === 'PM') { 
+    Ke = 0.04; 
+    infoText = "<strong>Poor Metabolizer (PM):</strong> 대사가 지연되어 혈중 농도가 <span style='color:var(--danger)'>독성 한계선(MTC)</span>을 돌파합니다. 심각한 서맥 등 부작용이 발생합니다."; 
+    lineColor = '#ff2d78'; 
+  } else if(phenotype === 'UM') { 
+    Ke = 0.45; 
+    infoText = "<strong>Ultrarapid Metabolizer (UM):</strong> 약물이 너무 빨리 빠져나가 <span style='color:var(--success)'>최소 유효 농도(MEC)</span>에 도달하지 못해 약효가 전혀 없습니다."; 
+    lineColor = '#7b2fff'; 
+  }
+
+  const labels = []; 
+  const data = [];
+  const mtcData = []; // Minimum Toxic Concentration
+  const mecData = []; // Minimum Effective Concentration
+  const Ka = 1.0; 
+  
+  for(let t=0; t<=24; t+=0.5) {
+    labels.push(t + 'h');
+    let C = 110 * (Math.exp(-Ke * t) - Math.exp(-Ka * t));
+    data.push(C);
+    mtcData.push(80); // 독성선 y=80
+    mecData.push(30); // 유효선 y=30
+  }
+
+  infoBox.innerHTML = infoText;
+
+  if(pkChartObj) pkChartObj.destroy();
+  
+  pkChartObj = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: '약물 혈중 농도 (Metoprolol)',
+          data: data, borderColor: lineColor, backgroundColor: lineColor + '33',
+          borderWidth: 4, fill: true, tension: 0.4, pointRadius: 0
+        },
+        {
+          label: '독성 한계선 (MTC)',
+          data: mtcData, borderColor: 'rgba(255,45,120,0.6)', borderWidth: 2, 
+          borderDash: [5, 5], pointRadius: 0, fill: false
+        },
+        {
+          label: '최소 유효 농도 (MEC)',
+          data: mecData, borderColor: 'rgba(0,255,157,0.6)', borderWidth: 2, 
+          borderDash: [5, 5], pointRadius: 0, fill: false
+        }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: { legend: { labels: { color: '#e8f4fd', font:{family:'Noto Sans KR'} } } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#7a9bbf', maxTicksLimit:12 } },
+        y: { 
+          grid: { color: 'rgba(255,255,255,0.05)' }, 
+          ticks: { color: '#7a9bbf' }, max: 120, min: 0,
+          title: { display:true, text:'혈중 농도 Concentration (mg/L)', color:'#7a9bbf' }
+        }
+      },
+      animation: { duration: 800, easing: 'easeOutQuart' }
+    }
+  });
+}
+
+// ==========================================
+// 4. BIOTECH STOCK TRACKER LOGIC (Live Sim)
+// ==========================================
+let stockInterval;
+
+function initStock() {
+  showScreen('screen-stock');
+  if(stockInterval) clearInterval(stockInterval);
+  
+  // 시뮬레이션용 가격 변동 로직
+  stockInterval = setInterval(() => {
+    updatePrice('ilmn', 132.45, '$');
+    updatePrice('tmo', 574.20, '$');
+    updatePriceKRW('mac', 21450);
+  }, 3000);
+}
+
+function updatePrice(id, base, symbol) {
+  const el = document.getElementById(`price-${id}`);
+  const elChg = document.getElementById(`change-${id}`);
+  
+  // -1% ~ +1% 변동
+  const changePercent = (Math.random() * 2 - 1); 
+  const newPrice = base * (1 + changePercent/100);
+  
+  el.innerText = `${symbol}${newPrice.toFixed(2)}`;
+  elChg.innerText = `${changePercent > 0 ? '+' : ''}${changePercent.toFixed(2)}%`;
+  
+  if(changePercent > 0) { el.style.color = "var(--success)"; elChg.style.color = "var(--success)"; }
+  else { el.style.color = "var(--danger)"; elChg.style.color = "var(--danger)"; }
+}
+
+function updatePriceKRW(id, base) {
+  const el = document.getElementById(`price-${id}`);
+  const elChg = document.getElementById(`change-${id}`);
+  
+  const changePercent = (Math.random() * 3 - 1.5); 
+  const newPrice = Math.round(base * (1 + changePercent/100) / 10) * 10; // 10원 단위 반올림
+  
+  el.innerText = `₩${newPrice.toLocaleString()}`;
+  elChg.innerText = `${changePercent > 0 ? '+' : ''}${changePercent.toFixed(2)}%`;
+  
+  if(changePercent > 0) { el.style.color = "var(--accent2)"; elChg.style.color = "var(--accent2)"; }
+  else { el.style.color = "var(--danger)"; elChg.style.color = "var(--danger)"; }
+}
+
+// 초기 실행 방지용 (필요시)
+// document.addEventListener("DOMContentLoaded", () => { ... });
+</script>
+</body>
+</html>
