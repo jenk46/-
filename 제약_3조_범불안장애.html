@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>범불안장애(GAD) 약물 마스터 카드 게임</title>
+    <style>
+        /* --- 기본 스타일 --- */
+        body {
+            font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            background-color: #fdfaf5;
+            color: #5d4037;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        #game-container {
+            background-color: white;
+            width: 100%;
+            max-width: 900px;
+            border-radius: 25px;
+            box-shadow: 0 10px 40px rgba(139, 69, 19, 0.08);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            min-height: 600px;
+            position: relative;
+            overflow: hidden;
+            text-align: center;
+        }
+
+        h1 {
+            color: #795548;
+            font-size: 28px;
+            margin-bottom: 5px;
+            letter-spacing: -1px;
+        }
+
+        .header-title {
+            font-size: 16px;
+            color: #a1887f;
+            margin-bottom: 20px;
+            font-weight: 300;
+        }
+
+        .title-divider {
+            width: 60px;
+            height: 3px;
+            background-color: #d7ccc8;
+            margin: 0 auto 25px auto;
+            border-radius: 2px;
+        }
+
+        /* --- 메시지 보드 (따옴표 감성 유지) --- */
+        #message-board {
+            font-size: 18px;
+            line-height: 1.7;
+            margin-bottom: 30px;
+            padding: 25px;
+            background-color: #fffaf0;
+            border-radius: 15px;
+            border: 1px solid #f3e5f5;
+            word-break: keep-all;
+            position: relative;
+            text-align: left;
+        }
+
+        #message-board.story-mode::before {
+            content: '“';
+            font-size: 60px;
+            color: #d7ccc8;
+            position: absolute;
+            top: -15px;
+            left: 15px;
+            font-family: serif;
+        }
+
+        /* --- 타이머 UI --- */
+        #timer-display {
+            display: none;
+            font-size: 22px;
+            font-weight: bold;
+            color: #d32f2f;
+            margin-bottom: 15px;
+            background-color: #ffebee;
+            padding: 12px;
+            border-radius: 12px;
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.02); }
+        }
+
+        /* --- 버튼 --- */
+        .btn-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            background-color: #d4a781;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 17px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .btn:hover { background-color: #bf8b62; transform: translateY(-2px); }
+        .btn.secondary { background-color: #a1887f; }
+        .btn.secondary:hover { background-color: #8d6e63; }
+
+        /* --- 카드 게임 보드 (12칸 4x3 배열 최적화) --- */
+        #card-grid {
+            display: none;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            perspective: 1000px;
+            margin-top: 10px;
+        }
+
+        @media (max-width: 600px) {
+            #card-grid { grid-template-columns: repeat(3, 1fr); }
+        }
+
+        .card {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            position: relative;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+        }
+
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card.matched .card-face-up {
+            background-color: #e8f5e9;
+            border-color: #a5d6a7;
+            color: #2e7d32;
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 12px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+            word-break: keep-all;
+        }
+
+        .card-face-down {
+            background-color: #8d6e63;
+            color: white;
+            background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(255,255,255,0.05) 10px, rgba(255,255,255,0.05) 20px);
+        }
+        
+        .card-face-down::after { content: '💊'; font-size: 30px; }
+
+        .card-face-up {
+            background-color: white;
+            color: #4e342e;
+            border: 2px solid #d7ccc8;
+            transform: rotateY(180deg);
+            line-height: 1.4;
+        }
+
+        .drug-name { color: #d32f2f; font-size: 16px; }
+
+        #stage-info {
+            display: none;
+            font-size: 18px;
+            font-weight: bold;
+            color: #5d4037;
+            margin-bottom: 15px;
+            background-color: #f5f0e1;
+            padding: 10px;
+            border-radius: 10px;
+        }
+
+        /* --- 폭죽 효과 --- */
+        .confetti-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 10;
+        }
+        .confetti {
+            position: absolute; width: 15px; height: 15px; border-radius: 50%;
+            opacity: 0; animation: confetti-burst 1.5s ease-out forwards;
+        }
+        @keyframes confetti-burst {
+            0% { transform: translate(0, 0) scale(0); opacity: 1; }
+            100% { transform: translate(var(--dx), var(--dy)) scale(1.5); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="confetti-overlay" id="confetti-overlay"></div>
+
+<div id="game-container">
+    <h1 id="main-title">약물학 마스터 : GAD 편</h1>
+    <div class="header-title">10초 암기 처방 짝맞추기 (12칸)</div>
+    <div class="title-divider"></div>
+
+    <div id="stage-info"></div>
+    <div id="timer-display"></div>
+    <div id="message-board" class="story-mode"></div>
+    <div class="btn-container" id="btn-container"></div>
+    
+    <div id="card-grid"></div>
+</div>
+
+<script>
+    // --- 범불안장애(GAD) 핵심 약물 데이터 (12칸을 위해 6가지로 압축) ---
+    const GAD_DATA = [
+        { id: 1, drug: "Escitalopram", class: "SSRI", ind: "GAD 1차 선택약<br>(안전성 높음)", se: "초기 불안 증가(Activation), 위장장애" },
+        { id: 2, drug: "Venlafaxine", class: "SNRI", ind: "우울증 동반 시<br>1차 선택약", se: "혈압 상승 모니터링 필요" },
+        { id: 3, drug: "Alprazolam", class: "Benzodiazepine<br>(단/중기)", ind: "초기 급성 불안 완화<br>(브릿지 요법)", se: "단기 금단 증상, 노인 낙상 위험" },
+        { id: 4, drug: "Clonazepam", class: "Benzodiazepine<br>(장기)", ind: "반동성 불안 적고<br>작용 시간 김", se: "장기 복용 시 인지기능 저하" },
+        { id: 5, drug: "Buspirone", class: "5-HT1A<br>부분 효현제", ind: "진정/의존성 없는<br>만성 불안 치료", se: "효과 발현 느림(2~4주 소요)" },
+        { id: 6, drug: "Propranolol", class: "Beta-blocker", ind: "심계항진, 무대 공포증 등<br>신체 증상 완화", se: "천식, COPD 환자 금기" }
+    ];
+
+    let currentStage = 0;
+    let flippedCards = [];
+    let matchedPairs = 0;
+    let lockBoard = false;
+    let timerInterval;
+
+    const msgBoard = document.getElementById('message-board');
+    const btnContainer = document.getElementById('btn-container');
+    const cardGrid = document.getElementById('card-grid');
+    const stageInfo = document.getElementById('stage-info');
+    const timerDisplay = document.getElementById('timer-display');
+
+    function triggerPangEffect() {
+        const overlay = document.getElementById('confetti-overlay');
+        const colors = ['#ffab91', '#ffcc80', '#e6ee9c', '#81d4fa', '#f48fb1', '#ce93d8', '#ffeb3b', '#4caf50', '#2196f3'];
+        const centerX = overlay.offsetWidth / 2;
+        const centerY = overlay.offsetHeight / 2;
+
+        for (let i = 0; i < 150; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.left = centerX + 'px';
+            confetti.style.top = centerY + 'px';
+
+            const angle = Math.random() * Math.PI * 2; 
+            const distance = 80 + Math.random() * 400; 
+            const dx = Math.cos(angle) * distance + 'px';
+            const dy = Math.sin(angle) * distance + 'px';
+            confetti.style.setProperty('--dx', dx);
+            confetti.style.setProperty('--dy', dy);
+            overlay.appendChild(confetti);
+
+            setTimeout(() => confetti.remove(), 1500);
+        }
+    }
+
+    function initGame() {
+        cardGrid.style.display = 'none';
+        stageInfo.style.display = 'none';
+        timerDisplay.style.display = 'none';
+        msgBoard.classList.add('story-mode');
+        msgBoard.innerHTML = "<b>[약대생을 위한 임상 약학 실습]</b><br><br>범불안장애(GAD)의 핵심 치료제 6가지를 마스터할 시간입니다.<br><br>이번 시뮬레이션에서는 <b>스테이지 시작 전 딱 10초 동안만 정답의 위치를 보여줍니다.</b> 빠르게 훑어보고 기억력과 약물 지식을 동시에 발휘해 보세요!";
+        
+        btnContainer.innerHTML = '';
+        createBtn("1단계 시작하기", () => startStage(1));
+    }
+
+    function startStage(stageNum) {
+        currentStage = stageNum;
+        matchedPairs = 0;
+        flippedCards = [];
+        lockBoard = true; // 암기 시간에는 클릭 불가
+        
+        msgBoard.style.display = 'none';
+        btnContainer.innerHTML = '';
+        cardGrid.style.display = 'grid';
+        stageInfo.style.display = 'block';
+
+        let stageData = [];
+        
+        if (stageNum === 1) {
+            stageInfo.innerText = "🎯 [1단계] 약물 분류 ↔ 약물 성분 (6쌍)";
+            GAD_DATA.forEach(d => {
+                stageData.push({ id: d.id, text: d.class, type: 'concept' });
+                stageData.push({ id: d.id, text: d.drug, type: 'drug' });
+            });
+        } else if (stageNum === 2) {
+            stageInfo.innerText = "🎯 [2단계] 대표 적응증 ↔ 약물 성분 (6쌍)";
+            GAD_DATA.forEach(d => {
+                stageData.push({ id: d.id, text: d.ind, type: 'concept' });
+                stageData.push({ id: d.id, text: d.drug, type: 'drug' });
+            });
+        } else if (stageNum === 3) {
+            stageInfo.innerText = "🎯 [3단계] 주요 부작용/금기 ↔ 약물 성분 (6쌍)";
+            GAD_DATA.forEach(d => {
+                stageData.push({ id: d.id, text: d.se, type: 'concept' });
+                stageData.push({ id: d.id, text: d.drug, type: 'drug' });
+            });
+        } else if (stageNum === 4) {
+            stageInfo.innerText = "🔥 [보너스 복습] 통합 개념 ↔ 약물 성분 (6쌍)";
+            GAD_DATA.forEach(d => {
+                const combinedText = `[${d.class}]<br><span style='font-size:12px;'>${d.ind}<br>주의: ${d.se}</span>`;
+                stageData.push({ id: d.id, text: combinedText, type: 'concept' });
+                stageData.push({ id: d.id, text: d.drug, type: 'drug' });
+            });
+        }
+
+        // 배열 섞기
+        stageData.sort(() => Math.random() - 0.5);
+        renderBoard(stageData);
+        startMemorizePhase(); // 10초 암기 타이머 시작
+    }
+
+    function renderBoard(data) {
+        cardGrid.innerHTML = '';
+        data.forEach(item => {
+            const card = document.createElement('div');
+            card.className = 'card flipped'; // 처음에 모두 앞면으로 설정
+            card.dataset.id = item.id;
+            
+            const isDrug = item.type === 'drug';
+            const displayText = isDrug ? `<span class="drug-name">${item.text}</span>` : item.text;
+
+            card.innerHTML = `
+                <div class="card-face card-face-down"></div>
+                <div class="card-face card-face-up">${displayText}</div>
+            `;
+            
+            card.addEventListener('click', () => flipCard(card));
+            cardGrid.appendChild(card);
+        });
+    }
+
+    // 10초 암기 페이즈 함수
+    function startMemorizePhase() {
+        let timeLeft = 10;
+        timerDisplay.style.display = 'block';
+        timerDisplay.innerText = `👁️ 눈으로 빠르게 암기하세요! (${timeLeft}초)`;
+        timerDisplay.style.color = '#d32f2f';
+
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            if (timeLeft > 0) {
+                timerDisplay.innerText = `👁️ 눈으로 빠르게 암기하세요! (${timeLeft}초)`;
+            } else {
+                clearInterval(timerInterval);
+                timerDisplay.innerText = "게임을 시작합니다! 짝을 맞춰보세요.";
+                timerDisplay.style.color = '#2e7d32'; // 초록색으로 변경
+                
+                // 모든 카드를 다시 뒷면으로 뒤집고 보드 잠금 해제
+                const allCards = document.querySelectorAll('.card');
+                setTimeout(() => {
+                    allCards.forEach(c => c.classList.remove('flipped'));
+                    lockBoard = false;
+                    
+                    // 시작 알림 텍스트도 1.5초 뒤에 숨김 처리
+                    setTimeout(() => { timerDisplay.style.display = 'none'; }, 1500);
+                }, 500); 
+            }
+        }, 1000);
+    }
+
+    function flipCard(card) {
+        if (lockBoard) return;
+        if (card === flippedCards[0]) return;
+        if (card.classList.contains('matched')) return;
+
+        card.classList.add('flipped');
+        flippedCards.push(card);
+
+        if (flippedCards.length === 2) {
+            checkForMatch();
+        }
+    }
+
+    function checkForMatch() {
+        const isMatch = flippedCards[0].dataset.id === flippedCards[1].dataset.id;
+        
+        if (isMatch) {
+            disableCards();
+        } else {
+            unflipCards();
+        }
+    }
+
+    function disableCards() {
+        flippedCards[0].classList.add('matched');
+        flippedCards[1].classList.add('matched');
+        matchedPairs++;
+        flippedCards = [];
+
+        if (matchedPairs === 6) { // 6쌍 매칭 시 클리어
+            setTimeout(handleStageClear, 500);
+        }
+    }
+
+    function unflipCards() {
+        lockBoard = true;
+        setTimeout(() => {
+            flippedCards[0].classList.remove('flipped');
+            flippedCards[1].classList.remove('flipped');
+            flippedCards = [];
+            lockBoard = false;
+        }, 800); // 1초에서 0.8초로 줄여서 속도감 확보
+    }
+
+    function handleStageClear() {
+        triggerPangEffect();
+        cardGrid.style.display = 'none';
+        stageInfo.style.display = 'none';
+        timerDisplay.style.display = 'none';
+        msgBoard.style.display = 'block';
+        msgBoard.classList.remove('story-mode');
+        
+        btnContainer.innerHTML = '';
+
+        if (currentStage === 1) {
+            msgBoard.innerHTML = "🎉 <b>1단계 클리어!</b><br><br>10초 안에 빠르게 파악하는 능력이 대단합니다! SSRI와 BZD의 구별은 필수입니다. 이어서 '적응증 매칭'으로 넘어갑니다.";
+            createBtn("2단계 시작하기", () => startStage(2));
+        } else if (currentStage === 2) {
+            msgBoard.innerHTML = "🎉 <b>2단계 클리어!</b><br><br>급성기 불안(Alprazolam)과 만성기 유지 치료(Escitalopram, Buspirone)의 용도 차이를 정확히 인지하셨습니다. 다음은 치명적인 오답을 피하기 위한 '부작용 매칭'입니다!";
+            createBtn("3단계 시작하기", () => startStage(3));
+        } else if (currentStage === 3) {
+            msgBoard.classList.add('story-mode');
+            msgBoard.innerHTML = "🎉 <b>3단계 클리어! 완벽합니다!</b><br><br>수고하셨습니다! 약물의 효능뿐만 아니라 부작용과 금기사항까지 확실히 암기하셨네요.<br><br><b>💡 추가 선택:</b><br>지금까지 배운 '약물, 적응증, 부작용'을 한 번에 묶어서 매칭하는 <b>[보너스 복습 모드]</b>를 진행하시겠습니까?";
+            
+            const btnYes = document.createElement('button');
+            btnYes.className = 'btn';
+            btnYes.innerText = "네, 복습할래요! 🔥";
+            btnYes.onclick = () => startStage(4);
+            
+            const btnNo = document.createElement('button');
+            btnNo.className = 'btn secondary';
+            btnNo.innerText = "아니요, 끝낼래요.";
+            btnNo.onclick = () => showEnding();
+
+            btnContainer.appendChild(btnYes);
+            btnContainer.appendChild(btnNo);
+        } else if (currentStage === 4) {
+            showEnding();
+        }
+    }
+
+    function showEnding() {
+        triggerPangEffect();
+        cardGrid.style.display = 'none';
+        stageInfo.style.display = 'none';
+        timerDisplay.style.display = 'none';
+        msgBoard.style.display = 'block';
+        msgBoard.classList.add('story-mode');
+        btnContainer.innerHTML = '';
+
+        msgBoard.innerHTML = "🎓 <b>[수료 완료] GAD 약물학 마스터!</b><br><br>10초 암기 미션까지 모두 훌륭하게 소화하셨습니다! 범불안장애 약물 치료의 핵심은 환자가 벤조디아제핀에만 의존하지 않도록 돕고, 항우울제(SSRI/SNRI)의 지연성 효과를 잘 설명해 장기적인 관리를 돕는 것입니다.<br><br>여러분의 정확하고 신속한 지식이 많은 환자들에게 든든한 안심이 될 것입니다. 앞날을 응원합니다! 💖";
+    }
+
+    function createBtn(text, onClickFunc) {
+        const btn = document.createElement('button');
+        btn.className = 'btn';
+        btn.innerText = text;
+        btn.onclick = onClickFunc;
+        btnContainer.appendChild(btn);
+    }
+
+    initGame();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>🏥 팜디의 수면 장애 클리닉: CBT-i 분석기</title>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --accent: #38bdf8; --point: #f472b6; --text: #f8fafc; }
+        body { font-family: 'Pretendard', sans-serif; background-color: var(--bg); color: var(--text); padding: 40px 20px; display: flex; justify-content: center; }
+        .container { max-width: 800px; width: 100%; background: var(--card); padding: 40px; border-radius: 30px; box-shadow: 0 25px 60px rgba(0,0,0,0.5); }
+        h1 { text-align: center; color: var(--accent); font-size: 2rem; margin-bottom: 40px; border-bottom: 2px solid #334155; padding-bottom: 20px; }
+        .section-title { font-size: 1.2rem; color: var(--point); margin: 30px 0 15px 0; font-weight: bold; border-left: 5px solid var(--point); padding-left: 10px; }
+        .q-card { background: #334155; padding: 20px; border-radius: 15px; margin-bottom: 15px; transition: 0.3s; }
+        .q-card:hover { background: #3d4b5f; }
+        label { display: block; margin-bottom: 10px; font-weight: 500; font-size: 0.95rem; }
+        select { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #0f172a; color: white; }
+        button { width: 100%; padding: 20px; background: var(--accent); color: var(--bg); border: none; border-radius: 15px; font-size: 1.2rem; font-weight: 800; cursor: pointer; margin-top: 30px; transition: 0.3s; }
+        button:hover { background: #7dd3fc; transform: translateY(-3px); box-shadow: 0 10px 20px rgba(56, 189, 248, 0.3); }
+        #result-area { display: none; animation: fadeIn 1s ease-out; }
+        .result-item { background: #1e293b; border: 1px solid #334155; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .highlight { color: var(--accent); font-weight: bold; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>💊 불면증 정밀 진단 시스템 (CBT-i)</h1>
+    
+    <div id="survey">
+        <div class="section-title">Step 1. 수면 양상 및 상태 체크</div>
+        <div class="q-card">
+            <label>Q1. 잠자리에 들고 잠이 들 때까지 30분 이상 걸리나요?</label>
+            <select id="q1_a1"><option value="no">아니오</option><option value="yes">네</option></select>
+        </div>
+        <div class="q-card">
+            <label>Q2. 자다가 자주 깨거나, 다시 잠들기 힘드신가요?</label>
+            <select id="q1_a2"><option value="no">아니오</option><option value="yes">네</option></select>
+        </div>
+        <div class="q-card">
+            <label>Q3. 아침에 너무 일찍 깨서 다시 잠들지 못하시나요?</label>
+            <select id="q1_a3"><option value="no">아니오</option><option value="yes">네</option></select>
+        </div>
+        <div class="q-card">
+            <label>Q4. 잠 문제 때문에 낮에 피곤하거나 일상생활이 힘드신가요?</label>
+            <select id="q2_b"><option value="no">아니오</option><option value="yes">네, 지장이 있습니다</option></select>
+        </div>
+        <div class="q-card">
+            <label>Q5. 이런 증상이 주 3회 이상 발생합니까?</label>
+            <select id="q3_c"><option value="no">아니오</option><option value="yes">네</option></select>
+        </div>
+        <div class="q-card">
+            <label>Q6. 이런 수면 문제가 3개월 이상 지속되었나요?</label>
+            <select id="q4_d"><option value="no">아니오, 3개월 미만입니다</option><option value="yes">네, 3개월 이상입니다</option></select>
+        </div>
+        <div class="q-card">
+            <label>Q7. 충분히 잘 수 있는 환경인데도 잠을 못 주무시나요?</label>
+            <select id="q5_e"><option value="yes">네, 잘 시간이 있어도 못 잡니다</option><option value="no">아니오</option></select>
+        </div>
+        <div class="q-card">
+            <label>Q8. 약물이나 다른 병 때문이 아닌, 잠드는 것 자체가 주 문제인가요?</label>
+            <select id="q6_fgh"><option value="yes">네, 잠드는 것 자체가 문제입니다</option><option value="no">아니오, 약이나 다른 건강 문제 때문인 것 같습니다</option></select>
+        </div>
+
+        <div class="section-title">Step 2. 잠을 방해하는 습관 체크</div>
+        <div class="q-card">
+            <label>Q9. 잠이 안 와도 침대에 계속 누워서 버티시나요?</label>
+            <select id="q7_p"><option value="yes">네, 누워서 잠을 청합니다</option><option value="no">아니오, 잠이 안 오면 일어납니다</option></select>
+        </div>
+        <div class="q-card">
+            <label>Q10. 침대에서 스마트폰을 보거나 딴짓을 자주 하시나요?</label>
+            <select id="q8_p"><option value="yes">네, 침대에서 휴대폰을 많이 봅니다</option><option value="no">아니오, 잠만 잡니다</option></select>
+        </div>
+        <div class="q-card">
+            <label>Q11. 어제 못 잔 잠을 낮잠으로 보충하시나요?</label>
+            <select id="q9_p"><option value="yes">네, 낮에 잠을 보충합니다</option><option value="no">아니오, 낮잠은 피합니다</option></select>
+        </div>
+
+        <div class="section-title">Step 3. 주변 환경 및 생활 패턴</div>
+        <div class="q-card">
+            <label>Q12. 오후에 커피를 마시거나, 잠을 위해 술을 드시나요?</label>
+            <select id="q10_h"><option value="yes">네, 그렇습니다</option><option value="no">아니오</option></select>
+        </div>
+        <div class="q-card">
+            <label>Q13. 평일과 주말에 일어나는 시간이 똑같으신가요?</label>
+            <select id="q11_h"><option value="no">아니오, 주말엔 늦잠을 잡니다</option><option value="yes">네, 일정하게 일어납니다</option></select>
+        </div>
+
+        <button onclick="runAnalysis()">나의 맞춤형 수면 개선 처방전 생성</button>
+    </div>
+
+    <div id="result-area">
+        <div class="result-item"><h2 class="highlight">📋 나의 수면 진단 리포트</h2><p id="diag-res"></p></div>
+        <div class="result-item"><h2 class="highlight">🧪 왜 잠을 못 자는 걸까요?</h2><p id="ppp-res"></p></div>
+        <div class="result-item"><h2 class="highlight">🚀 꿀잠을 위한 맞춤 처방 (CBT-i)</h2><div id="cbt-res" style="line-height: 1.8;"></div></div>
+        <div class="result-item" style="border-left: 5px solid var(--accent);"><h2 class="highlight">💊 약사님의 전문 가이드</h2><p id="med-res"></p></div>
+        <button onclick="location.reload()" style="background: #475569; color: white;">다시 테스트하기</button>
+    </div>
+</div>
+
+<script>
+    function runAnalysis() {
+        try {
+            // 모든 질문 값 가져오기
+            const q1_a = (document.getElementById('q1_a1').value === 'yes' || document.getElementById('q1_a2').value === 'yes' || document.getElementById('q1_a3').value === 'yes');
+            const q2_b = document.getElementById('q2_b').value;
+            const q3_c = document.getElementById('q3_c').value;
+            const q4_d = document.getElementById('q4_d').value;
+            const q5_e = document.getElementById('q5_e').value;
+            const q6_fgh = document.getElementById('q6_fgh').value;
+            const q7_p = document.getElementById('q7_p').value;
+            const q8_p = document.getElementById('q8_p').value;
+            const q9_p = document.getElementById('q9_p').value;
+            const q10_h = document.getElementById('q10_h').value;
+            const q11_h = document.getElementById('q11_h').value;
+
+            document.getElementById('survey').style.display = 'none';
+            document.getElementById('result-area').style.display = 'block';
+
+            // 1. 진단 (DSM-5 p.21 근거)
+            let diagText = "";
+            const isChronic = (q1_a && q2_b === 'yes' && q3_c === 'yes' && q4_d === 'yes' && q5_e === 'yes' && q6_fgh === 'yes');
+            
+            if (isChronic) diagText = "증상이 3개월 이상 지속된 <span class='highlight'>'만성 불면 상태'</span>입니다. 전문가의 도움과 습관 교정이 시급합니다.";
+            else if (q4_d === 'no' && q1_a) diagText = "현재 <span class='highlight'>'시작 단계의 불면증'</span>입니다. 지금 생활 습관을 고치면 금방 회복될 수 있습니다.";
+            else diagText = "심각한 상태는 아니지만, 더 나은 잠을 위해 아래 수칙을 지켜보세요.";
+            document.getElementById('diag-res').innerHTML = diagText;
+
+            // 2. 원인 분석 (p.10 근거)
+            let pRes = "잠을 방해하는 원인 분석: ";
+            if (q7_p === 'yes' || q8_p === 'yes') {
+                pRes += "현재 뇌가 <span class='highlight'>'침대는 잠자는 곳이 아니라 생각하고 노는 곳'으로 착각</span>하고 있습니다. 이 착각을 깨는 훈련이 필요합니다.";
+            } else {
+                pRes += "일부 생활 습관이 잠 기운을 방해하고 있습니다.";
+            }
+            document.getElementById('ppp-res').innerHTML = pRes;
+
+            // 3. 솔루션 (CBT-i + 이완요법 p.60-63 근거)
+            let sol = [];
+            if (q7_p === 'yes' || q8_p === 'yes') sol.push("✅ <b>자극 조절:</b> 잠이 안 오는데 누워있으면 뇌가 깨어납니다. 20분 넘게 잠이 안 오면 거실로 나가서 지루한 책을 읽다가 졸릴 때 다시 들어오세요.");
+            if (q9_p === 'yes') sol.push("✅ <b>낮잠 금지:</b> 낮잠은 밤에 잘 잠을 미리 빌려 쓰는 것입니다. 밤의 '잠 기운'을 모으기 위해 낮잠은 꾹 참으세요.");
+            
+            // 이완요법 추가
+            sol.push("✅ <b>복식호흡 (이완요법):</b> 아랫배가 부풀어 오르게 숨을 깊게 들이마시고 천천히 내뱉으세요. 몸의 긴장을 풀어주면 잠이 훨씬 잘 옵니다.");
+            sol.push("✅ <b>근육 이완법:</b> 발가락부터 머리끝까지 근육에 힘을 꽉 줬다가 한꺼번에 툭! 푸는 과정을 반복하여 몸을 릴렉스하세요.");
+
+            if (q10_h === 'yes') sol.push("✅ <b>수면 위생:</b> 카페인은 오후 2시 이후 금지! 술은 잠들게 도와주는 것 같지만 실제론 잠의 질을 망쳐 자주 깨게 만듭니다.");
+            if (q11_h === 'no') sol.push("✅ <b>기상 시간 고정:</b> 주말에도 평일과 똑같은 시간에 일어나 빛을 쬐어야 우리 몸의 시계가 일정하게 돌아갑니다.");
+            
+            document.getElementById('cbt-res').innerHTML = sol.join("<br>");
+
+            // 4. 복약 가이드 (p.41, p.48 근거)
+            document.getElementById('med-res').innerHTML = "가장 좋은 치료는 약이 아닌 습관 교정입니다. 만약 수면제(졸피뎀 등)를 드신다면, <span class='highlight'>'복합수면행동'</span>(자다가 기억 없이 먹거나 걷는 행동)이 나타날 수 있으니 주의하시고, 정해진 용량만 짧게(최대 28일) 드셔야 합니다.";
+            
+        } catch (err) {
+            alert("모든 항목을 선택했는지 확인해주세요!");
+            console.error(err);
+        }
+    }
+</script>
+
+</body>
+</html>
