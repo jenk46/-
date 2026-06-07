@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>파킨슨병 스마트 약복용 & Wearing-off 매니저</title>
+    <style>
+        :root {
+            --primary-color: #2e7d32;
+            --warning-color: #f57c00;
+            --danger-color: #d32f2f;
+            --bg-color: #f5f5f5;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Malgun Gothic', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        .input-card {
+            background: #fafafa;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #444;
+            font-size: 14px;
+        }
+
+        .input-group select, .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 15px;
+            font-family: inherit;
+        }
+
+        .input-group textarea {
+            resize: vertical;
+        }
+
+        .btn-submit {
+            background-color: #1976d2;
+            margin-top: 5px;
+        }
+
+        .status-card {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            transition: all 0.5s ease;
+            display: none;
+        }
+
+        .status-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .timer {
+            font-size: 40px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #222;
+        }
+
+        .progress-container {
+            background-color: var(--border-color);
+            border-radius: 10px;
+            height: 20px;
+            width: 100%;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background-color: var(--primary-color);
+            height: 100%;
+            width: 100%;
+            transition: width 1s linear, background-color 0.5s ease;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .btn-warning {
+            background-color: var(--warning-color);
+        }
+
+        .btn-cancel {
+            background-color: #9e9e9e;
+        }
+
+        .log-section {
+            margin-top: 25px;
+            text-align: left;
+            border-top: 2px dashed #ccc;
+            padding-top: 15px;
+        }
+
+        .log-title {
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 10px;
+        }
+
+        .log-list {
+            list-style: none;
+            padding: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .log-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            line-height: 1.4;
+        }
+
+        /* 모달(팝업) 스타일 */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: left;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+
+        .modal-content h3 {
+            margin-top: 0;
+            color: var(--warning-color);
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .checkbox-group {
+            margin-bottom: 15px;
+            max-height: 250px;
+            overflow-y: auto;
+            padding-right: 10px;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 8px;
+            background: #fafafa;
+        }
+
+        .checkbox-group::-webkit-scrollbar {
+            width: 6px;
+        }
+        .checkbox-group::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .checkbox-group::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 4px;
+        }
+
+        .checkbox-group label {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            font-size: 14px;
+            color: #333;
+            cursor: pointer;
+            line-height: 1.4;
+        }
+
+        .checkbox-group input {
+            margin-right: 10px;
+            margin-top: 2px;
+            transform: scale(1.2);
+            flex-shrink: 0;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons button {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>💊 파킨슨병 약효 & 복용 매니저</h1>
+    
+    <div class="input-card" id="setupCard">
+        <div class="input-group">
+            <label for="initialSymptoms">현재 주요 증상 (기본 상태)</label>
+            <textarea id="initialSymptoms" rows="3" placeholder="예: 오른쪽 손 떨림, 걸을 때 발 끌림, 평소 허리 통증 등"></textarea>
+        </div>
+        <div class="input-group">
+            <label for="medType">약 종류 (상품명/성분명)</label>
+            <select id="medType">
+                <option value="마오비정 (selegiline)">마오비정 (selegiline)</option>
+                <option value="아질렉트정 (rasagiline)">아질렉트정 (rasagiline)</option>
+                <option value="에퀴피나필름코팅정 (safinamide)">에퀴피나필름코팅정 (safinamide)</option>
+                <option value="마도파정 (benserazide)">마도파정 (benserazide)</option>
+                <option value="명도파정 (benserazide)">명도파정 (benserazide)</option>
+                <option value="시네메트정 (carbidopa)">시네메트정 (carbidopa)</option>
+                <option value="퍼킨정 (carbidopa)">퍼킨정 (carbidopa)</option>
+                <option value="스타레보 (levodopa+carbidopa)">스타레보 (levodopa+carbidopa)</option>
+                <option value="이지레보정 (levodopa+carbidopa)">이지레보정 (levodopa+carbidopa)</option>
+                <option value="트리도파정 (levodopa+carbidopa)">트리도파정 (levodopa+carbidopa)</option>
+                <option value="트리레보정 (levodopa+carbidopa)">트리레보정 (levodopa+carbidopa)</option>
+                <option value="미라펙스정 (Pramipexole)">미라펙스정 (Pramipexole)</option>
+                <option value="리큅정 (Ropinirole)">리큅정 (Ropinirole)</option>
+                <option value="뉴프로패치 (Rotigotine)">뉴프로패치 (Rotigotine)</option>
+                <option value="팔로델정 (Bromocriptine)">팔로델정 (Bromocriptine)</option>
+                <option value="컴탄정 (Entacapone)">컴탄정 (Entacapone)</option>
+                <option value="타스마정 (Tolcapone)">타스마정 (Tolcapone)</option>
+                <option value="온젠티스캡슐 (Opicapone)">온젠티스캡슐 (Opicapone)</option>
+                <option value="가도파정 (Amantadine)">가도파정 (Amantadine)</option>
+            </select>
+        </div>
+        <div class="input-group">
+            <label for="medDose">1회 복용 용량 (mg/정)</label>
+            <input type="text" id="medDose" placeholder="예: 100mg 또는 1알">
+        </div>
+        <div class="input-group">
+            <label for="medFreq">하루 복용 횟수 (회)</label>
+            <input type="number" id="medFreq" placeholder="예: 3, 4, 5" min="1" max="10">
+        </div>
+        <button class="btn-submit" onclick="applySettings()">설정 완료 및 타이머 시작</button>
+    </div>
+
+    <div id="trackerSection" style="display: none;">
+        <div class="status-card" id="statusCard">
+            <div class="status-title" id="statusTitle">정상 복용 상태 (On)</div>
+            <div class="timer" id="timerDisplay">00:00:00</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+            <p id="statusMessage" style="margin: 0; color: #555;">약효가 잘 유지되고 있는 시간입니다.</p>
+        </div>
+
+        <button id="btnTakeMed" onclick="takeMedication()">지금 약 복용 완료 (타이머 리셋)</button>
+        <button id="btnWearingOff" class="btn-warning" onclick="openSymptomModal()">⚠️ 다음 복용 전 약효 소실/이상 기록</button>
+    </div>
+
+    <div class="log-section">
+        <div class="log-title">📋 복용 및 증상 기록 (의사 진료 참고용)</div>
+        <ul class="log-list" id="logList">
+            <li>약 정보를 입력하고 설정을 완료해 주세요.</li>
+        </ul>
+    </div>
+</div>
+
+<div class="modal-overlay" id="symptomModal">
+    <div class="modal-content">
+        <h3>⚠️ 약효 소실 및 이상 증상 체크</h3>
+        <p style="font-size: 13px; color: #666; margin-bottom: 10px;">해당하는 증상을 모두 선택해 주세요. (스크롤 가능)</p>
+        
+        <div class="checkbox-group">
+            <!-- 그룹 1: Wearing-off 계열 -->
+            <label><input type="checkbox" name="offSymptom" value="다음 약 먹기 전에 손이나 다리가 다시 떨려요."> 다음 약 먹기 전에 손이나 다리가 다시 떨려요.</label>
+            <label><input type="checkbox" name="offSymptom" value="다음 약 먹기 전에 몸이 뻣뻣해져요."> 다음 약 먹기 전에 몸이 뻣뻣해져요.</label>
+            <label><input type="checkbox" name="offSymptom" value="다음 약 먹기 전에 움직임이 느려져요."> 다음 약 먹기 전에 움직임이 느려져요.</label>
+            <label><input type="checkbox" name="offSymptom" value="다음 약 먹기 전에 걷기 힘들어지거나 발을 끌어요."> 다음 약 먹기 전에 걷기 힘들어지거나 발을 끌어요.</label>
+            <label><input type="checkbox" name="offSymptom" value="다음 약 먹을 시간이 가까워질수록 몸이 불편해져요."> 다음 약 먹을 시간이 가까워질수록 몸이 불편해져요.</label>
+            <label><input type="checkbox" name="offSymptom" value="다음 약을 먹으면 다시 좋아져요."> 다음 약을 먹으면 다시 좋아져요.</label>
+            
+            <!-- 그룹 2: Motor fluctuation 계열 -->
+            <label><input type="checkbox" name="offSymptom" value="잘 움직이다가 갑자기 몸이 얼어붙은 것처럼 안 움직여져요."> 잘 움직이다가 갑자기 몸이 얼어붙은 것처럼 안 움직여져요.</label>
+            <label><input type="checkbox" name="offSymptom" value="약 먹을 시간과 상관없이 갑자기 걸음이 느려지고 몸이 굳어요."> 약 먹을 시간과 상관없이 갑자기 걸음이 느려지고 몸이 굳어요.</label>
+            <label><input type="checkbox" name="offSymptom" value="걷다가 발이 바닥에 붙은 것처럼 안 떨어져요."> 걷다가 발이 바닥에 붙은 것처럼 안 떨어져요.</label>
+            <label><input type="checkbox" name="offSymptom" value="갑자기 손 떨림이나 몸의 뻣뻣함이 심해졌다가 다시 괜찮아져요."> 갑자기 손 떨림이나 몸의 뻣뻣함이 심해졌다가 다시 괜찮아져요.</label>
+            <label><input type="checkbox" name="offSymptom" value="어떤 때는 잘 걷는데, 갑자기 보폭이 좁아지고 몸 돌리기가 어려워져요."> 어떤 때는 잘 걷는데, 갑자기 보폭이 좁아지고 몸 돌리기가 어려워져요.</label>
+            
+            <!-- 그룹 3: 보행 동결 계열 -->
+            <label><input type="checkbox" name="offSymptom" value="발바닥이 자석처럼 땅에 딱 붙어서 안 떨어져요."> 발바닥이 자석처럼 땅에 딱 붙어서 안 떨어져요.</label>
+            <label><input type="checkbox" name="offSymptom" value="돌아서거나 방향을 바꿀 때 발이 얼어붙고 꼬여요."> 돌아서거나 방향을 바꿀 때 발이 얼어붙고 꼬여요.</label>
+            <label><input type="checkbox" name="offSymptom" value="좁은 문을 지나거나 장애물 앞에서 걸음이 멈춰서요."> 좁은 문을 지나거나 장애물 앞에서 걸음이 멈춰서요.</label>
+            
+            <!-- 그룹 4: 이상운동증 (Dyskinesia) 계열 -->
+            <label><input type="checkbox" name="offSymptom" value="입술을 오물오물하거나 쩝쩝거리는 움직여요."> 입술을 오물오물하거나 쩝쩝거리며 움직여요.</label>
+            <label><input type="checkbox" name="offSymptom" value="자신도 모르게 혀가 날름거리거나 입 밖으로 나와요."> 자신도 모르게 혀가 날름거리거나 입 밖으로 나와요.</label>
+            <label><input type="checkbox" name="offSymptom" value="눈썹이 들썩이거나 얼굴을 찡그리는 표정이 반복해서 지어져요."> 눈썹이 들썩이거나 얼굴을 찡그리는 표정이 반복해서 지어져요.</label>
+            <label><input type="checkbox" name="offSymptom" value="가만히 앉아 있는데도 어깨가 으쓱으쓱 들썩여요."> 가만히 앉아 있는데도 어깨가 으쓱으쓱 들썩여요.</label>
+            <label><input type="checkbox" name="offSymptom" value="팔이 허공을 향해 허우적거리거나 흔들려요."> 팔이 허공을 향해 허우적거리거나 흔들려요.</label>
+            <label><input type="checkbox" name="offSymptom" value="손가락이 마치 보이지 않는 피아노를 치는 것처럼 까딱거리고 꼼지락거려요."> 손가락이 마치 보이지 않는 피아노를 치는 것처럼 까딱거리고 꼼지락거려요.</label>
+            <label><input type="checkbox" name="offSymptom" value="가만히 서 있거나 앉아 있을 때 다리가 저절로 꼬이거나 흔들려요."> 가만히 서 있거나 앉아 있을 때 다리가 저절로 꼬이거나 흔들려요.</label>
+            <label><input type="checkbox" name="offSymptom" value="걸어갈 때 발을 헛딛는 것처럼 스텝이 꼬이거나, 과장되게 건들거리며 걷게돼요."> 걸어갈 때 발을 헛딛는 것처럼 스텝이 꼬이거나, 과장되게 건들거리며 걷게돼요.</label>
+            <label><input type="checkbox" name="offSymptom" value="상체가 좌우로 흔들리거나 앞뒤로 굽어지며 비틀거려요."> 상체가 좌우로 흔들리거나 앞뒤로 굽어지며 비틀거려요.</label>
+            <label><input type="checkbox" name="offSymptom" value="옆에서 보면 훌라후프를 돌리거나 가볍게 춤을 추는 것처럼 보여요."> 옆에서 보면 훌라후프를 돌리거나 가볍게 춤을 추는 것처럼 보여요.</label>
+            <label><input type="checkbox" name="offSymptom" value="한자리에 가만히 앉아있지 못하고 계속 안절부절못하며 자세를 바꿔요."> 한자리에 가만히 앉아있지 못하고 계속 안절부절못하며 자세를 바꿔요.</label>
+        </div>
+        
+        <div class="input-group" style="margin-bottom: 0;">
+            <input type="text" id="otherSymptom" placeholder="기타 증상 직접 입력">
+        </div>
+
+        <div class="modal-buttons">
+            <button class="btn-submit" onclick="submitWearingOff()">기록 저장</button>
+            <button class="btn-cancel" onclick="closeModal()">취소</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    let DOSE_INTERVAL = 0; 
+    let timeLeft = 0;
+    let timerInterval;
+    let currentMedInfo = {};
+    let savedTimePassed = 0;
+
+    const timerDisplay = document.getElementById('timerDisplay');
+    const progressBar = document.getElementById('progressBar');
+    const statusCard = document.getElementById('statusCard');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusMessage = document.getElementById('statusMessage');
+    const logList = document.getElementById('logList');
+    const setupCard = document.getElementById('setupCard');
+    const trackerSection = document.getElementById('trackerSection');
+    const symptomModal = document.getElementById('symptomModal');
+
+    // 증상 분류 배열 (정확한 매칭을 위해 사용)
+    const SYMPTOM_GROUP_1 = [
+        "다음 약 먹기 전에 손이나 다리가 다시 떨려요.", "다음 약 먹기 전에 몸이 뻣뻣해져요.", 
+        "다음 약 먹기 전에 움직임이 느려져요.", "다음 약 먹기 전에 걷기 힘들어지거나 발을 끌어요.",
+        "다음 약 먹을 시간이 가까워질수록 몸이 불편해져요.", "다음 약을 먹으면 다시 좋아져요."
+    ];
+
+    const SYMPTOM_GROUP_2 = [
+        "잘 움직이다가 갑자기 몸이 얼어붙은 것처럼 안 움직여져요.", "약 먹을 시간과 상관없이 갑자기 걸음이 느려지고 몸이 굳어요.",
+        "걷다가 발이 바닥에 붙은 것처럼 안 떨어져요.", "갑자기 손 떨림이나 몸의 뻣뻣함이 심해졌다가 다시 괜찮아져요.",
+        "어떤 때는 잘 걷는데, 갑자기 보폭이 좁아지고 몸 돌리기가 어려워져요."
+    ];
+
+    const SYMPTOM_GROUP_3 = [
+        "발바닥이 자석처럼 땅에 딱 붙어서 안 떨어져요.", "돌아서거나 방향을 바꿀 때 발이 얼어붙고 꼬여요.", "좁은 문을 지나거나 장애물 앞에서 걸음이 멈춰서요."
+    ];
+
+    const SYMPTOM_GROUP_4 = [
+        "입술을 오물오물하거나 쩝쩝거리는 움직여요.", "자신도 모르게 혀가 날름거리거나 입 밖으로 나와요.",
+        "눈썹이 들썩이거나 얼굴을 찡그리는 표정이 반복해서 지어져요.", "가만히 앉아 있는데도 어깨가 으쓱으쓱 들썩여요.",
+        "팔이 허공을 향해 허우적거리거나 흔들려요.", "손가락이 마치 보이지 않는 피아노를 치는 것처럼 까딱거리고 꼼지락거려요.",
+        "가만히 서 있거나 앉아 있을 때 다리가 저절로 꼬이거나 흔들려요.", "걸어갈 때 발을 헛딛는 것처럼 스텝이 꼬이거나, 과장되게 건들거리며 걷게돼요.",
+        "상체가 좌우로 흔들리거나 앞뒤로 굽어지며 비틀거려요.", "옆에서 보면 훌라후프를 돌리거나 가볍게 춤을 추는 것처럼 보여요.",
+        "한자리에 가만히 앉아있지 못하고 계속 안절부절못하며 자세를 바꿔요."
+    ];
+
+    function formatTime(seconds) {
+        const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+        const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+        const s = (seconds % 60).toString().padStart(2, '0');
+        return `${h}:${m}:${s}`;
+    }
+
+    function applySettings() {
+        const initialSymptoms = document.getElementById('initialSymptoms').value.trim();
+        const type = document.getElementById('medType').value;
+        const dose = document.getElementById('medDose').value.trim();
+        const freq = parseInt(document.getElementById('medFreq').value);
+
+        if (!dose || isNaN(freq) || freq <= 0) {
+            alert("용량과 올바른 복용 횟수를 입력해 주세요.");
+            return;
+        }
+
+        currentMedInfo = { type, dose, freq };
+        const hoursInterval = 24 / freq;
+        DOSE_INTERVAL = Math.floor(hoursInterval * 3600);
+
+        setupCard.style.display = 'none';
+        trackerSection.style.display = 'block';
+        statusCard.style.display = 'block';
+        
+        logList.innerHTML = '';
+        if (initialSymptoms) {
+            addLog(`[초기상태] 주요 증상: ${initialSymptoms}`);
+        }
+        addLog(`[설정완료] ${type} (${dose}), 하루 ${freq}회 복용 설정됨. (예상 간격: 약 ${hoursInterval.toFixed(1)}시간)`);
+        
+        takeMedication();
+    }
+
+    function updateTimer() {
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            timerDisplay.innerText = "00:00:00";
+            progressBar.style.width = '0%';
+            setDangerState();
+            return;
+        }
+
+        timeLeft--;
+        timerDisplay.innerText = formatTime(timeLeft);
+
+        const percentage = (timeLeft / DOSE_INTERVAL) * 100;
+        progressBar.style.width = percentage + '%';
+
+        if (timeLeft <= DOSE_INTERVAL * 0.3 && timeLeft > 0) {
+            setWarningState();
+        }
+    }
+
+    function setWarningState() {
+        statusCard.style.backgroundColor = '#fff3e0';
+        statusTitle.innerText = "⚠️ 약효 소실 주의 구간";
+        statusTitle.style.color = 'var(--warning-color)';
+        progressBar.style.backgroundColor = 'var(--warning-color)';
+        statusMessage.innerText = "다음 복용 시간이 다가옵니다. 몸이 굳거나 떨림이 있는지 확인하세요.";
+    }
+
+    function setDangerState() {
+        statusCard.style.backgroundColor = '#ffebee';
+        statusTitle.innerText = "🚨 약 복용 시간 초과 (Off 위험)";
+        statusTitle.style.color = 'var(--danger-color)';
+        progressBar.style.backgroundColor = 'var(--danger-color)';
+        statusMessage.innerText = "약 복용 시간이 지났습니다! 즉시 약을 복용해 주세요.";
+    }
+
+    function takeMedication() {
+        clearInterval(timerInterval);
+        timeLeft = DOSE_INTERVAL;
+        
+        statusCard.style.backgroundColor = '#e8f5e9';
+        statusTitle.innerText = "정상 복용 상태 (On)";
+        statusTitle.style.color = 'var(--primary-color)';
+        progressBar.style.backgroundColor = 'var(--primary-color)';
+        progressBar.style.width = '100%';
+        statusMessage.innerText = "약효가 잘 유지되고 있는 시간입니다.";
+        
+        timerDisplay.innerText = formatTime(timeLeft);
+        timerInterval = setInterval(updateTimer, 1000);
+
+        addLog(`💊 [복용완료] ${currentMedInfo.type} ${currentMedInfo.dose} 복용함.`);
+    }
+
+    function openSymptomModal() {
+        savedTimePassed = DOSE_INTERVAL - timeLeft;
+        
+        const checkboxes = document.querySelectorAll('input[name="offSymptom"]');
+        checkboxes.forEach(cb => cb.checked = false);
+        document.getElementById('otherSymptom').value = '';
+
+        symptomModal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        symptomModal.style.display = 'none';
+    }
+
+    function submitWearingOff() {
+        const checkboxes = document.querySelectorAll('input[name="offSymptom"]:checked');
+        const otherSymptom = document.getElementById('otherSymptom').value.trim();
+        
+        let selectedSymptoms = [];
+        let guidanceMessages = new Set(); // 중복 메시지 방지를 위한 Set
+
+        checkboxes.forEach(cb => {
+            selectedSymptoms.push(cb.value);
+            
+            // 그룹에 따른 메시지 할당
+            if (SYMPTOM_GROUP_1.includes(cb.value)) {
+                guidanceMessages.add("✅ [정형적 약효 소실]\n약물 조절이 필요합니다. 부가요법으로 Dopamine agonist 추가/증량, MAO-B i 추가, COMT i 추가를 고려할 수 있습니다.");
+            }
+            if (SYMPTOM_GROUP_2.includes(cb.value)) {
+                guidanceMessages.add("✅ [운동 동요/예측불허 소실]\nL-dopa 용량 조절 및 투여간격 조절, apomorphine 주사제 또는 흡입제를 고려할 수 있습니다.");
+            }
+            if (SYMPTOM_GROUP_3.includes(cb.value)) {
+                guidanceMessages.add("✅ [보행 동결]\nL-dopa 투여횟수 증가, 서방정 사용이 필요할 수 있습니다.");
+            }
+            if (SYMPTOM_GROUP_4.includes(cb.value)) {
+                guidanceMessages.add("✅ [이상운동증 (Dyskinesia)]\nL-dopa 용량 감소, amantadine 추가, 서방형 전환이 필요할 수 있습니다.");
+            }
+        });
+        
+        if (otherSymptom) {
+            selectedSymptoms.push(otherSymptom);
+        }
+
+        if (selectedSymptoms.length === 0) {
+            alert("발생한 증상을 하나 이상 선택하거나 입력해 주세요.");
+            return;
+        }
+
+        const formattedPassed = formatTime(savedTimePassed);
+        const symptomString = selectedSymptoms.join('<br> - ');
+
+        // 로그 기록 추가
+        addLog(`⚠️ [약효 이상/소실] 복용 후 ${formattedPassed} 경과.<br><span style="color:var(--danger-color); font-size:13px;">[발현 증상]<br> - ${symptomString}</span>`);
+        
+        // 팝업 알림창(Alert) 띄우기
+        if (guidanceMessages.size > 0) {
+            let finalAlertMsg = Array.from(guidanceMessages).join("\n\n");
+            finalAlertMsg += "\n\n⚠️ 위 내용은 참고용 가이드입니다. 정확한 진단 및 약물 조절을 위해 반드시 담당 의사와의 상담이 필요합니다.";
+            
+            // 모달을 닫고 0.1초 뒤에 Alert를 띄움 (화면 전환을 부드럽게 하기 위함)
+            closeModal();
+            setTimeout(() => {
+                alert(finalAlertMsg);
+            }, 100);
+        } else {
+            closeModal();
+        }
+    }
+
+    function addLog(text) {
+        const now = new Date();
+        const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+        
+        const li = document.createElement('li');
+        li.innerHTML = `<strong>[${timeStr}]</strong> ${text}`;
+        logList.insertBefore(li, logList.firstChild);
+    }
+</script>
+
+</body>
+</html>

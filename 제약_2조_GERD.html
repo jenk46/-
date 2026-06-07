@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GERD 프로 케어 다이어리</title>
+    <style>
+        :root {
+            --primary: #2ebdae; /* 화사한 민트 */
+            --primary-light: #e0f6f4;
+            --primary-dark: #209488;
+            --secondary: #ff8a65; /* 따뜻한 코랄 */
+            --secondary-light: #ffebd6;
+            --danger: #ef5350;
+            --success: #66bb6a;
+            --dark: #2c3e50;
+            --gray: #dcdde1;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+        }
+        body {
+            font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--dark);
+            margin: 0; padding: 0;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh;
+        }
+        .app-container {
+            width: 100%; max-width: 480px; height: 100vh; max-height: 900px;
+            background: var(--card-bg); display: flex; flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08); position: relative; overflow: hidden;
+        }
+        @media (min-width: 481px) { .app-container { height: 90vh; border-radius: 24px; } }
+
+        /* 온보딩 */
+        #onboarding-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--primary), #48c6ef);
+            color: white; z-index: 100; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;
+        }
+        .onboarding-card { background: rgba(255, 255, 255, 0.15); backdrop-filter: blur(10px); padding: 30px; border-radius: 20px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.1); }
+        .onboarding-card h1 { text-align: center; margin-top: 0; font-size: 1.5em; }
+        .onboarding-card label { color: white; margin-bottom: 5px; display: block; font-size: 0.9em; }
+        .onboarding-card input { width: 100%; padding: 12px; margin-bottom: 15px; border: none; border-radius: 8px; box-sizing: border-box; font-size: 1em; }
+        .onboarding-card button { width: 100%; padding: 14px; background: white; color: var(--primary-dark); border: none; border-radius: 8px; font-weight: bold; font-size: 1.1em; cursor: pointer; margin-top: 10px; }
+
+        /* 헤더 */
+        header { background-color: var(--primary); color: white; padding: 20px 15px; text-align: center; font-weight: 700; font-size: 1.2em; z-index: 10; box-shadow: 0 2px 15px rgba(46, 189, 174, 0.2); display: flex; flex-direction: column; gap: 5px; }
+        .header-greeting { font-size: 0.75em; font-weight: normal; opacity: 0.9; }
+
+        /* 메인 콘텐츠 */
+        main { flex: 1; overflow-y: auto; padding: 20px; padding-bottom: 90px; background-color: var(--bg-color); }
+        .tab-content { display: none; animation: fadeIn 0.3s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 네비게이션 */
+        .bottom-nav { position: absolute; bottom: 0; width: 100%; background: white; display: flex; border-top: 1px solid #f0f0f0; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 15px rgba(0,0,0,0.03); z-index: 10; }
+        .nav-item { flex: 1; padding: 12px 0; text-align: center; color: #a4b0be; font-size: 0.75em; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .nav-item.active { color: var(--primary); font-weight: bold; }
+        .nav-icon { font-size: 1.5em; }
+
+        /* 카드 및 폼 요소 */
+        .card { background: white; border-radius: 16px; padding: 20px; margin-bottom: 20px; border: 1px solid #f1f2f6; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+        .card h2 { margin-top: 0; font-size: 1.1em; color: var(--dark); display: flex; align-items: center; gap: 8px; margin-bottom: 15px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.85em; color: #576574; }
+        input[type="time"], input[type="text"], select { width: 100%; padding: 12px; margin-bottom: 12px; border: 1px solid var(--gray); border-radius: 10px; box-sizing: border-box; font-size: 0.95em; background: #fdfdfd; }
+        input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+        button.btn { background-color: var(--primary); color: white; border: none; padding: 14px 20px; border-radius: 10px; cursor: pointer; font-size: 1em; font-weight: bold; width: 100%; box-shadow: 0 4px 10px rgba(46, 189, 174, 0.3); }
+        button.btn-warning { background-color: var(--secondary); box-shadow: 0 4px 10px rgba(255, 138, 101, 0.3); }
+
+        /* 캘린더 */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; font-weight: bold; margin-bottom: 15px; }
+        .calendar-header span { cursor: pointer; padding: 5px 12px; background: var(--primary-light); border-radius: 8px; color: var(--primary-dark); }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
+        .calendar-day-label { font-size: 0.8em; font-weight: bold; color: #888; padding: 5px 0; }
+        .calendar-day { min-height: 52px; padding: 5px; background: #f8f9fa; border-radius: 10px; font-size: 0.9em; cursor: pointer; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; }
+        .calendar-day.active { border: 2px solid var(--primary); background: var(--primary-light); font-weight: bold; }
+        .calendar-day.has-data { background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .day-dots { display: flex; justify-content: center; gap: 3px; margin-top: 2px; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+        .dot.good { background: var(--success); }
+        .dot.late { background: var(--secondary); }
+        .dot.miss { background: var(--danger); }
+        .day-score { font-size: 0.7em; color: #7f8c8d; font-weight: bold; }
+
+        /* 가이드라인 인포박스 */
+        .info-box { background: #f8f9fa; border-left: 4px solid var(--secondary); padding: 15px; border-radius: 0 8px 8px 0; margin-top: 20px; font-size: 0.85em; color: #555; line-height: 1.6; }
+        .info-box h3 { margin-top: 0; color: var(--dark); font-size: 1.05em; margin-bottom: 8px; }
+
+        /* 미니게임 */
+        #game-container { width: 100%; height: 260px; background: #0f172a; border-radius: 12px; position: relative; overflow: hidden; margin-bottom: 15px; }
+        #game-shield { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 70px; height: 15px; background: #38bdf8; border-radius: 10px; box-shadow: 0 0 10px #38bdf8; }
+        .acid-drop { position: absolute; width: 16px; height: 16px; background: #bef264; border-radius: 50%; box-shadow: 0 0 8px #bef264; }
+        #game-ui { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; color: white; font-weight: bold; font-size: 0.9em; z-index: 5; }
+        .game-controls { display: flex; gap: 10px; }
+        .game-btn { flex: 1; padding: 18px; background: #1e293b; color: white; border: none; border-radius: 10px; font-size: 1.3em; touch-action: manipulation; }
+        #game-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; z-index: 10; text-align: center; }
+
+        /* 입력 모달 (스크롤 가능하도록 보완) */
+        .modal-overlay { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 20; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 85%; max-height: 80vh; overflow-y: auto; border-radius: 20px; padding: 22px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); box-sizing: border-box; }
+        .gerdq-section { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+        .gerdq-title { font-size: 0.85em; font-weight: bold; color: var(--primary-dark); margin-bottom: 6px; }
+        .alert-box { padding: 15px; border-radius: 10px; margin-top: 15px; font-size: 0.9em; display: none; }
+        
+        /* 분석 리포트 카드 데코 */
+        .report-card { background: #f8fafc; padding: 15px; border-radius: 12px; border-left: 4px solid var(--primary); margin-bottom: 12px; font-size: 0.95em; }
+        .report-card.danger-card { border-left-color: var(--secondary); background: #fffaf8; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <!-- 1. 온보딩 스크린 -->
+    <div id="onboarding-screen">
+        <div class="onboarding-card">
+            <h1>✨ 반가워요!</h1>
+            <p style="text-align:center; font-size:0.9em; opacity:0.9; margin-bottom:20px;">첫 이용이시군요. 맞춤 관리를 시작해볼까요?</p>
+            <label>이름 (닉네임)</label>
+            <input type="text" id="obName" placeholder="예: 홍길동">
+            <label>나이 (세)</label>
+            <input type="number" id="obAge" placeholder="예: 28">
+            <label>역류성 식도염 진단일</label>
+            <input type="date" id="obDate">
+            <button onclick="startApp()">체크리스트 시작하기</button>
+        </div>
+    </div>
+
+    <!-- 앱 헤더 -->
+    <header id="app-header">
+        <div class="header-greeting" id="headerGreeting">사용자님 반갑습니다.</div>
+        <div id="headerTitle">복약 알람 설정</div>
+    </header>
+
+    <main>
+        <!-- 탭 1: 알람 -->
+        <section id="tab-alarm" class="tab-content active">
+            <div class="card">
+                <h2>⏰ 식전 PPI 복용 골든타임</h2>
+                <p style="font-size:0.9em; color:#666;">위산 분비 억제제는 식사 전 미리 복용하는 것이 핵심입니다.</p>
+                <label>평소 아침 식사 시간:</label>
+                <input type="time" id="breakfastTime" value="08:00" onchange="calculateTiming()">
+                <div id="timingResult" style="background: var(--primary-light); padding: 20px; border-radius: 12px; margin-top: 15px; text-align: center; color: var(--primary-dark); font-weight: bold;"></div>
+            </div>
+        </section>
+
+        <!-- 탭 2: 점검 -->
+        <section id="tab-check" class="tab-content">
+            <div class="card">
+                <h2>🍔 식단 사전 검증기</h2>
+                <p style="font-size:0.85em; color:#666;">식사 전에 메뉴를 검색해보세요.</p>
+                <div style="display:flex; gap:10px;">
+                    <input type="text" id="foodCheckerInput" placeholder="예: 파스타, 스파게티, 삼겹살" style="margin-bottom:0;" onkeypress="if(event.keyCode==13) checkFoodWarnings()">
+                    <button class="btn btn-warning" onclick="checkFoodWarnings()" style="width:80px; padding:12px;">검색</button>
+                </div>
+                <div id="foodWarningResult" class="alert-box"></div>
+            </div>
+            <div class="info-box">
+                <h3>💡 세브란스병원 권장 식사요법</h3>
+                <ul style="padding-left: 18px; margin-bottom: 0;">
+                    <li><b>기름진 요리:</b> 튀김, 치킨, 삼겹살, 피자 (위 배출 지연 유발)</li>
+                    <li><b>밀가루/면류:</b> 라면, 파스타, 스파게티, 짜장면, 빵</li>
+                    <li><b>카페인/초콜릿:</b> 커피, 녹차, 코코아 (하부식도괄약근 느슨화)</li>
+                    <li><b>산성 음식:</b> 토마토, 케첩, 오렌지, 주스류</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 탭 3: 기록 (GERD-Q 탑재) -->
+        <section id="tab-diary" class="tab-content">
+            <div class="card">
+                <h2>📅 증상 및 식단 다이어리</h2>
+                <div class="calendar-header">
+                    <span onclick="changeMonth(-1)">◀</span>
+                    <span id="calendarMonthText" style="background:none; color:var(--dark);">2026년 5월</span>
+                    <span onclick="changeMonth(1)">▶</span>
+                </div>
+                <div class="calendar-grid" id="calendarGrid"></div>
+            </div>
+        </section>
+
+        <!-- 탭 4: 분석 (전날 연장 영향 반영) -->
+        <section id="tab-report" class="tab-content">
+            <div class="card">
+                <h2>📊 나만의 심층 원인 분석</h2>
+                <div id="reportBox">
+                    <p style="color:#999; text-align:center;">충분한 데이터가 쌓이면 분석 리포트가 활성화됩니다. (최소 1개 이상 기록 필요)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 탭 5: 미니게임 -->
+        <section id="tab-game" class="tab-content">
+            <div class="card" style="background:#0f172a; color:white; border:none;">
+                <h2 style="color:var(--primary-light);">🎮 위산 방어전</h2>
+                <div id="game-container">
+                    <div id="game-ui">
+                        <span id="scoreDisplay">점수: 0</span>
+                        <span id="healthDisplay">식도 벽: ♥♥♥</span>
+                    </div>
+                    <div id="game-shield"></div>
+                    <div id="game-overlay">
+                        <h3 id="game-msg">위산을 막아라!</h3>
+                        <button class="btn" style="width:auto; padding:10px 30px; background:#38bdf8; color:#0f172a;" onclick="startGame()">게임 시작</button>
+                    </div>
+                </div>
+                <div class="game-controls">
+                    <button class="game-btn" onmousedown="moveShield(-1)" onmouseup="stopShield()" ontouchstart="moveShield(-1)" ontouchend="stopShield()">◀ 좌</button>
+                    <button class="game-btn" onmousedown="moveShield(1)" onmouseup="stopShield()" ontouchstart="moveShield(1)" ontouchend="stopShield()">우 ▶</button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- GERD-Q 적용 입력 모달 -->
+    <div class="modal-overlay" id="inputModal">
+        <div class="modal-content">
+            <h3 id="modalDateText" style="margin-top:0; color:var(--primary); border-bottom:1px solid #eee; padding-bottom:8px;">증상 기록</h3>
+            
+            <label>약 복용 여부:</label>
+            <select id="medCheck">
+                <option value="Good">🟢 식전 정시간 복용 완료</option>
+                <option value="Late">🟡 식후 또는 임의 복용</option>
+                <option value="Missed">🔴 복용 건너뜀</option>
+            </select>
+
+            <label>오늘 먹은 음식 (쉼표 구분):</label>
+            <input type="text" id="foodInput" placeholder="예: 커피, 삼겹살, 흰쌀밥">
+
+            <div style="margin: 15px 0 10px 0; font-weight: bold; font-size: 0.9em; color:#2c3e50;">🩺 일일 GERD-Q 기반 증상 체크</div>
+            
+            <div class="gerdq-section">
+                <div class="gerdq-title">1. 명치 부위가 화끈거리거나 쓰린 느낌(가슴쓰림)</div>
+                <select id="gqHeartburn" class="gq-select" onchange="calcLiveGerdQ()">
+                    <option value="0">없었음 (0점)</option>
+                    <option value="1">약하게 가끔 느꼈음 (1점)</option>
+                    <option value="2">상당히 자주 느꼈음 (2점)</option>
+                    <option value="3">하루 종일 심하게 느꼈음 (3점)</option>
+                </select>
+            </div>
+
+            <div class="gerdq-section">
+                <div class="gerdq-title">2. 위산이나 음식물이 입/목으로 역류하는 느낌</div>
+                <select id="gqAcid" class="gq-select" onchange="calcLiveGerdQ()">
+                    <option value="0">없었음 (0점)</option>
+                    <option value="1">가끔 울컥 올라왔음 (1점)</option>
+                    <option value="2">자주 역류를 느꼈음 (2점)</option>
+                    <option value="3">매우 심하게 역류했음 (3점)</option>
+                </select>
+            </div>
+
+            <div class="gerdq-section">
+                <div class="gerdq-title">3. 가슴쓰림/역류 때문에 밤에 잠을 설쳤나요?</div>
+                <select id="gqSleep" class="gq-select" onchange="calcLiveGerdQ()">
+                    <option value="0">전혀 없음 (0점)</option>
+                    <option value="1">1회 정도 깼거나 뒤척임 (1점)</option>
+                    <option value="2">2~3회 깨어 불편했음 (2점)</option>
+                    <option value="3">통증 때문에 잠을 거의 못 잠 (3점)</option>
+                </select>
+            </div>
+
+            <div style="background:var(--secondary-light); padding:12px; border-radius:10px; font-weight:bold; text-align:center; color:var(--secondary); margin-bottom:15px;">
+                오늘의 GERD-Q 점수: <span id="liveGerdQScore">0</span>점 / 9점
+            </div>
+
+            <div style="display:flex; gap:10px;">
+                <button class="btn" style="background:#e0e0e0; color:#555; box-shadow:none;" onclick="closeModal()">취소</button>
+                <button class="btn" onclick="saveDailyData()">기록 저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 하단 내비게이션 바 -->
+    <nav class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('alarm', this)"><div class="nav-icon">⏰</div><span>알람</span></div>
+        <div class="nav-item" onclick="switchTab('check', this)"><div class="nav-icon">🍔</div><span>점검</span></div>
+        <div class="nav-item" onclick="switchTab('diary', this)"><div class="nav-icon">📅</div><span>기록</span></div>
+        <div class="nav-item" onclick="switchTab('report', this)"><div class="nav-icon">📊</div><span>분석</span></div>
+        <div class="nav-item" onclick="switchTab('game', this)"><div class="nav-icon">🎮</div><span>게임</span></div>
+    </nav>
+</div>
+
+<script>
+    /* =======================================
+       1. 온보딩 및 상태 관리
+    ======================================= */
+    let userInfo = { name: "", age: "", date: "" };
+    let diaryDatabase = {}; 
+    let currentYear = 2026, currentMonth = 5;
+    let selectedDateStr = "";
+
+    function checkOnboarding() {
+        if(!userInfo.name) {
+            document.getElementById('onboarding-screen').style.display = 'flex';
+        } else {
+            document.getElementById('onboarding-screen').style.display = 'none';
+        }
+    }
+
+    function startApp() {
+        const name = document.getElementById('obName').value.trim();
+        const age = document.getElementById('obAge').value.trim();
+        const date = document.getElementById('obDate').value;
+        if(!name) { alert("이름을 입력해주세요!"); return; }
+        
+        userInfo = { name, age, date };
+        document.getElementById('headerGreeting').innerText = `${name}님 (${age}세) | 진단일: ${date || '미입력'}`;
+        document.getElementById('onboarding-screen').style.display = 'none';
+        
+        calculateTiming();
+        renderCalendar();
+    }
+
+    function switchTab(tabId, element) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+        
+        document.getElementById(`tab-${tabId}`).classList.add('active');
+        element.classList.add('active');
+        
+        const headers = { 'alarm':'복약 알람 설정', 'check':'식단 사전 점검', 'diary':'다이어리 기록', 'report':'나의 데이터 분석', 'game':'휴식 미니게임' };
+        document.getElementById('headerTitle').innerText = headers[tabId];
+
+        if(tabId === 'report') updateAccumulatedReport();
+        else if(tabId === 'diary') renderCalendar();
+    }
+
+    /* =======================================
+       2. 알람 & 식품 점검 논리 (스파게티=파스타 동일 차단)
+    ======================================= */
+    function calculateTiming() {
+        const timeVal = document.getElementById('breakfastTime').value;
+        if(!timeVal) return;
+        const [hours, minutes] = timeVal.split(':').map(Number);
+        let ppiTime = new Date(); ppiTime.setHours(hours, minutes - 45, 0);
+        document.getElementById('timingResult').innerHTML = `위산 예방약(PPI) 복용 적정 타임<br><span style="font-size:1.6em; color:var(--primary);">${ppiTime.toTimeString().substring(0, 5)}</span>`;
+    }
+
+    const dietCategories = {
+        "기름진 육류/튀김류": ["튀김", "치킨", "삼겹살", "돈까스", "피자", "버거", "곱창", "구이", "짜장면"],
+        "밀가루 고탄수화물 면류": ["밀가루", "빵", "라면", "국수", "파스타", "스파게티", "수제비"],
+        "카페인 및 기호식품": ["커피", "에스프레소", "아메리카노", "녹차", "홍차", "초콜릿", "코코아"],
+        "산도가 강한 과일 및 토마토 베이스": ["토마토", "케첩", "오렌지", "귤", "레몬", "자몽", "주스"]
+    };
+
+    function checkFoodWarnings() {
+        const input = document.getElementById('foodCheckerInput').value.trim();
+        const resultDiv = document.getElementById('foodWarningResult');
+        if (!input) return;
+
+        let warningsFound = [];
+        for (const [category, keywords] of Object.entries(dietCategories)) {
+            if (keywords.some(kw => input.toLowerCase().includes(kw))) { warningsFound.push(category); }
+        }
+
+        resultDiv.style.display = 'block';
+        if (warningsFound.length > 0) {
+            resultDiv.style.backgroundColor = '#fff3f3'; resultDiv.style.color = '#c62828'; resultDiv.style.border = '1px solid #ffcdd2';
+            resultDiv.innerHTML = `⚠️ <b>주의군 요리 발견!</b><br>입력하신 요리는 <b>[${warningsFound.join(', ')}]</b> 위험 카테고리에 속해 위산 과다분비 및 역류를 유발할 확률이 높습니다.`;
+        } else {
+            resultDiv.style.backgroundColor = '#e8f5e9'; resultDiv.style.color = '#2e7d32'; resultDiv.style.border = '1px solid #c8e6c9';
+            resultDiv.innerHTML = `✅ <b>안전한 식품군입니다.</b><br>주요 위벽 자극 성분이 검출되지 않았습니다. 단, 과식은 괄약근을 늘려 역류를 유발하니 주의하세요.`;
+        }
+    }
+
+    /* =======================================
+       3. 캘린더 다이어리 & GERD-Q 연산
+    ======================================= */
+    function calcLiveGerdQ() {
+        let hb = parseInt(document.getElementById('gqHeartburn').value);
+        let ac = parseInt(document.getElementById('gqAcid').value);
+        let sl = parseInt(document.getElementById('gqSleep').value);
+        document.getElementById('liveGerdQScore').innerText = hb + ac + sl;
+    }
+
+    function changeMonth(offset) {
+        currentMonth += offset;
+        if(currentMonth > 12) { currentMonth = 1; currentYear++; }
+        else if(currentMonth < 1) { currentMonth = 12; currentYear--; }
+        renderCalendar();
+    }
+
+    function renderCalendar() {
+        document.getElementById('calendarMonthText').innerText = `${currentYear}년 ${currentMonth}월`;
+        const grid = document.getElementById('calendarGrid'); grid.innerHTML = '';
+        ['일', '월', '화', '수', '목', '금', '토'].forEach(d => grid.innerHTML += `<div class="calendar-day-label">${d}</div>`);
+
+        const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
+        const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
+
+        for(let i=0; i<firstDay; i++) grid.innerHTML += `<div></div>`;
+
+        for(let day=1; day<=daysInMonth; day++) {
+            let m = currentMonth.toString().padStart(2, '0');
+            let d = day.toString().padStart(2, '0');
+            let dateStr = `${currentYear}-${m}-${d}`;
+            
+            let hasDataClass = diaryDatabase[dateStr] ? 'has-data' : '';
+            let innerHtml = `<span>${day}</span>`;
+            if(diaryDatabase[dateStr]) {
+                let statusClass = diaryDatabase[dateStr].status.toLowerCase();
+                innerHtml += `<span class="day-score">${diaryDatabase[dateStr].totalGerdQ}점</span>
+                              <div class="day-dots"><span class="dot ${statusClass}"></span></div>`;
+            }
+            grid.innerHTML += `<div class="calendar-day ${hasDataClass}" onclick="openModal('${dateStr}', ${day})">${innerHtml}</div>`;
+        }
+    }
+
+    function openModal(dateStr, day) {
+        selectedDateStr = dateStr;
+        document.getElementById('modalDateText').innerText = `${currentMonth}월 ${day}일 기록 (GERD-Q)`;
+        
+        if(diaryDatabase[dateStr]) {
+            document.getElementById('medCheck').value = diaryDatabase[dateStr].status;
+            document.getElementById('foodInput').value = diaryDatabase[dateStr].foods.join(', ');
+            document.getElementById('gqHeartburn').value = diaryDatabase[dateStr].hb;
+            document.getElementById('gqAcid').value = diaryDatabase[dateStr].ac;
+            document.getElementById('gqSleep').value = diaryDatabase[dateStr].sl;
+        } else {
+            document.getElementById('medCheck').value = "Good"; document.getElementById('foodInput').value = "";
+            document.getElementById('gqHeartburn').value = "0"; document.getElementById('gqAcid').value = "0"; document.getElementById('gqSleep').value = "0";
+        }
+        calcLiveGerdQ();
+        document.getElementById('inputModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('inputModal').style.display = 'none'; }
+
+    function saveDailyData() {
+        const foodRaw = document.getElementById('foodInput').value;
+        const hb = parseInt(document.getElementById('gqHeartburn').value);
+        const ac = parseInt(document.getElementById('gqAcid').value);
+        const sl = parseInt(document.getElementById('gqSleep').value);
+
+        diaryDatabase[selectedDateStr] = {
+            status: document.getElementById('medCheck').value,
+            foods: foodRaw.split(',').map(f => f.trim()).filter(f => f !== ""),
+            hb: hb, ac: ac, sl: sl,
+            totalGerdQ: hb + ac + sl
+        };
+        closeModal(); renderCalendar();
+    }
+
+    /* =======================================
+       4. 고도화된 AI 분석 (당일 원인 vs 전날 연장 원인)
+    ======================================= */
+    function getPreviousDateString(dateStr) {
+        let [y, m, d] = dateStr.split('-').map(Number);
+        let prevDate = new Date(y, m - 1, d - 1);
+        return `${prevDate.getFullYear()}-${(prevDate.getMonth()+1).toString().padStart(2,'0')}-${prevDate.getDate().toString().padStart(2,'0')}`;
+    }
+
+    function updateAccumulatedReport() {
+        const reportBox = document.getElementById('reportBox');
+        const keys = Object.keys(diaryDatabase).sort();
+        if(keys.length === 0) { reportBox.innerHTML = `<p style="color:#999; text-align:center;">기록된 데이터가 부족하여 분석을 진행할 수 없습니다.</p>`; return; }
+
+        let sameDayRiskFoods = {}; // 당일 섭취 후 당일 아픔
+        let nextDayLagFoods = {};  // 전날 섭취 후 다음날 아픔 (연장성 유발)
+        let totalScoreSum = 0;
+
+        keys.forEach(dateStr => {
+            let data = diaryDatabase[dateStr];
+            totalScoreSum += data.totalGerdQ;
+
+            // GERD-Q 점수가 높은 날 (3점 이상으로 증상이 발현된 날)
+            if(data.totalGerdQ >= 3) {
+                // 1. 당일 유발 분석
+                data.foods.forEach(f => sameDayRiskFoods[f] = (sameDayRiskFoods[f] || 0) + 1);
+
+                // 2. 전날 연장 영향 분석 (어제 식단 추적)
+                let prevDateStr = getPreviousDateString(dateStr);
+                if(diaryDatabase[prevDateStr]) {
+                    diaryDatabase[prevDateStr].foods.forEach(f => {
+                        nextDayLagFoods[f] = (nextDayLagFoods[f] || 0) + 1;
+                    });
+                }
+            }
+        });
+
+        let sameDayHtml = Object.entries(sameDayRiskFoods).sort((a,b)=>b[1]-a[1]).slice(0, 3).map(i => `<li><b>${i[0]}</b> (당일 자극 ${i[1]}회 발생)</li>`).join('');
+        let nextDayHtml = Object.entries(nextDayLagFoods).sort((a,b)=>b[1]-a[1]).slice(0, 3).map(i => `<li><b>${i[0]}</b> (다음날까지 연장 영향 ${i[1]}회 추정)</li>`).join('');
+
+        let avgScore = (totalScoreSum / keys.length).toFixed(1);
+
+        reportBox.innerHTML = `
+            <div class="report-card" style="text-align:center; background:var(--primary-light);">
+                <div style="font-size:0.85em; color:var(--primary-dark);">일평균 GERD-Q 증상 강도</div>
+                <div style="font-size:1.8em; font-weight:bold; color:var(--primary);">${avgScore} / 9 점</div>
+            </div>
+
+            <div class="report-card danger-card">
+                <h4 style="margin:0 0 8px 0; color:var(--secondary);">🎯 먹은 즉시 속쓰림을 유발한 식품</h4>
+                ${sameDayHtml ? `<ul style="margin:0; padding-left:20px;">${sameDayHtml}</ul>` : `<p style="margin:0; font-size:0.9em; color:#777;">아직 명확히 검출된 당일 자극 요인이 없습니다.</p>`}
+            </div>
+
+            <div class="report-card danger-card" style="border-left-color: #a55eea;">
+                <h4 style="margin:0 0 8px 0; color:#8854d0;">⏳ 전날 먹은 게 다음 날까지 영향을 준 식품</h4>
+                <p style="margin:0 0 8px 0; font-size:0.8em; color:#7f8c8d;">주로 전날 저녁 또는 야식으로 섭취 시 다음 날 공복 가슴 쓰림을 연장 유발하는 강력한 후보군입니다.</p>
+                ${nextDayHtml ? `<ul style="margin:0; padding-left:20px;">${nextDayHtml}</ul>` : `<p style="margin:0; font-size:0.9em; color:#777;">연장성 유발(지연 영향) 음식 피드백 데이터가 더 필요합니다.</p>`}
+            </div>
+        `;
+    }
+
+    /* =======================================
+       5. 미니게임 로직
+    ======================================= */
+    let gameInterval, dropInterval, shieldPos = 50, shieldDir = 0, score = 0, health = 3, isPlaying = false;
+    const container = document.getElementById('game-container'); const shield = document.getElementById('game-shield');
+    const scoreUI = document.getElementById('scoreDisplay'); const healthUI = document.getElementById('healthDisplay');
+    const overlay = document.getElementById('game-overlay'); const msgUI = document.getElementById('game-msg');
+
+    function startGame() {
+        document.querySelectorAll('.acid-drop').forEach(e => e.remove());
+        score = 0; health = 3; shieldPos = 50; isPlaying = true;
+        scoreUI.innerText = `점수: ${score}`; healthUI.innerText = `식도 벽: ♥♥♥`;
+        overlay.style.display = 'none';
+        gameInterval = setInterval(gameLoop, 20); dropInterval = setInterval(createAcid, 900);
+    }
+    function moveShield(dir) { if(isPlaying) shieldDir = dir; }
+    function stopShield() { shieldDir = 0; }
+    function gameLoop() {
+        if(!isPlaying) return;
+        shieldPos += shieldDir * 3.5;
+        if(shieldPos < 5) shieldPos = 5; if(shieldPos > 95) shieldPos = 95;
+        shield.style.left = shieldPos + '%';
+
+        document.querySelectorAll('.acid-drop').forEach(acid => {
+            let top = parseFloat(acid.style.top); let left = parseFloat(acid.style.left);
+            acid.style.top = (top + 1.8) + '%';
+            if(top > 84 && top < 93 && Math.abs(left - shieldPos) < 14) {
+                score += 10; scoreUI.innerText = `점수: ${score}`; acid.remove();
+            } else if(top >= 100) {
+                health--; healthUI.innerText = `식도 벽: ${'♥'.repeat(health)}`; acid.remove();
+                if(health <= 0) { isPlaying = false; clearInterval(gameInterval); clearInterval(dropInterval); overlay.style.display = 'flex'; msgUI.innerHTML = `방어 실패!<br><span style="color:#bef264; font-size:0.8em;">최종 점수: ${score}</span>`; }
+            }
+        });
+    }
+    function createAcid() { if(!isPlaying) return; let acid = document.createElement('div'); acid.className = 'acid-drop'; acid.style.left = (Math.random() * 90 + 5) + '%'; acid.style.top = '0%'; container.appendChild(acid); }
+
+    window.onload = checkOnboarding;
+</script>
+</body>
+</html>

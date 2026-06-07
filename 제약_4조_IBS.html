@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 장 건강 다이어리 & IBS 가이드</title>
+    <style>
+        :root {
+            --primary: #2b6cb0;
+            --secondary: #4299e1;
+            --accent: #e53e3e;
+            --bg: #f7fafc;
+            --card-bg: #ffffff;
+            --text: #2d3748;
+            --border: #e2e8f0;
+        }
+
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: var(--bg); color: var(--text); line-height: 1.6; margin: 0; padding: 0; }
+        .header { background-color: var(--primary); color: white; text-align: center; padding: 1.5rem 1rem; }
+        .header h1 { margin: 0; font-size: 1.8rem; }
+        
+        .container { max-width: 900px; margin: 20px auto; padding: 0 15px; }
+        .card { background: var(--card-bg); border-radius: 10px; padding: 25px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+        .card-title { color: var(--primary); border-bottom: 2px solid var(--secondary); padding-bottom: 10px; margin-top: 0; font-size: 1.3rem; }
+        
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 8px; color: #4a5568; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; box-sizing: border-box; }
+        
+        /* Image Reference Styles */
+        .bristol-chart-img { width: 100%; max-width: 600px; height: auto; display: block; margin: 0 auto 15px auto; border-radius: 8px; border: 1px solid var(--border); }
+        .img-desc { font-size: 0.9rem; color: #718096; margin-top: 0; margin-bottom: 15px; }
+
+        /* Bristol Stool Chart Styles */
+        .stool-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px; }
+        .stool-option { border: 2px solid var(--border); border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; background: #f8fafc; }
+        .stool-option:hover { border-color: var(--secondary); background: #ebf8ff; }
+        .stool-option input[type="radio"] { display: none; }
+        .stool-option.selected { border-color: var(--primary); background: #bee3f8; font-weight: bold; }
+        
+        .checkbox-group { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+        .checkbox-label { display: flex; align-items: center; background: #f1f5f9; padding: 10px; border-radius: 6px; cursor: pointer; }
+        .checkbox-label input { margin-right: 10px; }
+
+        .btn { display: inline-block; padding: 12px 24px; font-size: 1rem; font-weight: bold; text-align: center; border: none; border-radius: 6px; cursor: pointer; transition: 0.3s; width: 100%; box-sizing: border-box; }
+        .btn-primary { background-color: var(--secondary); color: white; }
+        .btn-primary:hover { background-color: var(--primary); }
+        .btn-danger { background-color: #fc8181; color: white; margin-top: 10px; }
+        .btn-danger:hover { background-color: var(--accent); }
+
+        /* Table Styles */
+        .log-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 0.9rem; }
+        .log-table th, .log-table td { border: 1px solid var(--border); padding: 10px; text-align: center; }
+        .log-table th { background-color: #edf2f7; color: var(--primary); }
+        .log-table tr:nth-child(even) { background-color: #f8fafc; }
+
+        /* Result Section */
+        #result-section { display: none; margin-top: 30px; }
+        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; }
+        .alert-danger { background-color: #fed7d7; color: #9b2c2c; border: 1px solid #fc8181; }
+        .alert-success { background-color: #c6f6d5; color: #22543d; border: 1px solid #68d391; }
+        .alert-normal { background-color: #e6fffa; color: #234e52; border: 1px solid #319795; }
+        
+        /* Algorithm Stepper Styles */
+        .algo-container { margin-top: 15px; }
+        .algo-step { background: #f8fafc; border: 1px solid var(--border); border-left: 5px solid var(--secondary); border-radius: 0 8px 8px 0; padding: 15px; margin-bottom: 15px; }
+        .algo-step.first { border-left-color: #4299e1; }
+        .algo-step.second { border-left-color: #ed8936; }
+        .algo-step-title { font-weight: bold; font-size: 1.05rem; margin-top: 0; margin-bottom: 10px; display: flex; align-items: center; }
+        .algo-badge { display: inline-block; padding: 2px 8px; font-size: 0.75rem; color: white; border-radius: 4px; margin-right: 8px; font-weight: bold; }
+        
+        .treatment-card { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 15px; }
+        .treatment-card h4 { margin-top: 0; color: var(--primary); }
+        .drug-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 5px; background: white; }
+        .drug-table th, .drug-table td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+        .drug-table th { background-color: #e2e8f0; }
+
+        .stat-box { display: flex; justify-content: space-around; background: white; padding: 15px; border-radius: 8px; border: 1px solid var(--border); margin-bottom: 20px; }
+        .stat-item { text-align: center; }
+        .stat-value { font-size: 1.5rem; font-weight: bold; color: var(--primary); }
+        .arrow-down { text-align: center; font-size: 1.5rem; color: #a0aec0; margin: -5px 0 10px 0; }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <h1>나의 장 건강 다이어리</h1>
+        <p>매일의 배변 상태와 증상을 기록하고, 누적된 데이터를 바탕으로 맞춤 분석을 받아보세요.</p>
+    </header>
+
+    <div class="container">
+        
+        <div class="card">
+            <h2 class="card-title">📝 오늘의 증상 기록하기</h2>
+            
+            <div class="form-group">
+                <label>날짜</label>
+                <input type="date" id="log-date" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>오늘 복통이 있었나요?</label>
+                <label style="display:inline-block; margin-right: 20px; font-weight:normal;">
+                    <input type="radio" name="pain" value="yes" checked> 네 (있었음)
+                </label>
+                <label style="display:inline-block; font-weight:normal;">
+                    <input type="radio" name="pain" value="no"> 아니오 (없었음)
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>대변의 형태 (Bristol Stool Scale)</label>
+                <p class="img-desc">아래의 참고 이미지를 확인하고, 오늘 가장 가까웠던 대변의 형태를 선택해 주세요.</p>
+                
+                <img src="image_ec399b.jpeg" alt="Bristol Stool Chart Reference" class="bristol-chart-img">
+                
+                <div class="stool-grid" id="stool-grid">
+                    <label class="stool-option">
+                        <input type="radio" name="stool" value="1">
+                        <strong>Type 1~2</strong><br><small>단단하고 덩어리진 변 (변비)</small>
+                    </label>
+                    <label class="stool-option">
+                        <input type="radio" name="stool" value="3">
+                        <strong>Type 3~5</strong><br><small>부드럽고 정상적인 변</small>
+                    </label>
+                    <label class="stool-option">
+                        <input type="radio" name="stool" value="6">
+                        <strong>Type 6~7</strong><br><small>묽고 퍼지거나 물 설사</small>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>경고 증상 (해당하는 것 모두 체크)</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label"><input type="checkbox" class="alarm-chk" value="혈변"> 혈변</label>
+                    <label class="checkbox-label"><input type="checkbox" class="alarm-chk" value="체중감소"> 의도치 않은 체중 감소</label>
+                    <label class="checkbox-label"><input type="checkbox" class="alarm-chk" value="야간통증"> 야간 통증/야간 배변</label>
+                    <label class="checkbox-label"><input type="checkbox" class="alarm-chk" value="발열"> 발열</label>
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveLog()">오늘의 데이터 저장하기</button>
+        </div>
+
+        <div class="card">
+            <h2 class="card-title">📊 나의 기록 모아보기</h2>
+            <div style="overflow-x: auto;">
+                <table class="log-table" id="log-table">
+                    <thead>
+                        <tr>
+                            <th>날짜</th>
+                            <th>복통 여부</th>
+                            <th>대변 형태</th>
+                            <th>경고 증상</th>
+                            <th>관리</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-body">
+                        </tbody>
+                </table>
+            </div>
+            <p id="no-data-msg" style="text-align:center; color:#718096; margin-top:20px;">아직 기록된 데이터가 없습니다.</p>
+            
+            <button class="btn btn-primary" style="margin-top:20px; background-color: #2b6cb0;" onclick="analyzeData()">데이터 종합 분석 및 가이드 생성</button>
+            <button class="btn btn-danger" onclick="clearLogs()">모든 기록 초기화</button>
+        </div>
+
+        <div id="result-section">
+            <div class="card">
+                <h2 class="card-title">🩺 데이터 종합 분석 결과</h2>
+                
+                <div id="alert-box" class="alert"></div>
+
+                <div id="analysis-content" style="display:none;">
+                    <div class="stat-box">
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-days">0</div>
+                            <div>기록 일수</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-pain">0%</div>
+                            <div>복통 발생률</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="stat-subtype">-</div>
+                            <div>진단 결과</div>
+                        </div>
+                    </div>
+
+                    <div id="guide-content"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('log-date').valueAsDate = new Date();
+
+        const stoolOptions = document.querySelectorAll('.stool-option');
+        stoolOptions.forEach(opt => {
+            opt.addEventListener('click', () => {
+                stoolOptions.forEach(o => o.classList.remove('selected'));
+                opt.classList.add('selected');
+                opt.querySelector('input').checked = true;
+            });
+        });
+
+        function saveLog() {
+            const date = document.getElementById('log-date').value;
+            const pain = document.querySelector('input[name="pain"]:checked').value;
+            const stoolInput = document.querySelector('input[name="stool"]:checked');
+            
+            if (!date) return alert('날짜를 입력해주세요.');
+            if (!stoolInput) return alert('대변 형태를 선택해주세요.');
+
+            const stool = stoolInput.value;
+            
+            const alarms = [];
+            document.querySelectorAll('.alarm-chk:checked').forEach(chk => {
+                alarms.push(chk.value);
+            });
+
+            const newLog = {
+                id: Date.now(),
+                date: date,
+                pain: pain,
+                stool: stool,
+                alarms: alarms
+            };
+
+            let logs = JSON.parse(localStorage.getItem('ibsLogs')) || [];
+            
+            const existingIndex = logs.findIndex(l => l.date === date);
+            if (existingIndex > -1) {
+                logs[existingIndex] = newLog;
+            } else {
+                logs.push(newLog);
+            }
+
+            logs.sort((a, b) => new Date(b.date) - new Date(a.date));
+            localStorage.setItem('ibsLogs', JSON.stringify(logs));
+            document.querySelectorAll('.alarm-chk').forEach(chk => chk.checked = false);
+            
+            renderLogs();
+            alert('기록이 저장되었습니다.');
+        }
+
+        function renderLogs() {
+            const logs = JSON.parse(localStorage.getItem('ibsLogs')) || [];
+            const tbody = document.getElementById('log-body');
+            const noDataMsg = document.getElementById('no-data-msg');
+            
+            tbody.innerHTML = '';
+
+            if (logs.length === 0) {
+                noDataMsg.style.display = 'block';
+                return;
+            }
+
+            noDataMsg.style.display = 'none';
+
+            logs.forEach(log => {
+                let stoolText = '';
+                if(log.stool === '1') stoolText = '단단한 변';
+                else if(log.stool === '3') stoolText = '정상 변';
+                else stoolText = '묽은 변';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${log.date}</td>
+                    <td>${log.pain === 'yes' ? '<span style="color:red;">있음</span>' : '없음'}</td>
+                    <td>${stoolText}</td>
+                    <td>${log.alarms.length > 0 ? log.alarms.join(', ') : '-'}</td>
+                    <td><button onclick="deleteLog(${log.id})" style="border:none; background:none; color:red; cursor:pointer; text-decoration:underline;">삭제</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function deleteLog(id) {
+            let logs = JSON.parse(localStorage.getItem('ibsLogs')) || [];
+            logs = logs.filter(log => log.id !== id);
+            localStorage.setItem('ibsLogs', JSON.stringify(logs));
+            renderLogs();
+        }
+
+        function clearLogs() {
+            if(confirm('정말 모든 기록을 삭제하시겠습니까?')) {
+                localStorage.removeItem('ibsLogs');
+                renderLogs();
+                document.getElementById('result-section').style.display = 'none';
+            }
+        }
+
+        // 3. 데이터 분석 및 알고리즘 기반 가이드 생성
+        function analyzeData() {
+            const logs = JSON.parse(localStorage.getItem('ibsLogs')) || [];
+            if (logs.length < 3) {
+                alert('신뢰할 수 있는 분석을 위해 최소 3일 이상의 데이터가 필요합니다.');
+                return;
+            }
+
+            const resultSection = document.getElementById('result-section');
+            const alertBox = document.getElementById('alert-box');
+            const analysisContent = document.getElementById('analysis-content');
+            
+            resultSection.style.display = 'block';
+
+            let hasAlarm = false;
+            let totalPainDays = 0;
+            let typeC_count = 0;
+            let typeD_count = 0;
+
+            logs.forEach(log => {
+                if (log.alarms.length > 0) hasAlarm = true;
+                if (log.pain === 'yes') totalPainDays++;
+                if (log.stool === '1') typeC_count++;
+                if (log.stool === '6') typeD_count++;
+            });
+
+            if (hasAlarm) {
+                alertBox.className = 'alert alert-danger';
+                alertBox.innerHTML = `<strong>⚠️ 경고 증상 감지됨:</strong> 기록 중 '혈변', '체중감소' 등의 경고 증상이 포함되어 있습니다. 즉시 전문의의 진료와 검사를 받으시길 강력히 권장합니다.`;
+                analysisContent.style.display = 'none';
+                resultSection.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+
+            const totalDays = logs.length;
+            const painRate = Math.round((totalPainDays / totalDays) * 100);
+            const typeC_Rate = (typeC_count / totalDays) * 100;
+            const typeD_Rate = (typeD_count / totalDays) * 100;
+
+            let subtype = "";
+            let subtypeCode = "";
+            
+            if (painRate < 14 || (typeC_count === 0 && typeD_count === 0)) {
+                subtype = "정상 범위 (IBS 기준 미달)"; 
+                subtypeCode = "NORMAL";
+            } else {
+                if (typeC_Rate > 25 && typeD_Rate < 25) {
+                    subtype = "변비형 (IBS-C)"; subtypeCode = "C";
+                } else if (typeD_Rate > 25 && typeC_Rate < 25) {
+                    subtype = "설사형 (IBS-D)"; subtypeCode = "D";
+                } else if (typeC_Rate > 25 && typeD_Rate > 25) {
+                    subtype = "혼합형 (IBS-M)"; subtypeCode = "M";
+                } else {
+                    subtype = "미분류형 (IBS-U)"; subtypeCode = "U";
+                }
+            }
+
+            document.getElementById('stat-days').innerText = totalDays + '일';
+            document.getElementById('stat-pain').innerText = painRate + '%';
+            document.getElementById('stat-subtype').innerText = subtype;
+            
+            let guideHtml = "";
+
+            if (subtypeCode === "NORMAL") {
+                alertBox.className = 'alert alert-normal';
+                alertBox.innerHTML = `<strong>🌿 진단 결과:</strong> 현재 수집된 데이터로는 <strong>[과민대장증후군 진단 기준에 미달]</strong>합니다.`;
+                
+                guideHtml = `
+                <div class="treatment-card">
+                    <h4>✨ 일상 장 건강 관리 가이드</h4>
+                    <p>현재 상태는 일시적인 위장 장애일 가능성이 높습니다. 아래 기본 관리법을 유지해 주세요.</p>
+                    <ul>
+                        <li><strong>수분 섭취:</strong> 하루 1.5 ~ 2L의 미온수 섭취</li>
+                        <li><strong>식이 섬유:</strong> 채소, 통곡물 등 점진적 섭취 확대</li>
+                        <li><strong>유산균:</strong> 일반 프로바이오틱스 제품 복용 유효</li>
+                    </ul>
+                </div>`;
+            } else {
+                alertBox.className = 'alert alert-success';
+                alertBox.innerHTML = `<strong>✅ 분석 완료:</strong> Rome IV 진단 기준에 부합하며, <strong>[${subtype}]</strong> 패턴을 보이고 있습니다.`;
+                
+                guideHtml = `<h3 style="color:var(--primary); margin-top:25px; border-bottom:1px solid var(--border); padding-bottom:5px;">📋 알고리즘에 따른 약물치료 단계</h3><div class="algo-container">`;
+
+                if (subtypeCode === "C") {
+                    // 변비형(IBS-C) 지침 기반 1차/2차 분류
+                    guideHtml += `
+                    <div class="algo-step first">
+                        <div class="algo-step-title"><span class="algo-badge" style="background:#4299e1;">1차 약제</span> 초기 치료 및 완화</div>
+                        <p>배변 빈도 및 대변 경도를 우선적으로 개선하고 복통 완화를 목표로 처방합니다.</p>
+                        <table class="drug-table">
+                            <tr><th>약물 분류</th><th>대표 성분 예시</th><th>주요 작용 및 효과</th></tr>
+                            <tr><td><b>완하제 (Laxatives)</b></td><td>Psyllium(차전자피), Polyethylene glycol(PEG) 등</td><td>배변 빈도 증가 및 대변 경도 완화 개개인 맞춤 적용</td></tr>
+                            <tr><td><b>진경제 (Antispasmodics)</b></td><td>Trimebutine, Mebeverine 등</td><td>장 평활근 이완 작용을 통한 유발 복통 경감</td></tr>
+                        </table>
+                    </div>
+                    <div class="arrow-down">▼</div>
+                    <div class="algo-step second">
+                        <div class="algo-step-title"><span class="algo-badge" style="background:#ed8936;">2차 약제</span> 1차 약제 반응 부재 시 선택</div>
+                        <p>초기 완하제 및 진경제 요법에 효과가 없을 경우 다음 단계의 전문 표적 약제 또는 중추 조절제를 고려합니다.</p>
+                        <table class="drug-table">
+                            <tr><th>약물 분류</th><th>대표 성분 예시</th><th>주요 작용 및 효과</th></tr>
+                            <tr><td><b>장관 분비 촉진제</b></td><td>Linaclotide, Lubiprostone 등</td><td>소화관 내 수분 분비 촉진 및 동반 복통 개선</td></tr>
+                            <tr><td><b>5-HT4 작동제</b></td><td>Prucalopride 등</td><td>장 연동 운동을 직접적으로 촉진하여 배변 유도</td></tr>
+                            <tr><td><b>선택적 세로토닌<br>재흡수 억제제(SSRIs)</b></td><td>Fluoxetine, Sertraline, Citalopram 등</td><td>기분 장애 동반 시 사용 고려, 장 과민성 및 전반적 증상 개선</td></tr>
+                        </table>
+                    </div>`;
+
+                } else if (subtypeCode === "D") {
+                    // 설사형(IBS-D) 지침 기반 1차/2차 분류
+                    guideHtml += `
+                    <div class="algo-step first">
+                        <div class="algo-step-title"><span class="algo-badge" style="background:#4299e1;">1차 약제</span> 초기 치료 및 완화</div>
+                        <p>설사 증상을 직접 조절하고 장 평활근 경련으로 인한 통증을 억제합니다.</p>
+                        <table class="drug-table">
+                            <tr><th>약물 분류</th><th>대표 성분 예시</th><th>주요 작용 및 효과</th></tr>
+                            <tr><td><b>지사제 (Antimotility)</b></td><td>Loperamide</td><td>장 운동 지연을 유도하여 설사 제어 및 대변 긴급성 감소</td></tr>
+                            <tr><td><b>진경제 (Antispasmodics)</b></td><td>Trimebutine, Mebeverine, Papaverine 등</td><td>장 평활근 수축을 이완시켜 동반되는 복통 완화</td></tr>
+                        </table>
+                    </div>
+                    <div class="arrow-down">▼</div>
+                    <div class="algo-step second">
+                        <div class="algo-step-title"><span class="algo-badge" style="background:#ed8936;">2차 약제</span> 1차 약제 반응 부재 시 선택</div>
+                        <p>일반 지사제나 진경제로 증상이 통제되지 않을 경우 수용체 제어 또는 신경 신호 차단 약물로 전환합니다.</p>
+                        <table class="drug-table">
+                            <tr><th>약물 분류</th><th>대표 성분 예시</th><th>주요 작용 및 효과</th></tr>
+                            <tr><td><b>5-HT3 길항제</b></td><td>Ramosetron, Alosetron 등</td><td>설사형 IBS의 핵심 표적, 설사 및 만성 복통 동시 조절</td></tr>
+                            <tr><td><b>비흡수성 항생제</b></td><td>Rifaximin</td><td>장내 세균총 환경 정상화 유도로 설사 및 가스 팽만감 개선</td></tr>
+                            <tr><td><b>삼환계 항우울제(TCAs)</b></td><td>Amitriptyline, Nortriptyline, Imipramine 등</td><td>소화관 통증 신호 전달 조절, 특히 설사형 증상 개선 효과 우수</td></tr>
+                        </table>
+                    </div>`;
+
+                } else {
+                    // 혼합형(IBS-M) 및 기타 유형 치료 (지침에 따른 대증치료 배치)
+                    guideHtml += `
+                    <div class="algo-step first" style="border-left-color: #4a5568;">
+                        <div class="algo-step-title"><span class="algo-badge" style="background:#4a5568;">증상별 대증치료</span> 임상 상태에 따른 유연한 선택</div>
+                        <p>설사와 변비가 불규칙하게 반복되므로 단계적 구분보다는 현재 지배적인 증상에 맞추어 유연하게 치료를 시행합니다.</p>
+                        <table class="drug-table">
+                            <tr><th>상황별 분류</th><th>대표 약제군 예시</th><th>기전 및 관리 방법</th></tr>
+                            <tr><td><b>복통 및 연동 이상</b></td><td>Trimebutine (장운동조절제)</td><td>과도한 장 운동은 낮추고 저하된 운동은 높여 혼합형에 효과적</td></tr>
+                            <tr><td><b>변비 증상 지배 시</b></td><td>부피형성 하제, 삼투성 완하제</td><td>불편감이 심한 단기 변비기 동안 일시적 사용</td></tr>
+                            <tr><td><b>설사 증상 지배 시</b></td><td>Loperamide (지사제)</td><td>묽은 변 및 잦은 배변 횟수 증가 시 필요에 따라 선택적 복용</td></tr>
+                            <tr><td><b>공통 장 환경 개선</b></td><td>Probiotics (유산균 제제)</td><td>장내 미생물 균형(Lactobacilli, Bifidobacteria) 회복 도모</td></tr>
+                        </table>
+                    </div>`;
+                }
+
+                guideHtml += `</div>
+                <div class="treatment-card" style="border-left: 4px solid #f6ad55; background-color: #fffaf0; margin-top:20px;">
+                    <h4 style="color: #dd6b20;">🥗 공통 식이요법 가이드 (비약물 치료)</h4>
+                    <p style="font-size:0.9rem; margin-top:0;">약물 치료와 병행하여 장내 삼투압 증가 및 가스 유발을 최소화하는 식단을 유지합니다.</p>
+                    <table class="drug-table" style="background:white;">
+                        <tr><th style="background:#fed7d7; color:#c53030;">피해야 할 음식 (High FODMAP)</th><th style="background:#c6f6d5; color:#22543d;">권장 음식 (Low FODMAP)</th></tr>
+                        <tr>
+                            <td>밀가루 제품, 양파, 마늘, 사과, 수박, 일반 우유, 콩류 일체</td>
+                            <td>쌀밥, 귀리, 토마토, 시금치, 바나나, 락토프리(유당제거) 우유</td>
+                        </tr>
+                    </table>
+                </div>`;
+            }
+
+            document.getElementById('guide-content').innerHTML = guideHtml;
+            analysisContent.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        window.onload = renderLogs;
+    </script>
+</body>
+</html>
