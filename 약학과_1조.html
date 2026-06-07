@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>SafePill · 병용금기 체크</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --p:#0F6FBF;--p2:#1A8CDB;--ps:#E8F4FE;
+  --teal:#0EA896;--teal-s:#E6F8F6;
+  --warn:#FF6B35;--danger:#D93025;--danger-s:#FEE9E7;
+  --ok:#1E8449;--ok-s:#E8F5E9;
+  --amber:#E67E22;--amber-s:#FEF3E2;
+  --bg:#F2F5FA;--card:#FFF;
+  --t1:#111827;--t2:#4B5563;--t3:#9CA3AF;
+  --bd:#E5E7EB;
+  --sh:0 2px 10px rgba(0,0,0,.07);
+  --sh2:0 6px 24px rgba(0,0,0,.10);
+  --r:14px;--rs:8px;
+}
+html,body{height:100%;font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--t1);overflow-x:hidden;}
+
+/* ── LAYOUT ── */
+.layout{display:flex;min-height:100vh;}
+
+/* Sidebar (PC) */
+.sidebar{
+  width:260px;flex-shrink:0;
+  background:var(--card);border-right:1px solid var(--bd);
+  display:flex;flex-direction:column;
+  position:fixed;top:0;left:0;height:100vh;
+  z-index:300;padding:0 0 24px;
+  transition:transform .3s;
+}
+.sb-logo{
+  padding:24px 20px 20px;border-bottom:1px solid var(--bd);
+  display:flex;align-items:center;gap:10px;
+}
+.sb-logo .logo-box{
+  width:38px;height:38px;border-radius:12px;
+  background:linear-gradient(135deg,var(--p),var(--teal));
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+}
+.sb-logo h1{font-size:20px;font-weight:800;color:var(--p);}
+.sb-logo span{font-size:10px;color:var(--t3);display:block;margin-top:-2px;}
+
+.sb-nav{padding:12px 12px;flex:1;display:flex;flex-direction:column;gap:2px;}
+.nav-btn{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 14px;border-radius:10px;
+  border:none;background:none;cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:500;
+  color:var(--t2);transition:all .2s;width:100%;text-align:left;
+}
+.nav-btn:hover{background:#F3F4F6;color:var(--t1);}
+.nav-btn.active{background:var(--ps);color:var(--p);font-weight:700;}
+.nav-btn .ni{font-size:18px;flex-shrink:0;}
+
+.sb-bottom{padding:0 20px;}
+.sb-badge{
+  background:var(--amber-s);color:var(--amber);
+  font-size:11px;padding:8px 12px;border-radius:var(--rs);
+  line-height:1.5;
+}
+
+/* Main content */
+.main{
+  margin-left:260px;flex:1;min-height:100vh;
+  display:flex;flex-direction:column;
+}
+
+/* Bottom nav (mobile) */
+.bottom-nav{
+  display:none;
+  position:fixed;bottom:0;left:0;right:0;
+  background:var(--card);border-top:1px solid var(--bd);
+  z-index:300;padding-bottom:env(safe-area-inset-bottom,0);
+}
+.bnav-inner{display:flex;}
+.bnav-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:3px;padding:10px 0 8px;
+  border:none;background:none;cursor:pointer;
+  font-family:inherit;color:var(--t3);transition:color .2s;
+}
+.bnav-btn.active{color:var(--p);}
+.bnav-btn .bi{font-size:22px;line-height:1;}
+.bnav-btn .bl{font-size:10px;font-weight:600;}
+
+/* ── SCREENS ── */
+.screen{display:none;flex-direction:column;min-height:100%;}
+.screen.active{display:flex;}
+
+/* Header */
+.hdr{
+  background:var(--card);border-bottom:1px solid var(--bd);
+  padding:14px 20px;display:flex;align-items:center;gap:10px;
+  position:sticky;top:0;z-index:200;flex-shrink:0;
+}
+.hdr-back{
+  width:34px;height:34px;border-radius:50%;border:1.5px solid var(--bd);
+  background:none;cursor:pointer;font-size:16px;
+  display:flex;align-items:center;justify-content:center;color:var(--t2);
+  flex-shrink:0;
+}
+.hdr-title{font-size:17px;font-weight:700;flex:1;}
+.hdr-action{
+  background:none;border:none;cursor:pointer;
+  font-family:inherit;font-size:13px;font-weight:600;color:var(--p);
+  padding:6px 10px;border-radius:var(--rs);transition:background .2s;
+}
+.hdr-action:hover{background:var(--ps);}
+
+/* Scrollable content */
+.content{flex:1;padding:20px;overflow-y:auto;}
+.content.pb-nav{padding-bottom:80px;}
+
+/* ── CARDS ── */
+.card{background:var(--card);border-radius:var(--r);padding:20px;box-shadow:var(--sh);margin-bottom:16px;}
+.card-title{font-size:12px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:14px;}
+
+/* ── BUTTONS ── */
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;
+  padding:12px 20px;border-radius:100px;border:none;
+  font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.btn-primary{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;}
+.btn-primary:hover{box-shadow:0 4px 14px rgba(15,111,191,.35);transform:translateY(-1px);}
+.btn-primary:active{transform:translateY(0);}
+.btn-teal{background:linear-gradient(135deg,var(--teal),#12B3A0);color:#fff;}
+.btn-ghost{background:#F3F4F6;color:var(--t2);}
+.btn-ghost:hover{background:var(--bd);}
+.btn-outline{background:transparent;border:1.5px solid var(--bd);color:var(--t2);}
+.btn-danger-soft{background:var(--danger-s);color:var(--danger);}
+.btn-full{width:100%;}
+.btn-lg{padding:15px 24px;font-size:15px;border-radius:14px;}
+.btn-sm{padding:7px 14px;font-size:12px;}
+
+/* ── HOME SCREEN ── */
+.hero{
+  background:linear-gradient(145deg,#0A4F8C 0%,#0F6FBF 45%,#0EA896 100%);
+  padding:40px 24px 36px;color:#fff;
+}
+.hero-row{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+.hero-icon{
+  width:64px;height:64px;border-radius:20px;
+  background:rgba(255,255,255,.18);backdrop-filter:blur(12px);
+  display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0;
+}
+.hero h2{font-size:24px;font-weight:800;line-height:1.2;}
+.hero p{font-size:13px;opacity:.85;margin-top:4px;line-height:1.5;}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
+.stat-box{background:rgba(255,255,255,.15);border-radius:12px;padding:12px 10px;text-align:center;backdrop-filter:blur(8px);}
+.stat-box .sn{font-size:20px;font-weight:800;}
+.stat-box .sl{font-size:10px;opacity:.8;margin-top:2px;}
+
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.feat-item{
+  background:var(--card);border-radius:12px;padding:16px;
+  box-shadow:var(--sh);display:flex;flex-direction:column;gap:6px;
+}
+.feat-icon{font-size:22px;}
+.feat-title{font-size:13px;font-weight:700;}
+.feat-desc{font-size:11px;color:var(--t3);line-height:1.5;}
+
+/* ── DRUG INPUT ── */
+.input-wrap{position:relative;flex:1;}
+.input-label{font-size:11px;font-weight:600;color:var(--t3);margin-bottom:4px;}
+.drug-input{
+  width:100%;padding:11px 14px;
+  border:1.5px solid var(--bd);border-radius:10px;
+  font-family:inherit;font-size:14px;color:var(--t1);
+  background:#fff;outline:none;transition:border-color .2s;
+}
+.drug-input:focus{border-color:var(--p);}
+.drug-input.filled{border-color:var(--teal);background:var(--teal-s);}
+
+.drug-row{
+  display:flex;align-items:flex-end;gap:8px;margin-bottom:8px;
+}
+.row-badge{
+  width:26px;height:26px;border-radius:50%;
+  background:var(--bd);color:var(--t3);
+  font-size:11px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  margin-bottom:3px;transition:all .2s;
+}
+.row-badge.on{background:var(--p);color:#fff;}
+.del-btn{
+  width:34px;height:34px;border-radius:50%;border:1.5px solid var(--bd);
+  background:#fff;color:var(--t3);font-size:15px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;margin-bottom:3px;transition:all .2s;
+}
+.del-btn:hover{border-color:var(--danger);color:var(--danger);background:var(--danger-s);}
+
+/* Autocomplete */
+.ac-drop{
+  position:absolute;top:100%;left:0;right:0;
+  background:#fff;border:1.5px solid var(--bd);border-top:none;
+  border-radius:0 0 10px 10px;max-height:220px;overflow-y:auto;
+  z-index:500;box-shadow:0 8px 20px rgba(0,0,0,.10);display:none;
+}
+.ac-item{
+  padding:10px 14px;cursor:pointer;border-bottom:1px solid #F9FAFB;
+  transition:background .15s;
+}
+.ac-item:hover{background:var(--ps);}
+.ac-item:last-child{border-bottom:none;}
+.ac-name{font-size:13px;font-weight:600;color:var(--t1);}
+.ac-products{font-size:11px;color:var(--t3);margin-top:2px;}
+.hl{color:var(--p);font-weight:800;}
+
+/* Chips */
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 10px 5px 10px;border-radius:100px;
+  background:var(--ps);color:var(--p);
+  font-size:12px;font-weight:600;
+}
+.chip-del{
+  width:16px;height:16px;border-radius:50%;border:none;background:rgba(15,111,191,.15);
+  color:var(--p);font-size:11px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+}
+.chips-wrap{display:flex;flex-wrap:wrap;gap:6px;}
+
+/* ── RESULT ── */
+.result-summary{
+  border-radius:var(--r);padding:20px;margin-bottom:16px;
+  display:flex;align-items:center;gap:16px;
+}
+.result-summary.danger{background:linear-gradient(135deg,#FDECEC,#FFF5F5);}
+.result-summary.safe{background:linear-gradient(135deg,#E8F5E9,#F1FAF1);}
+.rs-icon{font-size:40px;flex-shrink:0;}
+.rs-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+.rs-title{font-size:20px;font-weight:800;}
+.rs-sub{font-size:12px;margin-top:2px;}
+
+.contra-card{
+  background:#fff;border-radius:var(--r);
+  border:1.5px solid #FECACA;
+  box-shadow:0 2px 8px rgba(217,48,37,.06);
+  margin-bottom:12px;overflow:hidden;
+}
+.contra-card.medium{border-color:#FDE68A;}
+.contra-header{
+  padding:14px 16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+.contra-pair{display:flex;align-items:center;gap:6px;flex-wrap:wrap;flex:1;}
+.contra-drug{
+  font-size:13px;font-weight:700;color:var(--t1);
+  background:#F3F4F6;padding:3px 8px;border-radius:6px;
+}
+.contra-plus{color:var(--t3);font-size:16px;font-weight:300;}
+.contra-badge{
+  font-size:10px;font-weight:800;padding:3px 9px;border-radius:100px;
+  white-space:nowrap;flex-shrink:0;
+}
+.contra-badge.high{background:var(--danger-s);color:var(--danger);}
+.contra-badge.medium{background:var(--amber-s);color:var(--amber);}
+.contra-toggle{color:var(--t3);font-size:12px;flex-shrink:0;}
+.contra-body{
+  padding:0 16px 14px;border-top:1px solid #FEE2E2;
+  display:none;
+}
+.contra-card.medium .contra-body{border-top-color:#FDE68A;}
+.contra-reason{
+  font-size:13px;font-weight:700;margin-top:12px;
+  color:var(--danger);margin-bottom:6px;
+}
+.contra-card.medium .contra-reason{color:var(--amber);}
+.contra-detail{font-size:12px;color:var(--t2);line-height:1.7;}
+
+.safe-box{
+  background:var(--ok-s);border:1.5px solid #A7D7A0;
+  border-radius:var(--r);padding:28px;text-align:center;
+}
+.safe-box .si{font-size:44px;margin-bottom:10px;}
+.safe-box h3{font-size:17px;font-weight:800;color:var(--ok);}
+.safe-box p{font-size:13px;color:#2E7D32;margin-top:4px;line-height:1.6;}
+
+/* ── NOTEBOOK ── */
+.nb-item{
+  background:#fff;border-radius:12px;
+  box-shadow:var(--sh);margin-bottom:10px;
+  display:flex;align-items:center;padding:14px 16px;gap:12px;
+  cursor:pointer;transition:all .2s;
+  border:1.5px solid transparent;
+}
+.nb-item:hover{border-color:var(--p);background:var(--ps);}
+.nb-info{flex:1;min-width:0;}
+.nb-date{font-size:11px;color:var(--t3);margin-bottom:3px;}
+.nb-drugs{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.nb-count{font-size:11px;color:var(--t3);margin-top:2px;}
+.nb-badge{
+  font-size:11px;font-weight:700;padding:4px 10px;border-radius:100px;
+  white-space:nowrap;flex-shrink:0;
+}
+.nb-badge.danger{background:var(--danger-s);color:var(--danger);}
+.nb-badge.safe{background:var(--ok-s);color:var(--ok);}
+.nb-del{
+  background:none;border:none;cursor:pointer;
+  color:var(--t3);font-size:16px;padding:4px;flex-shrink:0;
+  border-radius:6px;transition:all .2s;
+}
+.nb-del:hover{color:var(--danger);background:var(--danger-s);}
+
+/* ── DISCLAIMER ── */
+.disclaimer{
+  background:#FFFBEB;border:1px solid #FDE68A;
+  border-radius:10px;padding:12px 14px;
+  font-size:11px;color:#78350F;line-height:1.7;
+}
+.disclaimer strong{color:#92400E;}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:48px 24px;color:var(--t3);}
+.empty .ei{font-size:52px;margin-bottom:12px;}
+.empty h3{font-size:16px;font-weight:700;color:var(--t2);margin-bottom:6px;}
+.empty p{font-size:13px;line-height:1.7;}
+
+/* ── DIVIDER ── */
+.divider{height:1px;background:var(--bd);margin:16px 0;}
+.section-gap{margin-bottom:12px;}
+
+/* ── TOAST ── */
+.toast{
+  position:fixed;bottom:90px;left:50%;
+  transform:translateX(-50%) translateY(16px);
+  background:#1F2937;color:#fff;
+  padding:10px 20px;border-radius:100px;
+  font-size:13px;font-weight:500;
+  opacity:0;transition:all .3s;z-index:9999;
+  white-space:nowrap;pointer-events:none;max-width:90vw;
+  box-shadow:0 4px 16px rgba(0,0,0,.2);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── EXPORT AREA ── */
+.export-row{display:flex;gap:10px;}
+.export-row .btn{flex:1;}
+
+/* ── COUNTER BAR ── */
+.counter-bar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 0;margin-bottom:4px;
+}
+.counter-text{font-size:12px;color:var(--t3);}
+.pill-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  background:var(--ps);color:var(--p);
+  font-size:11px;font-weight:700;
+  padding:4px 10px;border-radius:100px;
+}
+
+/* ── INFO BANNER ── */
+.info-banner{
+  background:var(--ps);border-radius:10px;
+  padding:10px 14px;display:flex;gap:8px;align-items:flex-start;
+  font-size:12px;color:var(--p);line-height:1.6;margin-bottom:16px;
+}
+
+/* ── RESPONSIVE: MOBILE ── */
+@media(max-width:767px){
+  .sidebar{display:none;}
+  .main{margin-left:0;}
+  .bottom-nav{display:block;}
+  .content.pb-nav{padding-bottom:90px;}
+  .hero{padding:28px 18px 24px;}
+  .hero h2{font-size:20px;}
+  .feat-grid{grid-template-columns:1fr 1fr;}
+  .toast{bottom:78px;}
+  /* Don't show PC-only stuff */
+  .pc-only{display:none!important;}
+}
+
+@media(min-width:768px){
+  .mob-only{display:none!important;}
+  .content{max-width:720px;}
+}
+
+/* Animations */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+.fu{animation:fadeUp .3s ease forwards;}
+.fu1{animation-delay:.05s;opacity:0;}
+.fu2{animation-delay:.10s;opacity:0;}
+.fu3{animation-delay:.15s;opacity:0;}
+.fu4{animation-delay:.20s;opacity:0;}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px;}
+
+/* Print */
+@media print{
+  .sidebar,.bottom-nav,.hdr-back,.hdr-action,.export-row,.btn,.info-banner{display:none!important;}
+  #screen-home,#screen-check,#screen-notebook{display:none!important;}
+  #screen-result{display:flex!important;}
+  .main{margin-left:0!important;}
+  .contra-body{display:block!important;}
+  body{background:#fff;}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ══════════════════════════════
+     SIDEBAR (PC)
+══════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="logo-box">💊</div>
+    <div>
+      <h1>SafePill</h1>
+      <span>병용금기 체크 시스템</span>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <button class="nav-btn active" data-screen="home" onclick="nav('home')">
+      <span class="ni">🏠</span> 홈
+    </button>
+    <button class="nav-btn" data-screen="check" onclick="nav('check')">
+      <span class="ni">💊</span> 약물 입력
+    </button>
+    <button class="nav-btn" data-screen="result" onclick="nav('result')">
+      <span class="ni">📋</span> 검사 결과
+    </button>
+    <button class="nav-btn" data-screen="notebook" onclick="nav('notebook')">
+      <span class="ni">📒</span> 나의 약 수첩
+    </button>
+  </nav>
+  <div class="sb-bottom">
+    <div class="sb-badge">
+      ⚖️ 본 서비스는 HIRA DUR 데이터 기반 <strong>참고용</strong>입니다. 복약 변경 전 반드시 약사·전문의와 상담하세요.
+    </div>
+  </div>
+</aside>
+
+<!-- ══════════════════════════════
+     MAIN CONTENT
+══════════════════════════════ -->
+<div class="main">
+
+<!-- ── SCREEN: HOME ── -->
+<div class="screen active" id="screen-home">
+  <div class="hero">
+    <div class="hero-row">
+      <div class="hero-icon">💊</div>
+      <div>
+        <h2>SafePill</h2>
+        <p>다제 약물 병용 금기를 즉시 확인하고<br>안전한 복약을 관리하세요</p>
+      </div>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="sn" id="stat-drugs">80+</div>
+        <div class="sl">성분 DB</div>
+      </div>
+      <div class="stat-box">
+        <div class="sn" id="stat-contras">48+</div>
+        <div class="sl">금기 조합</div>
+      </div>
+      <div class="stat-box">
+        <div class="sn">HIRA</div>
+        <div class="sl">DUR 기반</div>
+      </div>
+    </div>
+  </div>
+  <div class="content pb-nav">
+    <!-- CTA -->
+    <div class="card fu" style="margin-top:4px;">
+      <div class="card-title">빠른 시작</div>
+      <p style="font-size:13px;color:var(--t2);line-height:1.7;margin-bottom:16px;">복용 중인 약물을 2개 이상 입력하면 HIRA DUR 데이터를 기반으로 병용 금기 여부를 즉시 알려드립니다.</p>
+      <button class="btn btn-primary btn-full btn-lg" onclick="nav('check')">
+        💊 약물 입력 시작하기
+      </button>
+    </div>
+
+    <!-- Features -->
+    <div class="card fu fu1">
+      <div class="card-title">주요 기능</div>
+      <div class="feat-grid">
+        <div class="feat-item">
+          <div class="feat-icon">🔍</div>
+          <div class="feat-title">성분·제품명 검색</div>
+          <div class="feat-desc">자동완성 및 초성 검색으로 빠른 입력</div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">⚠️</div>
+          <div class="feat-title">병용 금기 즉시 확인</div>
+          <div class="feat-desc">위험 등급·사유·대처 방법 제공</div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">📒</div>
+          <div class="feat-title">나의 약 수첩</div>
+          <div class="feat-desc">검색 기록 저장 및 불러오기</div>
+        </div>
+        <div class="feat-item">
+          <div class="feat-icon">📤</div>
+          <div class="feat-title">결과 내보내기</div>
+          <div class="feat-desc">PNG·PDF 저장으로 상담 자료 활용</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- How to use -->
+    <div class="card fu fu2">
+      <div class="card-title">사용 방법</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--p);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">1</div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:2px;">약물 이름 입력</div><div style="font-size:12px;color:var(--t2);">성분명(예: 와파린) 또는 제품명(예: 쿠마딘)을 입력하면 자동완성이 나타납니다</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--p);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">2</div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:2px;">검사 실행</div><div style="font-size:12px;color:var(--t2);">2개 이상 입력 후 '병용 금기 검사하기' 버튼 클릭</div></div>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-start;">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--p);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;">3</div>
+          <div><div style="font-size:13px;font-weight:700;margin-bottom:2px;">결과 확인 및 저장</div><div style="font-size:12px;color:var(--t2);">금기 조합·사유·대처법을 확인하고 PNG·PDF로 저장하세요</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer fu fu3">
+      <strong>⚖️ 법적 고지 (Disclaimer)</strong><br>
+      본 서비스는 2026년 5월 14일 기준 건강보험심사평가원(HIRA) DUR 성분별 병용금기 데이터를 기반으로 제공되는 <strong>참고용 정보</strong>입니다. 실제 복용 중단 및 변경은 반드시 전문의 또는 약사와의 상담을 통해 결정해야 하며, 본 서비스 제공 정보로 발생한 문제에 대해 법적 책임을 지지 않습니다.
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: CHECK ── -->
+<div class="screen" id="screen-check">
+  <div class="hdr">
+    <span class="hdr-title">💊 약물 입력</span>
+    <span class="pill-badge" id="drugCountBadge">0개 선택</span>
+  </div>
+  <div class="content pb-nav">
+    <div class="info-banner">
+      <span>💡</span>
+      <span>성분명(예: 와파린) 또는 제품명(예: 쿠마딘정)을 입력하세요. 초성(예: ㅇㅂ)으로도 검색됩니다. 최소 2개 이상 입력해야 검사가 가능합니다.</span>
+    </div>
+
+    <div class="card">
+      <div class="counter-bar">
+        <div class="card-title" style="margin:0;">복용 중인 약물 목록</div>
+        <span class="counter-text" id="inputCounter">0 / 10 입력됨</span>
+      </div>
+
+      <div id="drugInputList"></div>
+
+      <div style="display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;">
+        <button class="btn btn-ghost btn-sm" onclick="addRows(10)" id="addRowsBtn">➕ 10개 추가</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearAll()">🗑 전체 초기화</button>
+      </div>
+    </div>
+
+    <!-- Selected chips -->
+    <div class="card" id="selectedCard" style="display:none;">
+      <div class="card-title">선택된 약물</div>
+      <div class="chips-wrap" id="selectedChips"></div>
+    </div>
+
+    <button class="btn btn-primary btn-full btn-lg" onclick="runCheck()">
+      🔍 병용 금기 검사하기
+    </button>
+
+    <div class="disclaimer" style="margin-top:16px;">
+      <strong>안내:</strong> 본 DB는 HIRA DUR 2026.05.14 기준 데이터입니다. 모든 상호작용을 포함하지 않을 수 있으므로 전문가 상담을 병행하세요.
+    </div>
+  </div>
+</div>
+
+<!-- ── SCREEN: RESULT ── -->
+<div class="screen" id="screen-result">
+  <div class="hdr">
+    <button class="hdr-back" onclick="nav('check')">←</button>
+    <span class="hdr-title">검사 결과</span>
+    <button class="hdr-action" onclick="saveNote()">💾 저장</button>
+  </div>
+  <div class="content pb-nav" id="resultContent"></div>
+</div>
+
+<!-- ── SCREEN: NOTEBOOK ── -->
+<div class="screen" id="screen-notebook">
+  <div class="hdr">
+    <span class="hdr-title">📒 나의 약 수첩</span>
+    <button class="hdr-action" onclick="clearAllNotes()" style="color:var(--t3);">전체삭제</button>
+  </div>
+  <div class="content pb-nav" id="notebookContent"></div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- BOTTOM NAV (mobile) -->
+<nav class="bottom-nav mob-only">
+  <div class="bnav-inner">
+    <button class="bnav-btn active" data-screen="home" onclick="nav('home')">
+      <span class="bi">🏠</span><span class="bl">홈</span>
+    </button>
+    <button class="bnav-btn" data-screen="check" onclick="nav('check')">
+      <span class="bi">💊</span><span class="bl">약물입력</span>
+    </button>
+    <button class="bnav-btn" data-screen="result" onclick="nav('result')">
+      <span class="bi">📋</span><span class="bl">결과</span>
+    </button>
+    <button class="bnav-btn" data-screen="notebook" onclick="nav('notebook')">
+      <span class="bi">📒</span><span class="bl">약수첩</span>
+    </button>
+  </div>
+</nav>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   DRUG DATABASE  (HIRA DUR 병용금기 성분별 데이터 기반)
+   2026.05.14 기준 참고용 샘플 데이터
+═══════════════════════════════════════════════════ */
+const DRUGS = [
+  {id:1,  name:'와파린',       alt:['쿠마딘정','와파린정','정우와파린정']},
+  {id:2,  name:'아스피린',     alt:['아스피린프로텍트정','바이아스피린정','아스트릭스캡슐','아스피린정']},
+  {id:3,  name:'이부프로펜',   alt:['애드빌정','부루펜정','이지엔6이부프로펜정','탁센연질캡슐']},
+  {id:4,  name:'나프록센',     alt:['낙센에프정','나프록센정','나록센정','탁센나프록센']},
+  {id:5,  name:'심바스타틴',   alt:['조코정','심바스타틴정','유캔정','심코정']},
+  {id:6,  name:'아토르바스타틴',alt:['리피토정','아토르바스타틴정','리피로우정']},
+  {id:7,  name:'아미오다론',   alt:['코다론정','아미오다론정']},
+  {id:8,  name:'클라리스로마이신',alt:['클래리스정','비악신정','클라리스로마이신정']},
+  {id:9,  name:'에리스로마이신',alt:['에리스로마이신정','에리트로마이신정']},
+  {id:10, name:'실데나필',     alt:['비아그라정','실데나필정','팔팔정','헤라정']},
+  {id:11, name:'타다라필',     alt:['시알리스정','타다라필정','구구정','센돔정','시알리정']},
+  {id:12, name:'니트로글리세린',alt:['니트로글리세린설하정','니트로민설하정','나이트로듀어패취']},
+  {id:13, name:'이소소르비드 모노니트레이트',alt:['이소켓정','모노케트정']},
+  {id:14, name:'이소소르비드 디니트레이트',alt:['이소디닐설하정','디니켓정']},
+  {id:15, name:'메트포르민',   alt:['글루코파지정','다이아벡스정','메트포르민정','디아타민정']},
+  {id:16, name:'케토코나졸',   alt:['케토코나졸정','니조랄정','케토코나졸샴푸']},
+  {id:17, name:'이트라코나졸', alt:['스포라녹스캡슐','이트리졸캡슐','이트라코나졸캡슐']},
+  {id:18, name:'플루코나졸',   alt:['디플루칸캡슐','플루코나졸캡슐','플루카정']},
+  {id:19, name:'리팜피신',     alt:['리팜피신캡슐','리파딘캡슐','리파마이신캡슐']},
+  {id:20, name:'에티닐에스트라디올(경구피임약)',alt:['야스민정','마이보라정','머시론정','미뇨비아정']},
+  {id:21, name:'시프로플록사신',alt:['시프로바이정','씨프로정','시프로플록사신정']},
+  {id:22, name:'테오필린',     alt:['테오필린서방정','슬로비드캡슐','유니콘틴서방정']},
+  {id:23, name:'메토트렉세이트',alt:['메토트렉세이트정','메토렉스정','MTX정']},
+  {id:24, name:'리튬',         alt:['리튬카보네이트정','에스칼리스정','리테닌서방정']},
+  {id:25, name:'페노바르비탈', alt:['페노바르비탈정','루미날정']},
+  {id:26, name:'페니토인',     alt:['페니토인정','디페닌정','에필린서방캡슐']},
+  {id:27, name:'카르바마제핀', alt:['테그레톨정','카르바마제핀정','카뎀서방정']},
+  {id:28, name:'디곡신',       alt:['디고신정','디곡신정','라녹신정']},
+  {id:29, name:'스피로노락톤', alt:['알닥톤정','스피로노락톤정']},
+  {id:30, name:'에날라프릴',   alt:['레니텍정','에날라프릴정','에나프릴정']},
+  {id:31, name:'리시노프릴',   alt:['제스트릴정','리시노프릴정','프리닐정']},
+  {id:32, name:'클로피도그렐', alt:['플라빅스정','클로피도그렐정','크로피도정']},
+  {id:33, name:'오메프라졸',   alt:['로섹정','오메프라졸정','오메탈정','로섹캡슐']},
+  {id:34, name:'에소메프라졸', alt:['넥시움정','에소메프라졸정','에소메드정']},
+  {id:35, name:'세르트랄린',   alt:['졸로푸트정','세르트랄린정','젤프트정']},
+  {id:36, name:'플루옥세틴',   alt:['푸로작정','플루옥세틴캡슐','프로작캡슐']},
+  {id:37, name:'파록세틴',     alt:['팍실정','파록세틴정','레록세틴정']},
+  {id:38, name:'트라마돌',     alt:['트라마돌정','울트라셋정','마이돌정','트리돌서방정']},
+  {id:39, name:'트라닐사이프로민(MAO억제제)',alt:['파르나테정']},
+  {id:40, name:'페넬진(MAO억제제)',alt:['나르딜정']},
+  {id:41, name:'목클로베미드(MAO억제제)',alt:['오로릭스정']},
+  {id:42, name:'아미트리프틸린',alt:['에트라빌정','에라빌정','아미정']},
+  {id:43, name:'할로페리돌',   alt:['할돌정','할로페리돌정']},
+  {id:44, name:'퀘티아핀',     alt:['쎄로켈정','퀘타핀정','쿠에타핀정']},
+  {id:45, name:'메틸페니데이트',alt:['리탈린정','콘서타서방정','메디키넷서방캡슐']},
+  {id:46, name:'독시사이클린', alt:['독시사이클린캡슐','비브라마이신정','독시정']},
+  {id:47, name:'아세트아미노펜',alt:['타이레놀정','세토펜정','써스펜서방정','파세린정']},
+  {id:48, name:'덱사메타손',   alt:['덱사메타손정','데카드론정']},
+  {id:49, name:'프레드니솔론', alt:['프레드니솔론정','소론도정','메드롤정']},
+  {id:50, name:'딜티아젬',     alt:['헤르벤정','딜티아젬정','딜티캡슐']},
+  {id:51, name:'베라파밀',     alt:['이솝틴정','베라파밀정']},
+  {id:52, name:'알로퓨리놀',   alt:['알로퓨리놀정','자이로릭정','고픽정','알로린정']},
+  {id:53, name:'아자티오프린', alt:['이무란정','아자티오프린정']},
+  {id:54, name:'시클로스포린', alt:['산디문오랄정','뉴랄캡슐','시클로스포린연질캡슐']},
+  {id:55, name:'타크로리무스', alt:['프로그랍캡슐','아드바그라프캡슐','타크로벨캡슐']},
+  {id:56, name:'암로디핀',     alt:['노바스크정','암로디핀정','아모디핀정','오로디핀정']},
+  {id:57, name:'로수바스타틴', alt:['크레스토정','로수바스타틴정','로베린정']},
+  {id:58, name:'페노피브레이트',alt:['리피딜슈프라정','페노피브레이트정','트라이코정']},
+  {id:59, name:'콜히친',       alt:['콜키신정','콜히친정']},
+  {id:60, name:'다비가트란',   alt:['프라닥사캡슐']},
+  {id:61, name:'리바록사반',   alt:['자렐토정']},
+  {id:62, name:'아픽사반',     alt:['엘리퀴스정']},
+  {id:63, name:'헤파린',       alt:['헤파린나트륨주','헤파린칼슘주']},
+  {id:64, name:'알프라졸람',   alt:['자낙스정','알프라졸람정','알람정']},
+  {id:65, name:'디아제팜',     alt:['바리움정','디아제팜정']},
+  {id:66, name:'졸피뎀',       alt:['스틸녹스정','졸피뎀정','수면드림정']},
+  {id:67, name:'글리벤클라미드',alt:['다오닐정','글리벤클라미드정']},
+  {id:68, name:'레보티록신',   alt:['씬지로이드정','레보티록신정','유트로겐정']},
+  {id:69, name:'탄산칼슘',     alt:['탄산칼슘정','오스칼정','칼트레이트정']},
+  {id:70, name:'시메티딘',     alt:['타가메트정','시메티딘정']},
+  {id:71, name:'시클로포스파미드',alt:['싸이톡산정','엔독산정']},
+  {id:72, name:'독소루비신',   alt:['독소루비신주','아드리아마이신주']},
+  {id:73, name:'메토클로프라미드',alt:['맥페란정','메토클로프라미드정']},
+  {id:74, name:'케토프로펜',   alt:['케토프로펜정','아트로반정','케펜정']},
+  {id:75, name:'인도메타신',   alt:['인도메타신정','인도메신정']},
+  {id:76, name:'란소프라졸',   alt:['프레바시드정','란소프라졸정','란스톤캡슐']},
+  {id:77, name:'라베프라졸',   alt:['파리에트정','라베프라졸정']},
+  {id:78, name:'판토프라졸',   alt:['판토록정','판토프라졸정']},
+  {id:79, name:'모르핀',       alt:['모르핀염산염정','엠에스콘틴서방정']},
+  {id:80, name:'날트렉손',     alt:['레비아정','날트렉손정']},
+];
+
+/* ── CONTRAINDICATION DB ── */
+const CONTRAS = [
+  // 와파린 관련
+  {id:1,  a:1, b:2,  sv:'high',   why:'심각한 출혈 위험',
+   detail:'와파린과 아스피린 병용은 항응고·혈소판억제 효과가 중복되어 위장관 출혈, 뇌출혈 등 심각한 출혈 위험을 크게 높입니다. 혈소판 기능 억제와 항응고 상가 작용으로 지혈이 어려워질 수 있습니다. 불가피한 경우 INR 모니터링 강화 및 PPI 병용을 권고합니다.'},
+  {id:2,  a:1, b:3,  sv:'high',   why:'출혈 위험 증가 / INR 상승',
+   detail:'이부프로펜(NSAID)은 와파린의 혈장 단백 결합 경쟁 및 CYP2C9 억제로 와파린 혈중 농도를 높이고, 위장관 점막을 손상시켜 출혈 위험을 상승시킵니다. 통증 조절이 필요하면 아세트아미노펜으로 대체를 권고합니다.'},
+  {id:3,  a:1, b:4,  sv:'high',   why:'출혈 위험 증가',
+   detail:'나프록센(NSAID)도 와파린의 항응고 효과를 증강하여 프로트롬빈 시간 연장 및 INR 상승을 초래합니다. 병용 시 면밀한 INR 모니터링이 필수적이며, 가능한 대체 진통제를 사용하십시오.'},
+  {id:4,  a:1, b:18, sv:'high',   why:'와파린 효과 과도 증강 (출혈 위험)',
+   detail:'플루코나졸은 CYP2C9 강력 억제제로 와파린(주로 S-와파린, CYP2C9 대사)의 혈중 농도를 현저히 증가시킵니다. INR이 급격히 상승하여 중증 출혈 위험이 높아집니다. 불가피한 경우 와파린 용량을 약 50% 감량하고 INR을 매일 모니터링하십시오.'},
+  {id:5,  a:1, b:74, sv:'high',   why:'출혈 위험 증가',
+   detail:'케토프로펜(NSAID)은 와파린의 혈중 농도를 높이고 위장관 점막을 손상시켜 출혈 위험을 높입니다.'},
+
+  // 스타틴 관련
+  {id:6,  a:5, b:7,  sv:'high',   why:'심각한 근육병증 / 횡문근융해증',
+   detail:'아미오다론은 CYP3A4를 억제하여 심바스타틴 혈중 농도를 급격히 상승시킵니다. 근육 괴사(횡문근융해증)·급성 신부전 위험이 있습니다. 심바스타틴 최대 용량 20 mg 제한, 또는 상호작용이 적은 프라바스타틴·로수바스타틴으로 교체를 권고합니다.'},
+  {id:7,  a:5, b:8,  sv:'high',   why:'근육병증 / 횡문근융해증 위험',
+   detail:'클라리스로마이신(CYP3A4 강력 억제제)은 심바스타틴 AUC를 수십 배 증가시킵니다. 항생제 투여 기간 동안 심바스타틴을 일시 중단하거나 프라바스타틴으로 교체하십시오.'},
+  {id:8,  a:5, b:17, sv:'high',   why:'횡문근융해증 위험 (CYP3A4 억제)',
+   detail:'이트라코나졸은 CYP3A4를 강력히 억제하여 심바스타틴 AUC를 최대 20배 증가시킬 수 있습니다. 절대 금기에 가깝습니다. 프라바스타틴 또는 로수바스타틴으로 교체하십시오.'},
+  {id:9,  a:5, b:51, sv:'medium', why:'스타틴 농도 증가 (근육병증 위험)',
+   detail:'베라파밀은 CYP3A4 억제제로 심바스타틴 혈중 농도를 높입니다. 심바스타틴을 최대 10 mg으로 제한하거나, 상호작용이 적은 스타틴을 사용하십시오.'},
+  {id:10, a:5, b:50, sv:'medium', why:'스타틴 농도 증가',
+   detail:'딜티아젬도 CYP3A4 억제로 심바스타틴 농도를 상승시킵니다. 심바스타틴 10 mg 이하로 제한하거나 대체 스타틴 사용을 권고합니다.'},
+  {id:11, a:6, b:17, sv:'medium', why:'아토르바스타틴 농도 증가',
+   detail:'이트라코나졸은 아토르바스타틴 AUC를 약 3배 증가시킵니다. 근육병증 위험이 있어 용량 감소 또는 프라바스타틴으로 교체를 권고합니다.'},
+
+  // PDE5 억제제 + 질산염 (절대 금기)
+  {id:12, a:10, b:12, sv:'high',  why:'심각한 저혈압 ─ 생명 위협',
+   detail:'실데나필(PDE5억제제)과 니트로글리세린(질산염) 병용은 cGMP 농도 상승이 중복되어 혈압이 극도로 하강합니다. 실신, 심근허혈, 사망까지 보고됩니다. 절대 금기입니다.'},
+  {id:13, a:10, b:13, sv:'high',  why:'심각한 저혈압 (절대 금기)',
+   detail:'실데나필과 이소소르비드 모노니트레이트 병용은 심각한 혈압 강하를 유발합니다. 절대 금기입니다.'},
+  {id:14, a:10, b:14, sv:'high',  why:'심각한 저혈압 (절대 금기)',
+   detail:'실데나필과 이소소르비드 디니트레이트의 병용은 혈압을 위험하게 낮춥니다. 절대 금기입니다.'},
+  {id:15, a:11, b:12, sv:'high',  why:'심각한 저혈압 ─ 생명 위협',
+   detail:'타다라필은 반감기가 ~17.5시간으로 길어, 투약 후 최소 48시간은 질산염 투여를 피해야 합니다. 병용 시 심각한 저혈압, 심근허혈, 사망 위험이 있습니다.'},
+  {id:16, a:11, b:13, sv:'high',  why:'심각한 저혈압 (절대 금기)',
+   detail:'타다라필과 이소소르비드 모노니트레이트 병용은 혈압을 극도로 낮춥니다. 절대 금기입니다.'},
+  {id:17, a:11, b:14, sv:'high',  why:'심각한 저혈압 (절대 금기)',
+   detail:'타다라필과 이소소르비드 디니트레이트 병용도 심각한 혈압 강하를 유발합니다.'},
+
+  // MAO 억제제 + 세로토닌계
+  {id:18, a:39, b:35, sv:'high',  why:'세로토닌 증후군 ─ 생명 위협',
+   detail:'MAO억제제(트라닐사이프로민)와 SSRI(세르트랄린) 병용은 세로토닌 증후군을 유발합니다. 고열·근강직·경련·의식 변화·사망까지 보고됩니다. MAO억제제 중단 후 최소 14일, 플루옥세틴은 5주 후 SSRI 시작이 가능합니다.'},
+  {id:19, a:39, b:36, sv:'high',  why:'세로토닌 증후군 ─ 생명 위협',
+   detail:'MAO억제제와 플루옥세틴 병용은 절대 금기입니다. 플루옥세틴의 활성 대사체 반감기가 매우 길어(~2주) MAO억제제 시작 전 최소 5주간 중단해야 합니다.'},
+  {id:20, a:39, b:37, sv:'high',  why:'세로토닌 증후군 (절대 금기)',
+   detail:'MAO억제제와 파록세틴 병용은 세로토닌 증후군을 일으키는 절대 금기 조합입니다.'},
+  {id:21, a:40, b:35, sv:'high',  why:'세로토닌 증후군',
+   detail:'페넬진(MAO억제제)과 세르트랄린 병용은 절대 금기이며 세로토닌 증후군 위험이 있습니다.'},
+  {id:22, a:39, b:38, sv:'high',  why:'세로토닌 증후군 / 발작 위험',
+   detail:'MAO억제제와 트라마돌(약한 세로토닌 재흡수 억제·뮤 오피오이드) 병용은 세로토닌 증후군 및 발작 역치 저하를 일으킵니다.'},
+  {id:23, a:45, b:39, sv:'high',  why:'고혈압 위기 / 심혈관계 응급',
+   detail:'메틸페니데이트(중추신경흥분제)와 MAO억제제 병용은 고혈압 위기, 고열, 뇌출혈, 심혈관계 응급을 유발할 수 있습니다. 절대 금기입니다.'},
+  {id:24, a:41, b:35, sv:'high',  why:'세로토닌 증후군',
+   detail:'목클로베미드(가역성 MAO억제제)도 SSRI 병용 시 세로토닌 증후군을 유발합니다. 중단 후 최소 24시간 후 SSRI 시작을 권고합니다.'},
+
+  // 클로피도그렐 + PPI
+  {id:25, a:32, b:33, sv:'medium', why:'클로피도그렐 항혈소판 효과 감소',
+   detail:'오메프라졸은 CYP2C19 강력 억제제로, 클로피도그렐의 활성 대사체 형성을 방해합니다. 항혈소판 효과가 최대 50% 감소하여 심혈관 사건 위험이 증가합니다. CYP2C19 영향이 적은 판토프라졸로 교체를 권고합니다.'},
+  {id:26, a:32, b:34, sv:'medium', why:'클로피도그렐 효과 감소',
+   detail:'에소메프라졸도 CYP2C19 억제를 통해 클로피도그렐 효과를 감소시킵니다. 판토프라졸 또는 란소프라졸로 교체를 권고합니다.'},
+
+  // 디곡신 + 아미오다론
+  {id:27, a:28, b:7,  sv:'high',  why:'디곡신 독성 위험',
+   detail:'아미오다론은 P-gp 및 CYP 억제로 디곡신 혈중 농도를 50~100% 증가시킵니다. 서맥, 오심, 시각 이상, 부정맥 등 디곡신 독성이 발생할 수 있습니다. 디곡신 용량을 50% 감량하고 혈중 농도·심전도를 면밀히 모니터링하십시오.'},
+
+  // ACEI + 칼륨보존이뇨제
+  {id:28, a:30, b:29, sv:'high',  why:'심각한 고칼륨혈증 (부정맥 위험)',
+   detail:'ACE억제제(에날라프릴)와 스피로노락톤 병용은 신장에서 칼륨 배설을 억제하여 고칼륨혈증을 유발합니다. 치명적 부정맥 위험이 있으므로 칼륨 수치 및 신기능 정기 모니터링이 필수입니다.'},
+  {id:29, a:31, b:29, sv:'high',  why:'심각한 고칼륨혈증',
+   detail:'리시노프릴(ACE억제제)과 스피로노락톤 병용도 고칼륨혈증 위험을 높입니다. 신기능 저하, 당뇨 환자에서 특히 위험합니다.'},
+
+  // 리튬 + NSAIDs
+  {id:30, a:24, b:3,  sv:'high',  why:'리튬 독성 위험 (신장 배설 저해)',
+   detail:'이부프로펜(NSAID)은 프로스타글란딘 합성 억제로 리튬의 신장 배설을 감소시켜 혈중 농도를 상승시킵니다. 오심·구토·손 떨림·혼돈·경련·심부정맥 등 리튬 독성이 나타납니다. 리튬 혈중 농도 모니터링이 필수입니다.'},
+  {id:31, a:24, b:4,  sv:'high',  why:'리튬 독성 위험',
+   detail:'나프록센(NSAID)도 리튬 배설을 억제하여 혈중 농도와 독성을 높입니다.'},
+  {id:32, a:24, b:74, sv:'high',  why:'리튬 독성 위험',
+   detail:'케토프로펜(NSAID)도 리튬의 신장 배설을 억제하여 독성 위험을 높입니다.'},
+
+  // 면역억제제
+  {id:33, a:54, b:8,  sv:'high',  why:'시클로스포린 독성 위험',
+   detail:'클라리스로마이신은 CYP3A4 강력 억제로 시클로스포린 혈중 농도를 수 배 증가시킵니다. 신독성·면역억제 독성이 발생할 수 있습니다. 혈중 농도 면밀한 모니터링과 용량 조절이 필요합니다.'},
+  {id:34, a:55, b:8,  sv:'high',  why:'타크로리무스 독성 위험',
+   detail:'클라리스로마이신은 타크로리무스 혈중 농도를 크게 증가시켜 신독성·신경독성 위험을 높입니다.'},
+  {id:35, a:53, b:52, sv:'high',  why:'아자티오프린 독성 ─ 심각한 골수 억제',
+   detail:'알로퓨리놀은 아자티오프린 대사 효소(XO)를 억제하여 활성 대사체 농도를 4~6배 증가시킵니다. 심각한 범혈구감소증이 발생할 수 있습니다. 불가피한 경우 아자티오프린을 25% 수준으로 감량하고 혈구 수치를 자주 모니터링하십시오.'},
+
+  // 콜히친 + 강력 억제제
+  {id:36, a:59, b:8,  sv:'high',  why:'콜히친 독성 ─ 생명 위협',
+   detail:'클라리스로마이신은 P-gp 및 CYP3A4 억제로 콜히친 혈중 농도를 크게 증가시킵니다. 심각한 골수 억제·다발성 장기 부전·사망까지 보고됩니다. 신기능 저하 환자에서는 특히 위험합니다.'},
+  {id:37, a:59, b:17, sv:'high',  why:'콜히친 독성',
+   detail:'이트라코나졸도 콜히친 농도를 크게 높여 심각한 독성을 유발할 수 있습니다.'},
+
+  // 메토트렉세이트 + NSAIDs
+  {id:38, a:23, b:3,  sv:'high',  why:'메토트렉세이트 독성 (신장 배설 저해)',
+   detail:'이부프로펜(NSAID)은 신장 프로스타글란딘 억제로 메토트렉세이트의 배설을 방해하여 독성 농도까지 상승시킵니다. 골수억제·위장관 독성·간독성이 나타납니다.'},
+  {id:39, a:23, b:4,  sv:'high',  why:'메토트렉세이트 독성',
+   detail:'나프록센(NSAID)도 메토트렉세이트 배설을 저해하여 독성 위험을 높입니다.'},
+  {id:40, a:23, b:75, sv:'high',  why:'메토트렉세이트 독성',
+   detail:'인도메타신(NSAID)도 메토트렉세이트의 신장 배설을 억제하여 독성 농도까지 상승시킬 수 있습니다.'},
+
+  // 항경련제
+  {id:41, a:27, b:8,  sv:'medium', why:'카르바마제핀 독성 위험',
+   detail:'클라리스로마이신은 CYP3A4 억제로 카르바마제핀 혈중 농도를 상승시킵니다. 어지러움·복시·운동실조 등 독성이 나타날 수 있으므로 혈중 농도 모니터링이 필요합니다.'},
+  {id:42, a:26, b:7,  sv:'medium', why:'페니토인 독성 위험',
+   detail:'아미오다론은 CYP2C9 억제로 페니토인 농도를 상승시킵니다. 안진·운동실조·인지장애 등 독성이 나타날 수 있습니다.'},
+  {id:43, a:33, b:26, sv:'medium', why:'페니토인 농도 변화',
+   detail:'오메프라졸은 CYP2C19 억제로 페니토인 대사를 저해하여 혈중 농도를 높일 수 있습니다. 페니토인 혈중 농도 모니터링이 필요합니다.'},
+
+  // 항생제 + 테오필린
+  {id:44, a:21, b:22, sv:'high',  why:'테오필린 독성 위험 (CYP1A2 억제)',
+   detail:'시프로플록사신은 CYP1A2를 강력하게 억제하여 테오필린 혈중 농도를 50~100% 증가시킵니다. 테오필린 독성(오심·구토·경련·부정맥)이 발생할 수 있으므로 테오필린 용량을 약 50% 감량하고 혈중 농도를 모니터링하십시오.'},
+
+  // 리팜피신 + 피임약
+  {id:45, a:19, b:20, sv:'high',  why:'경구피임약 실패 위험',
+   detail:'리팜피신은 CYP 강력 유도제로 경구피임약(에티닐에스트라디올)의 대사를 촉진하여 혈중 농도를 크게 낮춥니다. 피임 실패 위험이 높아지므로 리팜피신 복용 기간 및 종료 후 최소 4주간 차단형 피임법을 병용하십시오.'},
+
+  // 새로운 경구 항응고제 + NSAIDs/아스피린
+  {id:46, a:60, b:3,  sv:'high',  why:'출혈 위험 증가',
+   detail:'다비가트란과 이부프로펜 병용은 위장관 출혈 위험을 크게 높입니다. 항응고 효과 상가 및 위장관 점막 손상이 이유입니다.'},
+  {id:47, a:61, b:2,  sv:'high',  why:'출혈 위험 증가',
+   detail:'리바록사반과 아스피린 병용은 출혈 위험을 현저히 증가시킵니다. 고용량 아스피린(>100 mg)과의 병용은 특히 위험합니다.'},
+
+  // 레보티록신 흡수 저해
+  {id:48, a:68, b:69, sv:'medium', why:'레보티록신 흡수 저해',
+   detail:'탄산칼슘은 위장관에서 레보티록신과 결합하여 흡수를 감소시킵니다. 최소 4시간 간격을 두고 복용하도록 반드시 복약 지도하십시오.'},
+  {id:49, a:46, b:69, sv:'medium', why:'독시사이클린 흡수 저해',
+   detail:'탄산칼슘(칼슘 이온)은 독시사이클린과 킬레이트 복합체를 형성하여 흡수를 크게 방해합니다. 복용 간격을 최소 2시간 이상 두어야 합니다.'},
+
+  // 벤조디아제핀 + 바르비투르산
+  {id:50, a:25, b:64, sv:'medium', why:'과도한 중추신경 억제',
+   detail:'페노바르비탈(바르비투르산염)과 알프라졸람(벤조디아제핀) 병용은 중추신경계 억제가 중복되어 진정·호흡 억제·혼수 위험이 있습니다.'},
+];
+
+/* ═══════════════════ UTILS ═══════════════════ */
+const CHOSUNG = ['ㄱ','ㄲ','ㄴ','ㄷ','ㄸ','ㄹ','ㅁ','ㅂ','ㅃ','ㅅ','ㅆ','ㅇ','ㅈ','ㅉ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
+function cho(c){const n=c.charCodeAt(0)-0xAC00;if(n<0||n>11171)return c;return CHOSUNG[Math.floor(n/28/21)];}
+function toCho(s){return s.split('').map(cho).join('');}
+function matches(text,q){
+  if(!q)return false;
+  const ltext=text.toLowerCase(),lq=q.toLowerCase();
+  if(ltext.includes(lq))return true;
+  if(toCho(text).includes(q))return true;
+  return false;
+}
+function hl(text,q){
+  if(!q)return text;
+  const i=text.toLowerCase().indexOf(q.toLowerCase());
+  if(i<0)return text;
+  return text.slice(0,i)+'<span class="hl">'+text.slice(i,i+q.length)+'</span>'+text.slice(i+q.length);
+}
+function byId(id){return DRUGS.find(d=>d.id===id);}
+function search(q){
+  if(!q||q.length<1)return[];
+  const out=[];
+  for(const d of DRUGS){
+    if(matches(d.name,q)){out.push({d,src:'name'});continue;}
+    const ap=d.alt.filter(p=>matches(p,q));
+    if(ap.length)out.push({d,ap,src:'alt'});
+  }
+  return out.slice(0,8);
+}
+
+/* ═══════════════════ STATE ═══════════════════ */
+let selected = new Array(30).fill(null); // ingredient objects or null
+let maxRows = 10;
+let lastResult = null;
+
+/* ═══════════════════ NAVIGATION ═══════════════════ */
+function nav(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const el=document.getElementById('screen-'+screen);
+  if(!el)return;
+  el.classList.add('active');
+  // Sidebar
+  document.querySelectorAll('.nav-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.screen===screen);
+  });
+  // Bottom nav
+  document.querySelectorAll('.bnav-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.screen===screen);
+  });
+  if(screen==='check') renderInputs();
+  if(screen==='notebook') renderNotebook();
+  if(screen==='result'){
+    if(!lastResult){toast('먼저 약물을 입력하고 검사를 실행해주세요 💊');nav('check');return;}
+  }
+}
+
+/* ═══════════════════ DRUG INPUTS ═══════════════════ */
+function renderInputs(){
+  const list=document.getElementById('drugInputList');
+  list.innerHTML='';
+  for(let i=0;i<maxRows;i++) list.appendChild(makeRow(i));
+  // restore selected
+  for(let i=0;i<maxRows;i++){
+    if(selected[i]){
+      const inp=document.getElementById('inp-'+i);
+      if(inp){inp.value=selected[i].name;inp.classList.add('filled');}
+      const nb=document.getElementById('nb-'+i);
+      if(nb)nb.classList.add('on');
+    }
+  }
+  updateCounters();
+  updateChips();
+}
+
+function makeRow(i){
+  const wrap=document.createElement('div');
+  wrap.className='drug-row';
+  wrap.id='row-'+i;
+  wrap.innerHTML=`
+    <div class="row-badge" id="nb-${i}">${i+1}</div>
+    <div class="input-wrap">
+      <div class="input-label">성분명 또는 제품명</div>
+      <input class="drug-input" id="inp-${i}" type="text"
+        placeholder="예: 와파린, 타이레놀, 리피토..."
+        autocomplete="off"
+        oninput="onInput(${i},this.value)"
+        onfocus="onFocus(${i})"
+        onblur="onBlur(${i})">
+      <div class="ac-drop" id="ac-${i}"></div>
+    </div>
+    <button class="del-btn" onclick="delRow(${i})" title="삭제">✕</button>
+  `;
+  return wrap;
+}
+
+function onInput(i,v){
+  if(selected[i]&&v!==selected[i].name){
+    selected[i]=null;
+    document.getElementById('inp-'+i).classList.remove('filled');
+    document.getElementById('nb-'+i).classList.remove('on');
+  }
+  showAC(i,v);
+  updateCounters();updateChips();
+}
+function onFocus(i){
+  const v=document.getElementById('inp-'+i).value;
+  showAC(i,v);
+}
+function onBlur(i){
+  setTimeout(()=>{
+    const ac=document.getElementById('ac-'+i);
+    if(ac)ac.style.display='none';
+  },200);
+}
+function showAC(i,q){
+  const ac=document.getElementById('ac-'+i);
+  if(!ac)return;
+  if(!q){ac.style.display='none';return;}
+  const res=search(q);
+  if(!res.length){ac.style.display='none';return;}
+  ac.innerHTML=res.map(r=>`
+    <div class="ac-item" onclick="pickDrug(${i},${r.d.id})">
+      <div class="ac-name">${hl(r.d.name,q)}</div>
+      <div class="ac-products">${r.d.alt.slice(0,3).join(' · ')}</div>
+    </div>
+  `).join('');
+  ac.style.display='block';
+}
+function pickDrug(i,did){
+  const d=byId(did);if(!d)return;
+  if(selected.some((s,j)=>s&&s.id===did&&j!==i)){toast('이미 추가된 약물입니다');return;}
+  selected[i]=d;
+  const inp=document.getElementById('inp-'+i);
+  if(inp){inp.value=d.name;inp.classList.add('filled');}
+  const nb=document.getElementById('nb-'+i);
+  if(nb)nb.classList.add('on');
+  const ac=document.getElementById('ac-'+i);
+  if(ac)ac.style.display='none';
+  updateCounters();updateChips();
+}
+function delRow(i){
+  selected[i]=null;
+  const inp=document.getElementById('inp-'+i);
+  if(inp){inp.value='';inp.classList.remove('filled');}
+  const nb=document.getElementById('nb-'+i);
+  if(nb)nb.classList.remove('on');
+  updateCounters();updateChips();
+}
+function addRows(n){
+  if(maxRows>=30){toast('최대 30개까지 가능합니다');return;}
+  maxRows=Math.min(30,maxRows+n);
+  const btn=document.getElementById('addRowsBtn');
+  if(btn)btn.textContent=maxRows>=30?'최대 달성':'➕ 10개 추가';
+  renderInputs();
+}
+function clearAll(){
+  selected=new Array(30).fill(null);
+  maxRows=10;
+  const btn=document.getElementById('addRowsBtn');
+  if(btn)btn.textContent='➕ 10개 추가';
+  renderInputs();
+}
+function updateCounters(){
+  const cnt=selected.filter(Boolean).length;
+  const el=document.getElementById('inputCounter');
+  if(el)el.textContent=`${cnt} / ${maxRows} 입력됨`;
+  const badge=document.getElementById('drugCountBadge');
+  if(badge)badge.textContent=`${cnt}개 선택`;
+}
+function updateChips(){
+  const drugs=selected.filter(Boolean);
+  const card=document.getElementById('selectedCard');
+  const wrap=document.getElementById('selectedChips');
+  if(!card||!wrap)return;
+  if(!drugs.length){card.style.display='none';return;}
+  card.style.display='block';
+  wrap.innerHTML=drugs.map(d=>`
+    <div class="chip">💊 ${d.name}<button class="chip-del" onclick="removeName('${d.name}')">✕</button></div>
+  `).join('');
+}
+function removeName(name){
+  const i=selected.findIndex(s=>s&&s.name===name);
+  if(i>=0)delRow(i);
+}
+
+/* ═══════════════════ CHECK LOGIC ═══════════════════ */
+function runCheck(){
+  const drugs=selected.filter(Boolean);
+  if(drugs.length<2){toast('⚠️ 2개 이상의 약물을 입력해주세요');return;}
+
+  const ids=drugs.map(d=>d.id);
+  const hits=[];
+  for(let i=0;i<ids.length;i++){
+    for(let j=i+1;j<ids.length;j++){
+      const c=CONTRAS.find(x=>(x.a===ids[i]&&x.b===ids[j])||(x.a===ids[j]&&x.b===ids[i]));
+      if(c)hits.push({d1:drugs[i],d2:drugs[j],c});
+    }
+  }
+  lastResult={drugs,hits,date:new Date()};
+  buildResult(lastResult);
+  nav('result');
+}
+
+/* ═══════════════════ RESULT ═══════════════════ */
+function buildResult(r){
+  const {drugs,hits,date}=r;
+  const pairs=drugs.length*(drugs.length-1)/2;
+  const dateStr=date.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'});
+  const highN=hits.filter(h=>h.c.sv==='high').length;
+  const medN=hits.filter(h=>h.c.sv==='medium').length;
+
+  let html=`
+  <div id="resultPrintArea">
+    <!-- 검사 약물 요약 -->
+    <div class="card fu">
+      <div class="card-title">검사 약물 목록</div>
+      <div class="chips-wrap" style="margin-bottom:10px;">
+        ${drugs.map(d=>`<div class="chip">💊 ${d.name}</div>`).join('')}
+      </div>
+      <div style="font-size:12px;color:var(--t3);">총 ${drugs.length}개 약물 · ${pairs}개 조합 검사 · ${dateStr}</div>
+    </div>
+  `;
+
+  if(!hits.length){
+    html+=`
+    <div class="safe-box fu fu1">
+      <div class="si">✅</div>
+      <h3>병용 금기 조합 없음</h3>
+      <p>입력하신 약물 간 HIRA DUR 기준<br>병용 금기 조합이 발견되지 않았습니다.<br><br>그래도 복약 전 약사·전문의와 상담하는 것을 권장합니다.</p>
+    </div>`;
+  } else {
+    html+=`
+    <div class="result-summary danger fu fu1">
+      <div class="rs-icon">⚠️</div>
+      <div>
+        <div class="rs-label">검사 결과</div>
+        <div class="rs-title">병용 금기 ${hits.length}건 발견</div>
+        <div class="rs-sub" style="color:var(--danger);">
+          ${highN?`<strong>🚨 고위험 ${highN}건</strong>`:''}
+          ${medN?`<span style="color:var(--amber);"> ⚠️ 주의 ${medN}건</span>`:''}
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:8px;font-size:12px;color:var(--t3);">▼ 각 항목을 클릭하면 상세 정보가 표시됩니다</div>
+    `;
+    hits.forEach((h,idx)=>{
+      const isH=h.c.sv==='high';
+      html+=`
+      <div class="contra-card ${isH?'':'medium'} fu" style="animation-delay:${0.05*idx}s" id="cc-${idx}">
+        <div class="contra-header" onclick="toggleCC(${idx})">
+          <div class="contra-pair">
+            <span class="contra-drug">💊 ${h.d1.name}</span>
+            <span class="contra-plus">+</span>
+            <span class="contra-drug">💊 ${h.d2.name}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <span class="contra-badge ${isH?'high':'medium'}">${isH?'🚨 고위험':'⚠️ 주의'}</span>
+            <span class="contra-toggle" id="ct-${idx}">▼</span>
+          </div>
+        </div>
+        <div class="contra-body" id="cb-${idx}">
+          <div class="contra-reason">${h.c.why}</div>
+          <div class="contra-detail">${h.c.detail}</div>
+        </div>
+      </div>`;
+    });
+  }
+
+  html+=`
+    <div class="card" style="margin-top:4px;">
+      <div class="card-title">결과 내보내기</div>
+      <div class="export-row">
+        <button class="btn btn-teal btn-sm" onclick="exportPNG()">📸 PNG 저장</button>
+        <button class="btn btn-outline btn-sm" onclick="window.print()">📄 PDF 인쇄</button>
+      </div>
+    </div>
+    <div class="disclaimer" style="margin-bottom:16px;">
+      <strong>⚖️ 법적 고지:</strong> 본 결과는 2026.05.14 기준 HIRA DUR 데이터를 기반으로 한 참고용 정보입니다. 실제 복용 중단 및 변경은 반드시 전문의 또는 약사와의 상담 후 결정하십시오. 본 정보로 발생한 문제에 대해 법적 책임을 지지 않습니다.
+    </div>
+  </div>`;
+
+  document.getElementById('resultContent').innerHTML=html;
+}
+
+function toggleCC(idx){
+  const body=document.getElementById('cb-'+idx);
+  const tog=document.getElementById('ct-'+idx);
+  const open=body.style.display==='block';
+  body.style.display=open?'none':'block';
+  tog.textContent=open?'▼':'▲';
+}
+
+/* ═══════════════════ NOTEBOOK ═══════════════════ */
+function saveNote(){
+  if(!lastResult){toast('저장할 결과가 없습니다');return;}
+  const notes=JSON.parse(localStorage.getItem('sp_nb')||'[]');
+  notes.unshift({
+    id:Date.now(),
+    date:lastResult.date.toISOString(),
+    drugs:lastResult.drugs.map(d=>({id:d.id,name:d.name})),
+    hitCount:lastResult.hits.length
+  });
+  if(notes.length>30)notes.pop();
+  localStorage.setItem('sp_nb',JSON.stringify(notes));
+  toast('💾 약 수첩에 저장되었습니다');
+}
+
+function renderNotebook(){
+  const el=document.getElementById('notebookContent');
+  const notes=JSON.parse(localStorage.getItem('sp_nb')||'[]');
+  if(!notes.length){
+    el.innerHTML=`
+    <div class="empty">
+      <div class="ei">📒</div>
+      <h3>저장된 기록이 없습니다</h3>
+      <p>병용 금기 검사 결과 화면에서<br>'저장' 버튼을 눌러 기록을 남겨보세요.</p>
+      <button class="btn btn-primary" style="margin-top:16px;" onclick="nav('check')">💊 약물 검사 시작</button>
+    </div>`;
+    return;
+  }
+  el.innerHTML=notes.map(n=>{
+    const d=new Date(n.date).toLocaleDateString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const drugStr=n.drugs.map(x=>x.name).join(', ');
+    const safe=n.hitCount===0;
+    return`<div class="nb-item" onclick="loadNote(${n.id})">
+      <div class="nb-info">
+        <div class="nb-date">${d}</div>
+        <div class="nb-drugs">${drugStr}</div>
+        <div class="nb-count">${n.drugs.length}개 약물</div>
+      </div>
+      <div class="nb-badge ${safe?'safe':'danger'}">${safe?'✅ 안전':'⚠️ 금기 '+n.hitCount+'건'}</div>
+      <button class="nb-del" onclick="delNote(event,${n.id})">🗑</button>
+    </div>`;
+  }).join('');
+}
+
+function loadNote(id){
+  const notes=JSON.parse(localStorage.getItem('sp_nb')||'[]');
+  const n=notes.find(x=>x.id===id);if(!n)return;
+  selected=new Array(30).fill(null);
+  n.drugs.forEach((dd,i)=>{selected[i]=byId(dd.id);});
+  runCheck();
+  toast('📂 기록을 불러왔습니다');
+}
+function delNote(e,id){
+  e.stopPropagation();
+  const notes=JSON.parse(localStorage.getItem('sp_nb')||'[]').filter(n=>n.id!==id);
+  localStorage.setItem('sp_nb',JSON.stringify(notes));
+  renderNotebook();toast('삭제되었습니다');
+}
+function clearAllNotes(){
+  if(!confirm('모든 저장 기록을 삭제하시겠습니까?'))return;
+  localStorage.removeItem('sp_nb');
+  renderNotebook();toast('🗑 전체 삭제되었습니다');
+}
+
+/* ═══════════════════ EXPORT ═══════════════════ */
+function exportPNG(){
+  toast('📸 PNG 저장 준비 중...');
+  if(window.html2canvas){doCapture();return;}
+  const s=document.createElement('script');
+  s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+  s.onload=doCapture;
+  s.onerror=()=>toast('❌ 라이브러리 로드 실패. 인터넷 연결을 확인하세요.');
+  document.head.appendChild(s);
+}
+function doCapture(){
+  const target=document.getElementById('resultPrintArea')||document.getElementById('resultContent');
+  html2canvas(target,{backgroundColor:'#F2F5FA',scale:2,useCORS:true}).then(canvas=>{
+    const a=document.createElement('a');
+    const dateStr=new Date().toISOString().slice(0,10).replace(/-/g,'');
+    a.download=`SafePill_결과_${dateStr}.png`;
+    a.href=canvas.toDataURL('image/png');
+    a.click();
+    toast('✅ PNG 저장 완료!');
+  }).catch(()=>toast('❌ PNG 저장에 실패했습니다'));
+}
+
+/* ═══════════════════ TOAST ═══════════════════ */
+let _toastTimer=null;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer=setTimeout(()=>el.classList.remove('show'),2600);
+}
+
+/* ═══════════════════ INIT ═══════════════════ */
+(function init(){
+  document.getElementById('stat-drugs').textContent=DRUGS.length+'+';
+  document.getElementById('stat-contras').textContent=CONTRAS.length+'+';
+  selected=new Array(30).fill(null);
+  renderInputs();
+})();
+</script>
+</body>
+</html>

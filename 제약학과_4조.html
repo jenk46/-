@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💊 통합 병용금기 스캐너 (Pro버전)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f8ff; padding: 20px; color: #2c3e50; }
+        .container { max-width: 850px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { color: #2980b9; text-align: center; font-weight: 800; margin-bottom: 30px; }
+        .file-box { background: #ecf0f1; padding: 20px; border-radius: 10px; margin-bottom: 20px; border: 1px dashed #bdc3c7; }
+        .file-box label { font-weight: bold; display: block; margin-bottom: 10px; color: #34495e; }
+        input[type="file"] { width: 100%; font-size: 15px; }
+        .input-box { margin-bottom: 25px; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); border: 2px solid #3498db; }
+        input[type="text"] { width: calc(100% - 110px); padding: 15px; border: 2px solid #bdc3c7; border-radius: 8px; font-size: 16px; outline: none; transition: border 0.3s; }
+        input[type="text"]:focus { border-color: #3498db; }
+        button { width: 90px; padding: 15px; background: #3498db; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; transition: background 0.3s; }
+        button:hover { background: #2980b9; }
+        #resultArea { padding: 20px; border-radius: 10px; background: #f8f9fa; min-height: 120px; font-size: 16px; line-height: 1.6; }
+        .alert-danger { color: #c0392b; background-color: #ffeaa7; padding: 20px; border-radius: 10px; margin-bottom: 15px; border-left: 6px solid #d63031; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .alert-safe { color: #27ae60; background-color: #c8d6e5; padding: 20px; border-radius: 10px; border-left: 6px solid #2ecc71; }
+        .status { font-size: 15px; color: #7f8c8d; margin-top: -5px; margin-bottom: 20px; text-align: center; font-weight: bold; }
+        .highlight { font-weight: bold; color: #d35400; }
+        .ing-name { font-size: 14px; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>💊 통합 병용금기 스캐너 (단일 파일용) 🚀</h1>
+    
+    <div class="file-box">
+        <label>📁 병용금기_최종통합본 (.csv) 업로드</label>
+        <input type="file" id="fileContra" accept=".csv">
+    </div>
+
+    <div class="status" id="dataStatus">통합본 파일을 업로드해주세요! 🥺</div>
+
+    <div class="input-box">
+        <label style="font-weight: bold; display: block; margin-bottom: 10px; color: #34495e;">검색할 약품명 또는 성분명 (쉼표로 구분하여 여러 개 입력)</label>
+        <input type="text" id="drugInput" placeholder="예: 리피토정, 타이레놀, acemetacin" onkeypress="if(event.keyCode==13) checkInteractions();">
+        <button onclick="checkInteractions()">검색</button>
+    </div>
+
+    <div id="resultArea">
+        <div style="text-align:center; color:#95a5a6; padding-top:30px;">
+            결과가 이곳에 표시됩니다 (๑>ᴗ<๑)
+        </div>
+    </div>
+</div>
+
+<script>
+    let mergedData = [];
+
+    // 1. 단일 통합 파일 파싱
+    document.getElementById('fileContra').addEventListener('change', function(e) {
+        let file = e.target.files[0];
+        Papa.parse(file, {
+            header: true, // 첫 줄이 컬럼명이므로 true로 설정
+            complete: function(results) {
+                mergedData = results.data;
+                updateStatus();
+            }
+        });
+    });
+
+    function updateStatus() {
+        let statusText = document.getElementById('dataStatus');
+        if (mergedData.length > 0) {
+            statusText.innerHTML = "✅ 데이터 장전 완료! 이제 빛의 속도로 검색해 주십쇼 두목님! 🫡";
+            statusText.style.color = "#27ae60";
+        }
+    }
+
+    // 약물 검색어가 특정 유효성분 데이터에 포함되는지 확인하는 함수
+    function isMatch(query, engName, korName, prodNames) {
+        let q = query.replace(/\s+/g, '').toLowerCase();
+        let e = (engName || "").replace(/\s+/g, '').toLowerCase();
+        let k = (korName || "").replace(/\s+/g, '').toLowerCase();
+        let p = (prodNames || "").replace(/\s+/g, '').toLowerCase();
+
+        // 영문성분명, 한글성분명, 관련제품명 중 하나라도 검색어가 포함되어 있으면 매칭 성공
+        return e.includes(q) || k.includes(q) || p.includes(q);
+    }
+
+    // 금기 검사 실행 함수
+    function checkInteractions() {
+        if (mergedData.length === 0) {
+            alert("두목님! '병용금기_최종통합본.csv' 파일을 먼저 업로드해 주십쇼! 😭");
+            return;
+        }
+
+        let inputVal = document.getElementById('drugInput').value;
+        if (!inputVal) {
+            alert("검색할 약품이나 성분명을 입력해 주세요!");
+            return;
+        }
+
+        // 입력받은 약물 리스트 정리
+        let drugs = inputVal.split(',').map(item => item.trim()).filter(item => item !== "");
+        if (drugs.length < 2) {
+            document.getElementById('resultArea').innerHTML = `<div class="alert-safe"><strong>💡 팁:</strong> 병용금기를 확인하려면 쉼표(,)로 구분하여 2개 이상의 약물을 입력해 주세요!</div>`;
+            return;
+        }
+
+        let resultHTML = "";
+        let foundContra = false;
+        let displayedAlerts = new Set(); // 중복 출력 방지
+
+        // 약물 A vs 약물 B 교차 검증
+        for (let i = 0; i < drugs.length; i++) {
+            for (let j = i + 1; j < drugs.length; j++) {
+                let drugA = drugs[i];
+                let drugB = drugs[j];
+
+                // 통합본 데이터를 한 줄씩 훑으면서 확인
+                for (let row of mergedData) {
+                    // 마지막 빈 줄이나 비정상 데이터 건너뛰기
+                    if (!row["유효성분 '1'"]) continue;
+
+                    let matchA_in_1 = isMatch(drugA, row["유효성분 '1'"], row["유효성분 '1' 한글주성분명"], row["유효성분 '1' 관련제품명"]);
+                    let matchB_in_2 = isMatch(drugB, row["유효성분 '2'"], row["유효성분 '2' 한글주성분명"], row["유효성분 '2' 관련제품명"]);
+
+                    let matchA_in_2 = isMatch(drugA, row["유효성분 '2'"], row["유효성분 '2' 한글주성분명"], row["유효성분 '2' 관련제품명"]);
+                    let matchB_in_1 = isMatch(drugB, row["유효성분 '1'"], row["유효성분 '1' 한글주성분명"], row["유효성분 '1' 관련제품명"]);
+
+                    // A가 성분1에 있고 B가 성분2에 있거나 OR 반대인 경우 금기 성립!
+                    if ((matchA_in_1 && matchB_in_2) || (matchA_in_2 && matchB_in_1)) {
+                        
+                        // 고유 키를 만들어 중복 출력 방지
+                        let alertKey = `${row["유효성분 '1'"]}-${row["유효성분 '2'"]}-${drugA}-${drugB}`;
+                        if (!displayedAlerts.has(alertKey)) {
+                            displayedAlerts.add(alertKey);
+                            
+                            // 한글 성분명이 있으면 함께 표시해주기
+                            let name1 = row["유효성분 '1' 한글주성분명"] ? `${row["유효성분 '1'"]} <span class="ing-name">(${row["유효성분 '1' 한글주성분명"].split('|')[0].trim()})</span>` : row["유효성분 '1'"];
+                            let name2 = row["유효성분 '2' 한글주성분명"] ? `${row["유효성분 '2'"]} <span class="ing-name">(${row["유효성분 '2' 한글주성분명"].split('|')[0].trim()})</span>` : row["유효성분 '2'"];
+
+                            resultHTML += `<div class="alert-danger">
+                                <strong>🚨 병용 금기 발견!</strong><br><br>
+                                💊 <strong>복용 약물:</strong> <span class="highlight">${drugA}</span> & <span class="highlight">${drugB}</span><br>
+                                ⚠️ <strong>충돌 성분:</strong> ${name1} <strong>+</strong> ${name2}<br>
+                                💥 <strong>병용 시 부작용 (주의사항):</strong> ${row["상세정보"] || "상세 정보 없음"}
+                            </div>`;
+                            foundContra = true;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (!foundContra && drugs.length >= 2) {
+            resultHTML = `<div class="alert-safe">
+                <strong>✨ 앗싸! 안전합니다!</strong><br><br>
+                입력하신 약물 조합(${drugs.join(', ')})에서 병용금기 내역이 발견되지 않았습니다요! (안전띠 꽉 매셨습니다!) ദ്ദി ˃ ᴗ ˂ )
+            </div>`;
+        }
+
+        document.getElementById('resultArea').innerHTML = resultHTML;
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>DUR 병용금기 통합 검사기</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #f4f7f6; }
+        .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .file-input { background: #edf2f7; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #cbd5e0; }
+        .status { font-size: 13px; color: #3182ce; font-weight: bold; margin-top: 5px; }
+        textarea { width: 100%; height: 100px; padding: 12px; border: 2px solid #cbd5e0; border-radius: 10px; box-sizing: border-box; margin-bottom: 10px; font-size: 15px; }
+        button { width: 100%; padding: 15px; background: #2c3e50; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        .result-item { background: #fff5f5; border-left: 5px solid #e53e3e; padding: 15px; margin-top: 15px; border-radius: 5px; border: 1px solid #feb2b2; }
+        .safe { background: #f0fff4; border-left: 5px solid #38a169; padding: 15px; margin-top: 15px; text-align: center; border-radius: 5px; color: #2f855a; }
+        .debug-area { margin-top: 20px; padding: 15px; background: #2d3436; color: #fab1a0; font-family: monospace; font-size: 12px; border-radius: 10px; white-space: pre-wrap; height: 120px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>💊 DUR 병용금기 검색 시스템</h1>
+
+    <div class="file-input">
+        <label>1️⃣ <b>상품명, 성분명.csv</b> (J:상품명 / H:주성분명)</label>
+        <input type="file" id="mappingFile" accept=".csv" style="display:block; margin-top:10px;">
+        <div id="mappingStatus" class="status">파일을 업로드하세요.</div>
+    </div>
+
+    <div class="file-input">
+        <label>2️⃣ <b>병용금기.csv</b> (B:성분1 / C:성분2 / E:상세정보)</label>
+        <input type="file" id="durFile" accept=".csv" style="display:block; margin-top:10px;">
+        <div id="durStatus" class="status">파일을 업로드하세요.</div>
+    </div>
+
+    <textarea id="drugInput" placeholder="약 이름 또는 성분명을 입력하세요 (예: 케토라신, 나프록센)"></textarea>
+    <button onclick="runCheck()">병용금기 분석 시작</button>
+
+    <div id="resultArea"></div>
+    <div id="debugInfo" class="debug-area"><strong>[분석 시스템 로그]</strong><br><span id="logContent">대기 중...</span></div>
+</div>
+
+<script>
+    let rawMappingData = []; 
+    let durDatabase = [];    
+
+    // 텍스트 정제: 괄호, 용량 단위, 특수문자 제거
+    function cleanForMatch(text) {
+        if (!text) return "";
+        return text.toString()
+            .replace(/\(.*\)/g, '')   
+            .replace(/\[.*\]/g, '')   
+            .replace(/\d+(\.\d+)?\s*(mg|g|ml|mcg|밀리그램|그램|미리|밀리).*/gi, '') 
+            .replace(/[^a-zA-Z0-9가-힣]/g, '') 
+            .toLowerCase();
+    }
+
+    function parseCSV(text) {
+        const rows = [];
+        let curRow = [];
+        let curCell = '';
+        let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            let char = text[i];
+            if (char === '"') inQuotes = !inQuotes;
+            else if (char === ',' && !inQuotes) { curRow.push(curCell.trim()); curCell = ''; }
+            else if ((char === '\n' || char === '\r') && !inQuotes) {
+                if (curCell || curRow.length > 0) {
+                    curRow.push(curCell.trim());
+                    rows.push(curRow);
+                    curCell = ''; curRow = [];
+                }
+            } else curCell += char;
+        }
+        return rows;
+    }
+
+    function readCSV(file, callback) {
+        const reader = new FileReader();
+        reader.onload = (e) => callback(e.target.result);
+        reader.readAsText(file, 'euc-kr');
+    }
+
+    document.getElementById('mappingFile').addEventListener('change', function(e) {
+        readCSV(e.target.files[0], (data) => {
+            const rows = parseCSV(data);
+            rawMappingData = rows.slice(1).map(cols => ({
+                fullName: cols[9] || "", // J열
+                cleanName: cleanForMatch(cols[9]), 
+                ingredients: cols[7] ? cols[7].split(/[\/+,]/).map(s => cleanForMatch(s)) : [] // H열
+            })).filter(item => item.cleanName);
+            document.getElementById('mappingStatus').innerText = `✅ 상품 정보 로드 완료!`;
+        });
+    });
+
+    document.getElementById('durFile').addEventListener('change', function(e) {
+        readCSV(e.target.files[0], (data) => {
+            const rows = parseCSV(data);
+            durDatabase = rows.slice(1).map(cols => ({
+                s1: cleanForMatch(cols[1]), // B열
+                s2: cleanForMatch(cols[2]), // C열
+                info: cols[4]              // E열
+            })).filter(r => r.s1 && r.s2);
+            document.getElementById('durStatus').innerText = `✅ 금기 DB 로드 완료!`;
+        });
+    });
+
+    function runCheck() {
+        const input = document.getElementById('drugInput').value;
+        const resultArea = document.getElementById('resultArea');
+        const log = document.getElementById('logContent');
+        if (!input.trim()) return;
+
+        resultArea.innerHTML = "";
+        let foundAny = false;
+        let logText = "";
+
+        const inputRawNames = input.split(/[,\n]/).map(p => p.trim()).filter(p => p);
+        let analyzedDrugs = [];
+
+        inputRawNames.forEach(userInput => {
+            const cleanInput = cleanForMatch(userInput);
+            
+            // 1. 상품명 파일에서 제품명으로 먼저 검색
+            const productMatches = rawMappingData.filter(d => d.cleanName.includes(cleanInput));
+            
+            if (productMatches.length > 0) {
+                let ings = new Set();
+                productMatches.forEach(m => m.ingredients.forEach(i => ings.add(i)));
+                analyzedDrugs.push({ input: userInput, ingredients: Array.from(ings) });
+                logText += `✔️ [제품명 인식] ${userInput} -> 성분: ${Array.from(ings).join(', ')}\n`;
+            } else {
+                // 2. 제품명이 아니라면, 입력값 자체를 성분명으로 간주하여 직접 추가
+                analyzedDrugs.push({ input: userInput, ingredients: [cleanInput] });
+                logText += `✔️ [성분명 직접검색] ${userInput}을(를) 성분으로 분석에 포함합니다.\n`;
+            }
+        });
+
+        // 성분 교차 대조
+        for (let i = 0; i < analyzedDrugs.length; i++) {
+            for (let j = i + 1; j < analyzedDrugs.length; j++) {
+                const drugA = analyzedDrugs[i];
+                const drugB = analyzedDrugs[j];
+
+                drugA.ingredients.forEach(ingA => {
+                    drugB.ingredients.forEach(ingB => {
+                        const match = durDatabase.find(rule => 
+                            (rule.s1.includes(ingA) && rule.s2.includes(ingB)) || 
+                            (rule.s1.includes(ingB) && rule.s2.includes(ingA)) ||
+                            (ingA.includes(rule.s1) && ingB.includes(rule.s2)) ||
+                            (ingA.includes(rule.s2) && ingB.includes(rule.s1))
+                        );
+
+                        if (match) {
+                            foundAny = true;
+                            const div = document.createElement('div');
+                            div.className = 'result-item';
+                            div.innerHTML = `
+                                <strong>🚨 금기 주의: ${drugA.input} & ${drugB.input}</strong><br>
+                                <small>(매칭 성분: ${ingA} + ${ingB})</small><br><br>
+                                <b>금기 사유:</b> ${match.info}
+                            `;
+                            resultArea.appendChild(div);
+                        }
+                    });
+                });
+            }
+        }
+        log.innerText = logText;
+        if (!foundAny) resultArea.innerHTML = `<div class="safe">✅ 확인된 병용 금기 조합이 없습니다.</div>`;
+    }
+</script>
+</body>
+</html>

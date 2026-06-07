@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>우리가족 안심 약상자 🌿</title>
+    <style>
+        :root { 
+            --primary-color: #63b3ed; 
+            --primary-dark: #3182ce;
+            --secondary-color: #f7fafc; 
+            --accent-color: #f6ad55; 
+            --text-main: #4a5568;
+            --text-light: #a0aec0;
+            --alt-color: #b794f4; 
+            --safe-color: #68d391; 
+            --border-color: #e2e8f0;
+        }
+        body { 
+            font-family: 'Pretendard', 'Malgun Gothic', sans-serif; 
+            background-color: #f0f4f8; 
+            color: var(--text-main); 
+            margin: 0; padding: 20px; 
+            line-height: 1.6; 
+        }
+        .header { 
+            text-align: center; margin-bottom: 30px; 
+        }
+        .header h1 { 
+            margin: 0; font-size: 28px; color: var(--primary-dark); font-weight: 800;
+        }
+        .header p { 
+            color: var(--text-light); margin-top: 5px; font-size: 15px; 
+        }
+        
+        .main-wrapper { 
+            display: flex; gap: 25px; max-width: 1200px; margin: 0 auto; flex-wrap: wrap; 
+        }
+        .left-panel { 
+            flex: 1; min-width: 350px; background: #fff; padding: 35px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); height: fit-content;
+        }
+        .right-panel { 
+            flex: 1.5; min-width: 450px; background: #fff; padding: 35px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.03); min-height: 500px;
+        }
+
+        .file-box { 
+            margin-bottom: 15px; background: var(--secondary-color); padding: 15px; border-radius: 12px; border: 1px dashed var(--border-color);
+        }
+        .file-box label { 
+            font-weight: 600; font-size: 14px; display: block; margin-bottom: 8px; color: var(--text-main); 
+        }
+        input[type="file"] { font-size: 13px; width: 100%; color: var(--text-light); }
+        .status-badge { 
+            display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; margin-top: 8px; background: #e2e8f0; color: #718096; transition: 0.3s;
+        }
+        .loaded { background: var(--safe-color); color: white; }
+        
+        textarea { 
+            width: 100%; height: 120px; padding: 18px; border: 1px solid var(--border-color); border-radius: 16px; box-sizing: border-box; font-size: 15px; resize: none; margin-bottom: 15px; font-family: inherit; transition: 0.3s; background: #fdfdfd;
+        }
+        textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(99, 179, 237, 0.15); background: #fff; }
+        
+        .btn-group { display: flex; gap: 12px; }
+        button { 
+            flex: 1; padding: 16px; border: none; border-radius: 16px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; 
+        }
+        .btn-primary { background: var(--primary-color); color: white; }
+        .btn-primary:hover { background: var(--primary-dark); transform: translateY(-2px); }
+        .btn-primary:disabled { background: #cbd5e0; cursor: not-allowed; transform: none; }
+        .btn-reset { background: #edf2f7; color: #4a5568; flex: 0.4; }
+        .btn-reset:hover { background: #e2e8f0; }
+
+        .summary-box { background: var(--secondary-color); padding: 20px; border-radius: 16px; margin-bottom: 25px; font-size: 14px; border: 1px solid #edf2f7; }
+        .tag-ok { background: var(--primary-color); color: white; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-right: 5px; }
+        .tag-typo { background: #f6ad55; color: white; padding: 3px 10px; border-radius: 12px; font-size: 12px; margin-right: 5px; }
+        
+        /* 오타 제안 박스 스타일 강화 */
+        .typo-suggestion { background: #fffaf0; border: 1px solid #fbd38d; border-left: 4px solid #ed8936; padding: 12px; border-radius: 10px; margin-top: 10px; font-size: 13px; color: #dd6b20; }
+        .typo-suggestion span { font-weight: bold; color: #c05621; background: #feebc8; padding: 3px 8px; border-radius: 6px; margin: 0 3px; cursor: pointer; display: inline-block; }
+
+        .card { padding: 25px; border-radius: 16px; margin-bottom: 20px; border: 1px solid transparent; }
+        .danger { background-color: #fffaf0; border-color: #feebc8; } 
+        .safe { background-color: #f0fff4; border-color: #c6f6d5; text-align: center; padding: 40px 20px; }
+        
+        /* 새로운 오타 확인(보류) 카드 스타일 */
+        .verification { background-color: #f8fafc; border-color: #cbd5e0; text-align: center; padding: 40px 20px; }
+
+        .interaction-title { font-weight: 800; font-size: 18px; color: #dd6b20; margin-bottom: 12px; display: flex; align-items: center; }
+        .interaction-title.ok { color: #38a169; justify-content: center; font-size: 20px; }
+        .interaction-title.verify { color: #4a5568; justify-content: center; font-size: 20px; }
+        
+        .warning-msg { font-size: 15px; margin-bottom: 15px; color: #4a5568; background: white; padding: 15px; border-radius: 12px; }
+
+        .alt-box { background: #faf5ff; padding: 18px; border-radius: 12px; border-left: 4px solid var(--alt-color); margin-bottom: 15px; }
+        .alt-drug { display: inline-block; background: #fff; border: 1px solid #d6bcfa; padding: 4px 12px; border-radius: 20px; color: var(--alt-color); font-weight: bold; margin-right: 5px; font-size: 13px; margin-bottom: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.02);}
+        .consult-notice { background: #ebf8ff; padding: 15px; border-radius: 12px; font-size: 14px; color: #2b6cb0; text-align: center; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px;}
+
+        details { background: white; border-radius: 12px; border: 1px solid var(--border-color); padding: 12px 18px; margin-top: 15px; transition: all 0.3s ease; }
+        summary { font-weight: 600; color: #718096; cursor: pointer; font-size: 13px; outline: none; list-style: none; display: flex; align-items: center; justify-content: space-between; }
+        summary::-webkit-details-marker { display: none; }
+        summary::after { content: '▼'; font-size: 10px; color: #cbd5e0; }
+        details[open] summary::after { content: '▲'; }
+        .expert-content { margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border-color); font-size: 13px; color: #4a5568; }
+        
+        @media (max-width: 768px) {
+            .main-wrapper { flex-direction: column; }
+            .left-panel, .right-panel { min-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>우리가족 안심 약상자 🌿</h1>
+    <p>어려운 약 이름도 척척, 마음 편안하게 내 약의 궁합을 확인해 보세요.</p>
+</div>
+
+<div class="main-wrapper">
+    <div class="left-panel">
+        <div class="file-box">
+            <label>📁 심평원 약제급여목록 (CSV)</label>
+            <input type="file" id="hiraFile" accept=".csv" onchange="readFileAuto(event, 'HIRA')">
+            <div id="hiraStatus" class="status-badge">데이터를 기다리고 있어요</div>
+        </div>
+        <div class="file-box">
+            <label>📁 식약처 병용금기 리스트 (CSV)</label>
+            <input type="file" id="durFile" accept=".csv" onchange="readFileAuto(event, 'DUR')">
+            <div id="durStatus" class="status-badge">데이터를 기다리고 있어요</div>
+        </div>
+
+        <label style="font-weight: 700; margin-bottom: 10px; display: block; margin-top: 25px; color: var(--primary-dark);">💊 드시고 계신 약을 알려주세요</label>
+        <textarea id="drugInput" placeholder="약 봉투에 적힌 이름을 편하게 적어주세요. 쉼표(,)로 구분해주시면 좋아요!&#13;&#10;&#13;&#10;예) 타이레놀, 명새핀정(오타예시), 클라리스로마이신&#13;&#10;*숫자나 밀리그램(mg)은 빼고 적으셔도 똑똑하게 알아들어요."></textarea>
+        
+        <div class="btn-group">
+            <button id="analyzeBtn" class="btn-primary" onclick="analyzeDUR()" disabled>분석 준비 중...</button>
+            <button class="btn-reset" onclick="resetApp()">다시 쓰기</button>
+        </div>
+    </div>
+
+    <div class="right-panel">
+        <div id="initial-msg" style="text-align: center; color: #cbd5e0; margin-top: 130px;">
+            <svg style="width: 80px; height: 80px; margin-bottom: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <p style="font-size: 16px; color: #a0aec0;">파일을 등록하고 약 이름을 입력하시면<br>안전한 복용 방법을 다정하게 안내해 드릴게요.</p>
+        </div>
+        <div id="result-display" style="display: none;"></div>
+    </div>
+</div>
+
+<script>
+    let productDB = {}; 
+    let contraindications = []; 
+    let isHiraLoaded = false;
+    let isDurLoaded = false;
+
+    function parseCSV(text) {
+        const rows = []; let row = []; let current = ''; let inQuotes = false;
+        for (let i = 0; i < text.length; i++) {
+            let char = text[i];
+            if (char === '"' && text[i+1] === '"') { current += '"'; i++; } 
+            else if (char === '"') { inQuotes = !inQuotes; } 
+            else if (char === ',' && !inQuotes) { row.push(current.trim()); current = ''; } 
+            else if (char === '\n' && !inQuotes) { row.push(current.trim()); rows.push(row); row = []; current = ''; } 
+            else { current += char; }
+        }
+        if (current || row.length > 0) { row.push(current.trim()); rows.push(row); }
+        return rows;
+    }
+
+    function readFileAuto(event, type) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const readerUTF8 = new FileReader();
+        readerUTF8.onload = function(e) {
+            const text = e.target.result;
+            const keyword = (type === 'HIRA') ? '제품명' : '유효성분';
+            if (text.includes(keyword)) { processData(text, type); } 
+            else {
+                const readerEUC = new FileReader();
+                readerEUC.onload = function(e2) { processData(e2.target.result, type); };
+                readerEUC.readAsText(file, "EUC-KR");
+            }
+        };
+        readerUTF8.readAsText(file, "UTF-8");
+    }
+
+    function normalizeProductName(name) {
+        let normalized = name.replace(/[0-9.]+(밀리그램|마이크로그램|그램|mg|g|mcg|ml|정|캡슐|시럽|패취|연질)/gi, '');
+        normalized = normalized.replace(/[0-9.]/g, '');
+        return normalized.replace(/\s+/g, '');
+    }
+
+    function processData(text, type) {
+        const data = parseCSV(text);
+        if (type === 'HIRA') {
+            let headerRow = data.find(row => row.some(cell => cell.includes('제품명')) && row.some(cell => cell.includes('주성분명')));
+            if(headerRow) {
+                let nameIdx = headerRow.findIndex(cell => cell.includes('제품명'));
+                let ingIdx = headerRow.findIndex(cell => cell.includes('주성분명'));
+                data.forEach(row => {
+                    if(row[nameIdx] && row[ingIdx] && row[nameIdx] !== '제품명') {
+                        let cleanName = row[nameIdx].split('(')[0].trim();
+                        let ingredientInfo = row[ingIdx];
+                        if (cleanName) {
+                            productDB[cleanName] = ingredientInfo; 
+                            productDB[cleanName.replace(/\s+/g, '')] = ingredientInfo;       
+                            productDB[normalizeProductName(cleanName)] = ingredientInfo;    
+                        }
+                    }
+                });
+                document.getElementById('hiraStatus').innerText = `✅ 준비 완료`;
+                document.getElementById('hiraStatus').className = 'status-badge loaded';
+                isHiraLoaded = true;
+            }
+        } 
+        else if (type === 'DUR') {
+            let headerRow = data.find(row => row.some(cell => cell.includes("유효성분 '1'")) && row.some(cell => cell.includes("유효성분 '2'")));
+            if(headerRow) {
+                let ing1Idx = headerRow.findIndex(cell => cell.includes("유효성분 '1'"));
+                let ing2Idx = headerRow.findIndex(cell => cell.includes("유효성분 '2'"));
+                let infoIdx = headerRow.findIndex(cell => cell.includes("상세정보"));
+                if (infoIdx === -1) infoIdx = headerRow.length;
+                data.forEach(row => {
+                    if(row[ing1Idx] && row[ing2Idx] && !row[ing1Idx].includes("유효성분")) {
+                        contraindications.push({
+                            ing1: row[ing1Idx].toLowerCase(), ing2: row[ing2Idx].toLowerCase(),
+                            info: (row[infoIdx] || "상세 기전 미기재")
+                        });
+                    }
+                });
+                document.getElementById('durStatus').innerText = `✅ 준비 완료`;
+                document.getElementById('durStatus').className = 'status-badge loaded';
+                isDurLoaded = true;
+            }
+        }
+        checkReady();
+    }
+
+    function checkReady() {
+        if (isHiraLoaded && isDurLoaded) {
+            const btn = document.getElementById('analyzeBtn');
+            btn.disabled = false; btn.innerText = "안전성 분석해보기 ✨";
+        }
+    }
+
+    function matchIngredient(targetStr, durIng) {
+        if(!targetStr || !durIng) return false;
+        return targetStr.toLowerCase().includes(durIng);
+    }
+
+    function getLevenshteinDistance(a, b) {
+        const matrix = [];
+        for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+        for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+        for (let i = 1; i <= b.length; i++) {
+            for (let j = 1; j <= a.length; j++) {
+                if (b.charAt(i - 1) === a.charAt(j - 1)) {
+                    matrix[i][j] = matrix[i - 1][j - 1];
+                } else {
+                    matrix[i][j] = Math.min(matrix[i - 1][j - 1] + 1, Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1));
+                }
+            }
+        }
+        return matrix[b.length][a.length];
+    }
+
+    // [수정] 길이에 따라 허용 오차를 늘려 모든 오타에 대응
+    function findSimilarDrugs(inputStr) {
+        if (inputStr.length < 2) return [];
+        let keys = Object.keys(productDB);
+        let suggestions = [];
+        
+        for (let key of keys) {
+            if (Math.abs(key.length - inputStr.length) <= 3) {
+                let dist = getLevenshteinDistance(inputStr, key);
+                // 4글자 이하면 1글자 틀림 허용, 5글자 이상이면 2글자 틀림 허용
+                let tolerance = inputStr.length <= 4 ? 1 : 2; 
+                if (dist <= tolerance && dist > 0) {
+                    suggestions.push({ name: key, dist: dist });
+                }
+            }
+        }
+        suggestions.sort((a, b) => a.dist - b.dist);
+        return [...new Set(suggestions.map(s => s.name))].slice(0, 3);
+    }
+
+    function getSoftAlternativeData(ingName) {
+        let lowerIng = ingName.toLowerCase();
+        if (lowerIng.includes("statin")) return { alts: ["로수바스타틴", "프라바스타틴"], reason: "간에서 약이 분해되는 과정이 조금 달라서, 몸에 무리가 가지 않는 다른 콜레스테롤 약으로 변경해 볼 수 있어요." };
+        if (lowerIng.includes("azole") && !lowerIng.includes("prazole")) return { alts: ["테르비나핀", "바르는 연고류"], reason: "먹는 무좀약 등은 다른 약들의 흡수를 방해할 수 있어, 바르는 약이나 다른 계열의 약으로 바꾸는 것이 안전해요." };
+        if (lowerIng.includes("mycin") || lowerIng.includes("floxacin")) return { alts: ["다른 계열의 안전한 항생제"], reason: "현재 드시는 약과 부딪히지 않는 다른 종류의 항생제로 바꾸면 속이 훨씬 편안하실 거예요." };
+        if (lowerIng.includes("chloral hydrate")) return { alts: ["졸피뎀", "멜라토닌 성분"], reason: "너무 졸리거나 어지러울 수 있어서, 몸에 부담이 적은 다른 수면유도제로 조절하는 것이 좋습니다." };
+        if (lowerIng.includes("doxepin") || lowerIng.includes("triptyline")) return { alts: ["에스시탈로프람 (SSRI 계열)"], reason: "입 마름이나 졸음이 덜한 더 편안한 우울증/신경통 약으로 변경을 상의해 보세요." };
+        
+        return { alts: ["비슷한 효과를 내는 다른 약물", "시간을 띄워서 복용하기"], reason: "두 약이 몸속에서 같은 길을 통과하려다 부딪힐 수 있어요. 먹는 시간을 2~4시간 이상 떨어뜨리거나 성분을 바꾸면 해결된답니다." };
+    }
+
+    function resetApp() {
+        document.getElementById('drugInput').value = '';
+        document.getElementById('result-display').style.display = 'none';
+        document.getElementById('initial-msg').style.display = 'block';
+    }
+
+    function analyzeDUR() {
+        const input = document.getElementById('drugInput').value;
+        const display = document.getElementById('result-display');
+        const initialMsg = document.getElementById('initial-msg');
+        
+        if(!input.trim()) { alert('분석할 약 이름을 적어주세요.'); return; }
+
+        initialMsg.style.display = 'none';
+        const rawDrugs = input.split(',').map(d => d.trim()).filter(d => d.length > 0);
+        
+        let typoHtml = "";
+        let hasTypo = false; // [핵심] 오타 여부 추적 플래그
+
+        const activeMeds = rawDrugs.map(d => {
+            const noSpaceInput = d.replace(/\s+/g, '');
+            const normalizedInput = normalizeProductName(d);
+            const matchedIng = productDB[d] || productDB[noSpaceInput] || productDB[normalizedInput];
+
+            if (matchedIng) {
+                return { isTypo: false, inputName: d, matchTarget: matchedIng.toLowerCase() };
+            } else {
+                hasTypo = true; // 오타 하나라도 발견 시 true
+                let similarDrugs = findSimilarDrugs(d);
+                if (similarDrugs.length > 0) {
+                    let spans = similarDrugs.map(s => `<span>${s}</span>`).join(' 또는 ');
+                    typoHtml += `<div class="typo-suggestion">🤔 <strong>'${d}'</strong> 약을 못 찾았어요! 혹시 ${spans} (을)를 쓰시려고 한 것일까요?</div>`;
+                } else {
+                    // [수정] 대체어를 찾지 못한 경우에도 해당 약물을 명시하여 경고
+                    typoHtml += `<div class="typo-suggestion">🤔 <strong>'${d}'</strong> 약을 데이터베이스에서 찾을 수 없어요. 철자가 맞는지 다시 한 번 확인해 주세요.</div>`;
+                }
+                return { isTypo: true, inputName: d, matchTarget: d.toLowerCase() };
+            }
+        });
+
+        let inputSummaryHtml = `<div class="summary-box"><strong style="color:var(--primary-dark);">[이렇게 인식했어요]</strong><div style="margin-top:12px; display:flex; flex-wrap:wrap; gap:10px;">`;
+        activeMeds.forEach(med => {
+            if(!med.isTypo) {
+                inputSummaryHtml += `<div><span class="tag-ok">확인완료</span> <strong>${med.inputName}</strong></div>`;
+            } else {
+                inputSummaryHtml += `<div><span class="tag-typo">이름확인필요</span> <strong>${med.inputName}</strong></div>`;
+            }
+        });
+        inputSummaryHtml += `</div>${typoHtml}</div>`;
+
+        let resultsHtml = "";
+        let foundConflict = false;
+
+        for (let i = 0; i < activeMeds.length; i++) {
+            for (let j = i + 1; j < activeMeds.length; j++) {
+                const drugA = activeMeds[i]; const drugB = activeMeds[j];
+
+                const conflict = contraindications.find(rule => 
+                    (matchIngredient(drugA.matchTarget, rule.ing1) && matchIngredient(drugB.matchTarget, rule.ing2)) ||
+                    (matchIngredient(drugA.matchTarget, rule.ing2) && matchIngredient(drugB.matchTarget, rule.ing1))
+                );
+
+                if (conflict) {
+                    foundConflict = true;
+                    let altA = getSoftAlternativeData(drugA.matchTarget);
+                    let altB = getSoftAlternativeData(drugB.matchTarget);
+
+                    resultsHtml += `
+                        <div class="card danger">
+                            <div class="interaction-title">
+                                ⚠️ 주의가 필요해요: ${drugA.inputName} & ${drugB.inputName}
+                            </div>
+                            <div class="warning-msg">
+                                <strong>행동 지침:</strong> 두 약은 몸속에서 서로 부딪혀 예기치 않은 불편함(부작용)을 만들 수 있어요. 가급적 동시에 드시는 것은 피하는 것이 좋습니다.
+                            </div>
+                            
+                            <div class="alt-box">
+                                <strong style="color:var(--alt-color); display:block; margin-bottom:10px;">💡 이렇게 조절해 볼 수 있어요</strong>
+                                <div style="margin-bottom:12px;">
+                                    <span style="font-size:14px; color:#553c9a; font-weight:600;">👉 ${drugA.inputName} 대신</span><br>
+                                    ${altA.alts.map(a => `<span class="alt-drug">${a}</span>`).join('')}
+                                    <div style="font-size:13px; color:#6b46c1; margin-top:5px;">💬 ${altA.reason}</div>
+                                </div>
+                                <div style="margin-bottom:8px;">
+                                    <span style="font-size:14px; color:#553c9a; font-weight:600;">👉 ${drugB.inputName} 대신</span><br>
+                                    ${altB.alts.map(a => `<span class="alt-drug">${a}</span>`).join('')}
+                                    <div style="font-size:13px; color:#6b46c1; margin-top:5px;">💬 ${altB.reason}</div>
+                                </div>
+                            </div>
+
+                            <details>
+                                <summary>🔬 전문가용 약동학적 상세 기전 (펼쳐보기)</summary>
+                                <div class="expert-content">
+                                    <strong style="color:var(--primary-dark);">[충돌 유효성분 (API)]</strong> ${conflict.ing1} ↔ ${conflict.ing2}<br><br>
+                                    <strong style="color:var(--primary-dark);">[고시된 부작용 기전]</strong><br> 
+                                    <span style="color:#c53030;">${conflict.info}</span>
+                                </div>
+                            </details>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        let consultHtml = `
+            <div class="consult-notice">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                잠깐! 위 안내는 참고용입니다. 임의로 약을 끊거나 바꾸지 마시고, 반드시 담당 의사나 약사님과 상담하시는 걸 강력히 추천합니다.
+            </div>
+        `;
+
+        display.style.display = "block";
+        
+        // [수정] 금기 결과 출력 로직 세분화
+        if (foundConflict) {
+            display.innerHTML = inputSummaryHtml + resultsHtml + consultHtml;
+        } else if (hasTypo) {
+            // 금기는 발견 안 되었지만, 오타(미확인 약물)가 있는 경우
+            display.innerHTML = `
+                ${inputSummaryHtml}
+                <div class="card verification">
+                    <div style="font-size: 38px; margin-bottom: 12px;">🔍</div>
+                    <div class="interaction-title verify">안전한 분석을 위해 확인이 필요해요</div>
+                    <p style="font-size:15px; color:#4a5568;">입력하신 약 중에서 <strong>이름을 정확히 찾지 못한 약</strong>이 있습니다.<br>안전한 처방 확인을 위해 위에 표시된 약의 이름을 다시 한 번 확인해 주세요.</p>
+                </div>
+            `;
+        } else {
+            // 모든 약물이 정상 인식되었고 금기도 없는 완벽한 Safe 상태
+            display.innerHTML = `
+                ${inputSummaryHtml}
+                <div class="card safe">
+                    <div style="font-size: 38px; margin-bottom: 12px;">😊</div>
+                    <div class="interaction-title ok">안심하고 드셔도 좋습니다</div>
+                    <p style="font-size:15px; color:#4a5568;">입력하신 약물 조합은 알려진 위험한 충돌(병용금기)이 없습니다.<br>처방받으신 대로 편안하게 복용하세요.</p>
+                </div>
+            `;
+        }
+    }
+</script>
+
+</body>
+</html>
