@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>소화궤양 퀴즈 게임</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;font-family:'Noto Sans KR',sans-serif;background:#0B1928;}
+body{display:flex;}
+
+/* ── LEFT PANEL ── */
+#panel-left{
+  width:340px;flex-shrink:0;
+  background:linear-gradient(180deg,#0E2038 0%,#0B1928 100%);
+  border-right:1px solid rgba(255,255,255,0.06);
+  display:flex;flex-direction:column;align-items:center;
+  padding:1.1rem 0.9rem;gap:0.65rem;overflow:hidden;
+}
+.lp-label{
+  font-size:9.5px;letter-spacing:.22em;text-transform:uppercase;
+  color:rgba(255,255,255,.28);
+}
+.lp-card{
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:14px;width:100%;
+  display:flex;flex-direction:column;align-items:center;
+  padding:.85rem .75rem;gap:.55rem;
+}
+.hp-wrap{width:92%;}
+.hp-labels{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.32);margin-bottom:4px;}
+.hp-bg{background:rgba(255,255,255,.09);border-radius:99px;height:7px;overflow:hidden;}
+.hp-fill{height:7px;border-radius:99px;transition:width .7s ease,background .7s ease;}
+.status-txt{font-size:12.5px;font-weight:600;text-align:center;transition:color .5s;min-height:20px;}
+.divider{width:88%;height:1px;background:rgba(255,255,255,.06);}
+.stomach-txt{font-size:10.5px;color:rgba(255,255,255,.3);text-align:center;}
+.score-blk{text-align:center;}
+.score-big{font-size:32px;font-weight:700;color:#5DCAA5;line-height:1;}
+.score-lbl{font-size:10.5px;color:rgba(255,255,255,.3);}
+
+/* Flash overlay */
+#flash{
+  position:fixed;top:0;left:0;width:340px;height:100%;
+  pointer-events:none;opacity:0;z-index:99;
+  transition:opacity .2s;
+}
+
+/* ── RIGHT PANEL ── */
+#panel-right{
+  flex:1;background:#F2F5F9;
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* Quiz screen */
+#quiz-screen{
+  flex:1;display:flex;flex-direction:column;
+  padding:2.1rem 2.6rem;overflow-y:auto;
+}
+.q-header{display:flex;align-items:center;gap:13px;margin-bottom:1.65rem;}
+.q-ctr{font-size:11.5px;color:#909090;font-weight:600;white-space:nowrap;}
+.prog-bg{flex:1;height:5px;background:#DDE2EA;border-radius:99px;overflow:hidden;}
+.prog-fill{height:5px;background:#1A9B72;border-radius:99px;transition:width .4s ease;}
+.score-pill{
+  background:#E0F5EC;color:#0D6550;
+  font-size:12px;font-weight:700;
+  padding:5px 14px;border-radius:99px;white-space:nowrap;
+}
+
+.q-card{
+  background:#fff;border-radius:16px;
+  padding:1.55rem 1.75rem;
+  box-shadow:0 2px 14px rgba(0,0,0,.07);
+  margin-bottom:1rem;
+}
+.q-tag{
+  display:inline-block;font-size:10px;font-weight:700;
+  letter-spacing:.06em;background:#E0F5EC;color:#0D6550;
+  padding:4px 12px;border-radius:99px;margin-bottom:.85rem;
+}
+.q-text{font-size:15px;font-weight:700;color:#151515;line-height:1.82;}
+
+.options{display:flex;flex-direction:column;gap:9px;margin-bottom:.9rem;}
+.opt{
+  display:flex;align-items:flex-start;gap:11px;
+  background:#fff;border:1.5px solid #E2E8F0;
+  border-radius:12px;padding:12px 15px;
+  cursor:pointer;font-size:13.5px;color:#2D2D2D;
+  line-height:1.58;text-align:left;
+  font-family:'Noto Sans KR',sans-serif;
+  transition:border-color .15s,background .15s,transform .15s;
+}
+.opt:hover:not(:disabled){border-color:#1A9B72;background:#F3FBF8;transform:translateX(4px);}
+.opt-n{
+  flex-shrink:0;width:22px;height:22px;border-radius:50%;
+  background:#EEF1F5;display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#777;margin-top:1px;
+}
+.opt.ok{background:#EBF6D6;border-color:#5FA810;color:#254706;}
+.opt.ok .opt-n{background:#5FA810;color:#fff;}
+.opt.ng{background:#FDECEC;border-color:#C63030;color:#460E0E;}
+.opt.ng .opt-n{background:#C63030;color:#fff;}
+.opt.hl{background:#EBF6D6;border-color:#5FA810;color:#254706;opacity:.6;}
+.opt.hl .opt-n{background:#5FA810;color:#fff;}
+.opt:disabled{cursor:default;transform:none;}
+
+.expl{
+  background:#F6F9FC;border-left:3px solid #1A9B72;
+  border-radius:0 10px 10px 0;padding:13px 17px;
+  font-size:13px;color:#445;line-height:1.72;
+  display:none;margin-bottom:.9rem;
+}
+.expl.show{display:block;}
+
+.next-btn{
+  align-self:flex-start;padding:12px 28px;
+  background:#1A9B72;color:#fff;border:none;
+  border-radius:10px;font-size:14px;font-weight:700;
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:background .15s,transform .1s;display:none;
+}
+.next-btn:hover{background:#0E6A4D;transform:translateY(-1px);}
+.next-btn.show{display:block;}
+
+/* ── RESULT SCREEN ── */
+#result-screen{
+  display:none;flex-direction:column;align-items:center;
+  justify-content:flex-start;padding:2.5rem 3rem;
+  text-align:center;flex:1;overflow-y:auto;
+}
+#result-screen.show{display:flex;}
+.r-emoji{font-size:62px;margin-bottom:.45rem;}
+.r-title{font-size:23px;font-weight:700;color:#151515;margin-bottom:.4rem;}
+.r-sub{font-size:13.5px;color:#777;max-width:400px;line-height:1.68;margin-bottom:1.2rem;}
+.r-score{font-size:56px;font-weight:700;color:#1A9B72;line-height:1;}
+.r-denom{font-size:13.5px;color:#999;margin-bottom:1.5rem;}
+.restart-btn{
+  padding:13px 36px;background:#1A9B72;color:#fff;
+  border:none;border-radius:11px;font-size:14.5px;font-weight:700;
+  cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:background .15s;
+}
+.restart-btn:hover{background:#0E6A4D;}
+.bk-wrap{width:100%;max-width:520px;margin-top:1.75rem;text-align:left;}
+.bk-head{font-size:12px;font-weight:700;color:#555;margin-bottom:.6rem;}
+.bk-item{
+  display:flex;align-items:flex-start;gap:9px;
+  padding:9px 0;border-top:1px solid #E8EBF0;font-size:13px;
+}
+.bk-q{color:#2D2D2D;font-weight:500;}
+.bk-a{font-size:11.5px;color:#888;margin-top:2px;}
+
+/* SVG face transitions */
+#mouth{transition:d .52s ease;}
+#brow-l,#brow-r{transition:d .45s ease;}
+#eye-cov-l,#eye-cov-r{transition:opacity .4s ease;}
+#blush-l,#blush-r{transition:opacity .4s ease;}
+#sweat{transition:opacity .38s ease;}
+#tears{transition:opacity .38s ease;}
+/* Stomach transitions */
+.ulcer-g{
+  transform-box:fill-box;transform-origin:center;
+  transition:transform .7s cubic-bezier(.4,0,.2,1);
+}
+#inflame-tint{transition:opacity .65s ease;}
+#healed-g{transition:opacity .65s ease;}
+</style>
+</head>
+<body>
+
+<!-- Flash overlay -->
+<div id="flash"></div>
+
+<!-- ══════════════════════ LEFT PANEL ══════════════════════ -->
+<div id="panel-left">
+  <div class="lp-label">환자 케어 시뮬레이터</div>
+
+  <!-- Patient card -->
+  <div class="lp-card">
+
+    <!-- Patient SVG -->
+    <svg viewBox="0 0 160 192" width="148" height="168" xmlns="http://www.w3.org/2000/svg">
+      <!-- Body / coat -->
+      <rect x="22" y="138" width="116" height="58" rx="18" fill="#C9E4F7"/>
+      <!-- Lapels -->
+      <polygon points="55,138 80,165 80,138" fill="#FFF"/>
+      <polygon points="105,138 80,165 80,138" fill="#FFF"/>
+      <!-- Shirt strip -->
+      <rect x="72" y="138" width="16" height="28" fill="#E5EFF8"/>
+      <!-- Coat buttons -->
+      <circle cx="80" cy="163" r="2.8" fill="#9EC4DE"/>
+      <circle cx="80" cy="174" r="2.8" fill="#9EC4DE"/>
+      <!-- Stethoscope -->
+      <path d="M48,152 C40,164 37,181 55,186" stroke="#6282A2" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <circle cx="55" cy="186" r="5.5" fill="#849EC2" stroke="#5272A0" stroke-width="1.3"/>
+      <!-- Neck -->
+      <rect x="65" y="122" width="30" height="22" rx="10" fill="#F4C394"/>
+      <!-- Head -->
+      <ellipse cx="80" cy="88" rx="46" ry="47" fill="#FDD9B4"/>
+      <!-- Hair -->
+      <path d="M34,82 Q32,42 80,38 Q128,42 126,82" fill="#221510"/>
+      <ellipse cx="80" cy="50" rx="46" ry="18" fill="#221510"/>
+      <!-- Left ear -->
+      <ellipse cx="34" cy="90" rx="9" ry="12.5" fill="#F4BE90"/>
+      <ellipse cx="34" cy="90" rx="5.5" ry="8" fill="#EEAE80"/>
+      <!-- Right ear -->
+      <ellipse cx="126" cy="90" rx="9" ry="12.5" fill="#F4BE90"/>
+      <ellipse cx="126" cy="90" rx="5.5" ry="8" fill="#EEAE80"/>
+      <!-- Eyebrows -->
+      <path id="brow-l" d="M47,72 Q59,63 70,72" stroke="#221510" stroke-width="3.3" fill="none" stroke-linecap="round"/>
+      <path id="brow-r" d="M90,72 Q101,63 113,72" stroke="#221510" stroke-width="3.3" fill="none" stroke-linecap="round"/>
+      <!-- Eye whites -->
+      <ellipse cx="62" cy="87" rx="11.5" ry="12.5" fill="#fff"/>
+      <ellipse cx="98" cy="87" rx="11.5" ry="12.5" fill="#fff"/>
+      <!-- Pupils -->
+      <ellipse cx="62" cy="88" rx="6.5" ry="7.5" fill="#1A0E08"/>
+      <ellipse cx="98" cy="88" rx="6.5" ry="7.5" fill="#1A0E08"/>
+      <!-- Highlights -->
+      <ellipse cx="65" cy="84.5" rx="2.8" ry="3.2" fill="#fff"/>
+      <ellipse cx="101" cy="84.5" rx="2.8" ry="3.2" fill="#fff"/>
+      <!-- Happy-squint covers (arc that hides lower part of eye when smiling) -->
+      <path id="eye-cov-l" d="M50,87 Q62,77 74,87" fill="#FDD9B4" opacity="0"/>
+      <path id="eye-cov-r" d="M86,87 Q98,77 110,87" fill="#FDD9B4" opacity="0"/>
+      <!-- Nose -->
+      <path d="M76,100 Q80,105 84,100" stroke="#D4905C" stroke-width="1.9" fill="none"/>
+      <!-- Mouth -->
+      <path id="mouth" d="M64,114 Q80,124 96,114" stroke="#C07060" stroke-width="2.9" fill="none" stroke-linecap="round"/>
+      <!-- Blush -->
+      <ellipse id="blush-l" cx="43" cy="103" rx="15" ry="9.5" fill="#FFB0B0" opacity="0"/>
+      <ellipse id="blush-r" cx="117" cy="103" rx="15" ry="9.5" fill="#FFB0B0" opacity="0"/>
+      <!-- Sweat drop -->
+      <g id="sweat" opacity="0">
+        <ellipse cx="122" cy="73" rx="5" ry="7.5" fill="#88C4E8"/>
+        <path d="M122,65 L116.5,73 L127.5,73 Z" fill="#88C4E8"/>
+      </g>
+      <!-- Tears -->
+      <g id="tears" opacity="0">
+        <ellipse cx="53" cy="101" rx="4" ry="7" fill="#88C4E8"/>
+        <ellipse cx="89" cy="101" rx="4" ry="7" fill="#88C4E8"/>
+      </g>
+      <!-- Name badge -->
+      <rect x="52" y="154" width="56" height="22" rx="5" fill="#127055" opacity="0.94"/>
+      <text x="80" y="169" text-anchor="middle" fill="#fff" font-size="10" font-family="'Noto Sans KR',sans-serif" font-weight="700">김 환 자</text>
+    </svg>
+
+    <!-- Health bar -->
+    <div class="hp-wrap">
+      <div class="hp-labels"><span>건강 상태</span><span id="hp-pct">60%</span></div>
+      <div class="hp-bg"><div class="hp-fill" id="hp-fill" style="width:60%;background:#EF9F27;"></div></div>
+    </div>
+    <div class="status-txt" id="status-txt" style="color:rgba(255,200,100,.85);">치료 중...</div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Stomach card -->
+  <div class="lp-card">
+    <div class="lp-label">위 상태</div>
+
+    <svg viewBox="0 0 144 122" width="130" height="110" xmlns="http://www.w3.org/2000/svg">
+      <!-- Stomach body -->
+      <path d="M31,21 Q16,10 16,31 Q10,52 16,74 Q22,98 52,114 Q78,126 98,109 Q124,94 128,67 Q134,42 116,27 Q99,13 78,17 Q57,8 31,21 Z"
+        fill="#FDEAEA" stroke="#E8A0A0" stroke-width="2.2"/>
+      <!-- Inner mucosa -->
+      <path d="M38,28 Q24,18 24,36 Q19,56 25,76 Q32,97 56,111 Q78,120 96,107 Q118,92 121,67 Q125,45 110,32 Q96,21 77,25 Q58,16 38,28 Z"
+        fill="#FFF4F4" stroke="#F0B0B0" stroke-width="1.2"/>
+      <!-- Gastric rugae lines -->
+      <path d="M38,54 Q72,50 104,56" stroke="#F0A8A8" stroke-width="1" fill="none" opacity=".5"/>
+      <path d="M34,70 Q70,65 106,71" stroke="#F0A8A8" stroke-width="1" fill="none" opacity=".42"/>
+      <path d="M37,85 Q70,81 104,86" stroke="#F0A8A8" stroke-width="1" fill="none" opacity=".36"/>
+
+      <!-- Inflammation tint (behind ulcers) -->
+      <path id="inflame-tint"
+        d="M31,21 Q16,10 16,31 Q10,52 16,74 Q22,98 52,114 Q78,126 98,109 Q124,94 128,67 Q134,42 116,27 Q99,13 78,17 Q57,8 31,21 Z"
+        fill="#E24B4A" opacity="0"/>
+
+      <!-- Main ulcer -->
+      <g id="u-main" class="ulcer-g">
+        <circle cx="74" cy="74" r="28" fill="#F7C1C1" opacity=".42"/>
+        <circle cx="74" cy="74" r="20" fill="#E24B4A" opacity=".36"/>
+        <circle cx="74" cy="74" r="13" fill="#E24B4A" opacity=".65"/>
+        <circle cx="74" cy="74" r="7" fill="#981E1E" opacity=".9"/>
+        <circle cx="74" cy="74" r="3.5" fill="#540808"/>
+      </g>
+
+      <!-- Secondary ulcer -->
+      <g id="u-sec" class="ulcer-g">
+        <circle cx="49" cy="55" r="16" fill="#F7C1C1" opacity=".4"/>
+        <circle cx="49" cy="55" r="10.5" fill="#E24B4A" opacity=".52"/>
+        <circle cx="49" cy="55" r="6" fill="#981E1E" opacity=".88"/>
+        <circle cx="49" cy="55" r="2.8" fill="#540808"/>
+      </g>
+
+      <!-- Tertiary ulcer -->
+      <g id="u-tri" class="ulcer-g">
+        <circle cx="99" cy="91" r="13" fill="#F7C1C1" opacity=".4"/>
+        <circle cx="99" cy="91" r="8" fill="#E24B4A" opacity=".52"/>
+        <circle cx="99" cy="91" r="4.5" fill="#981E1E" opacity=".88"/>
+        <circle cx="99" cy="91" r="2" fill="#540808"/>
+      </g>
+
+      <!-- Healed overlay -->
+      <g id="healed-g" style="opacity:0;">
+        <circle cx="74" cy="74" r="22" fill="#B5D98A" opacity=".52"/>
+        <circle cx="74" cy="74" r="13" fill="#93C24E" opacity=".5"/>
+        <text x="74" y="79" text-anchor="middle" fill="#214808" font-size="18">✓</text>
+      </g>
+    </svg>
+
+    <div class="stomach-txt" id="stomach-txt">궤양 진행 중</div>
+  </div>
+
+  <!-- Score -->
+  <div class="score-blk">
+    <div class="score-big" id="score-big">0</div>
+    <div class="score-lbl" id="score-lbl">/ 0 문제 정답</div>
+  </div>
+</div>
+
+<!-- ══════════════════════ RIGHT PANEL ══════════════════════ -->
+<div id="panel-right">
+
+  <!-- Quiz screen -->
+  <div id="quiz-screen">
+    <div class="q-header">
+      <span class="q-ctr" id="q-ctr">1 / 12</span>
+      <div class="prog-bg"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+      <div class="score-pill" id="score-pill">0점</div>
+    </div>
+
+    <div class="q-card">
+      <div class="q-tag" id="q-tag">—</div>
+      <div class="q-text" id="q-text">—</div>
+    </div>
+
+    <div class="options" id="options"></div>
+    <div class="expl" id="expl"></div>
+    <button class="next-btn" id="next-btn">다음 문제 →</button>
+  </div>
+
+  <!-- Result screen -->
+  <div id="result-screen">
+    <div class="r-emoji" id="r-emoji">🏆</div>
+    <div class="r-title" id="r-title">—</div>
+    <div class="r-sub"   id="r-sub">—</div>
+    <div class="r-score" id="r-score">0</div>
+    <div class="r-denom" id="r-denom">/ 12 정답</div>
+    <button class="restart-btn" onclick="startGame()">↺ 다시 도전하기</button>
+    <div class="bk-wrap">
+      <div class="bk-head">📋 문제별 결과</div>
+      <div id="bk-items"></div>
+    </div>
+  </div>
+
+</div><!-- end panel-right -->
+
+<script>
+// ═══════════════════════════════════════════════════════════
+//  QUESTIONS  (12 questions, significantly harder difficulty)
+// ═══════════════════════════════════════════════════════════
+const QS = [
+  {
+    tag:"제균요법 - 순차치료",
+    q:"H. pylori 순차치료(Sequential therapy)에서 전반부 5일과 후반부 5일의 약물 구성으로 옳은 것은?",
+    opts:[
+      "전반부: PPI + Clarithromycin → 후반부: PPI + Amoxicillin + Metronidazole",
+      "전반부: PPI + Amoxicillin → 후반부: PPI + Clarithromycin + Metronidazole",
+      "전반부: PPI + Bismuth + Tetracycline → 후반부: PPI + Metronidazole",
+      "전반부: PPI + Metronidazole → 후반부: PPI + Amoxicillin + Levofloxacin"
+    ],
+    ans:1,
+    exp:"순차치료는 전반부 5일: PPI + Amoxicillin, 후반부 5일: PPI + Clarithromycin + Metronidazole입니다. Amoxicillin이 먼저 균 수와 세포막 투과성을 바꾸어 Clarithromycin 내성 발현을 억제하는 원리입니다."
+  },
+  {
+    tag:"제균요법 - Bismuth 4제",
+    q:"Bismuth 4제요법(Bismuth quadruple therapy)에서 PPI 이외의 3가지 약물 조합으로 옳은 것은?",
+    opts:[
+      "Amoxicillin + Clarithromycin + Metronidazole",
+      "Clarithromycin + Tetracycline + Metronidazole",
+      "Bismuth subcitrate + Tetracycline + Metronidazole",
+      "Bismuth subcitrate + Amoxicillin + Levofloxacin"
+    ],
+    ans:2,
+    exp:"Bismuth 4제요법은 PPI + Bismuth subcitrate + Tetracycline + Metronidazole로 구성됩니다. Clarithromycin 내성률이 높은 지역이나 1차 3제요법 실패 후 2차 치료로 사용합니다."
+  },
+  {
+    tag:"H. pylori 진단 - 내시경",
+    q:"내시경 검사 중 민감도·특이도 >95%의 표준 검사(gold standard)이지만, 비용 문제로 초기 검사로 권장되지 않는 것은?",
+    opts:[
+      "신속요소분해효소검사(Rapid urease test)",
+      "조직검사(Histology)",
+      "배양검사(Culture)",
+      "중합효소연쇄반응(PCR) 검사"
+    ],
+    ans:1,
+    exp:"조직검사는 민감도·특이도 모두 >95%인 표준 검사이지만, 신속요소분해효소검사에 비해 비용이 높아 초기 검사로는 권장되지 않습니다. 신속요소분해효소검사는 비용이 저렴하고 결과를 빠르게 얻을 수 있어 선호됩니다."
+  },
+  {
+    tag:"NSAIDs 예방전략",
+    q:"심혈관 질환 위험 낮음 + 소화성궤양 위험 높음인 환자에서 NSAIDs 장기 복용 시 권장 예방 전략은?",
+    opts:[
+      "비선택적 NSAIDs 단독 → 증상 발생 시 PPI 추가",
+      "비선택적 NSAIDs + H2RA 병용",
+      "선택적 COX-2 차단제 단독, 또는 비선택적 NSAIDs + PPI 병용",
+      "Misoprostol + 비선택적 NSAIDs 병용"
+    ],
+    ans:2,
+    exp:"심혈관 위험 낮음 + 소화궤양 위험 높음: 선택적 COX-2 차단제 단독 사용 또는 비선택적 NSAIDs + PPI 병용이 권장됩니다. H2RA는 PPI보다 예방 효과가 열등하며, Misoprostol은 PPI를 사용할 수 없을 때만 고려합니다."
+  },
+  {
+    tag:"SRMD 예방 - H2RA vs PPI",
+    q:"SRMD 예방에서 H2RA 정주를 장기 사용할 때 발생하는 문제로 H2RA 대신 PPI를 1차 선택으로 권장하는 주된 이유는?",
+    opts:[
+      "H2RA는 정맥주사 제형이 없어 중환자에게 사용이 불가능하다",
+      "장기 사용 시 약물 내성(Tolerance)이 발생하여 산 억제 효과가 감소한다",
+      "H2RA는 C. difficile 감염 위험을 PPI보다 더 크게 증가시킨다",
+      "H2RA는 신독성이 높아 ICU 환자에게 사용이 제한된다"
+    ],
+    ans:1,
+    exp:"H2RA를 장기 사용하면 약물 내성(Tolerance)이 발생하여 위산 억제 효과가 점차 감소합니다. 이 때문에 SRMD 예방 1차 선택은 내성이 없는 PPI 정주이며, H2RA는 PPI 사용이 불가능한 경우의 대안입니다."
+  },
+  {
+    tag:"제균 확인 검사",
+    q:"H. pylori 제균 확인 검사 시행 조건으로 두 가지 모두 옳은 것은?",
+    opts:[
+      "제균요법 종료 직후 + PPI 복용 중 시행 가능",
+      "제균요법 종료 최소 4주 후 + 검사 2주 전 PPI 중단",
+      "제균요법 종료 최소 4주 후 + PPI 지속 복용 중 시행",
+      "제균요법 종료 1주 후 + 혈청검사로 확인"
+    ],
+    ans:1,
+    exp:"제균 확인은 제균요법 종료 최소 4주 이상 경과 후 시행하며, 검사 2주 전에 PPI를 반드시 중단해야 합니다. PPI가 H. pylori를 억제하면 요소호기검사 등에서 위음성 결과가 나올 수 있습니다."
+  },
+  {
+    tag:"제균치료 적응증",
+    q:"국내 가이드라인에서 2020년에 새로 추가된 H. pylori 제균치료 '추가 적응증'에만 해당하는 것은?",
+    opts:[
+      "기능성 소화불량증(Functional dyspepsia)",
+      "위암 가족력이 있는 환자",
+      "위축성 위염 / 장상피 화생",
+      "만성 특발성 혈소판감소성 자반증"
+    ],
+    ans:2,
+    exp:"위축성 위염/장상피 화생은 2020년 가이드라인에서 추가된 적응증으로, 비교적 근거 수준이 낮습니다. 기능성 소화불량증, 위암 가족력, 혈소판감소성 자반증은 기존 적응증에 이미 포함되어 있습니다."
+  },
+  {
+    tag:"약물 분류 - PPI vs P-CAB",
+    q:"다음 약물 중 P-CAB(Potassium Competitive Acid Blocker)에 해당하는 것끼리 묶인 것은?",
+    opts:[
+      "Ilaprazole + Rabeprazole",
+      "Tegoprazan + Ilaprazole",
+      "Revaprazan + Tegoprazan",
+      "Omeprazole + Revaprazan"
+    ],
+    ans:2,
+    exp:"국내에서 사용 가능한 P-CAB은 Revaprazan(레바넥스정)과 Tegoprazan(케이캡정)입니다. Ilaprazole(놀텍정), Rabeprazole(파리에트정), Omeprazole(오메드정)은 모두 PPI입니다."
+  },
+  {
+    tag:"합병증 - 위궤양 vs 십이지장궤양",
+    q:"위궤양(GU)과 십이지장궤양(DU)의 합병증 비교에 대한 설명으로 옳은 것은?",
+    opts:[
+      "유문부 협착(pyloric stenosis)은 위궤양과 십이지장궤양 모두에서 동등하게 발생한다",
+      "출혈과 천공은 십이지장궤양에서만 발생하는 특이적 합병증이다",
+      "유문부 협착(폐색)은 십이지장궤양의 합병증이며, 위궤양의 합병증 목록에는 포함되지 않는다",
+      "위궤양의 가장 심각한 합병증은 유문부 협착이다"
+    ],
+    ans:2,
+    exp:"유문부 협착(폐색)은 십이지장 근위부 궤양의 반흔 형성으로 위 출구가 좁아지는 합병증으로, 십이지장궤양에서만 나타납니다. 위궤양의 합병증은 출혈·천공이며, 십이지장궤양에는 출혈·천공·유문부 협착이 모두 포함됩니다."
+  },
+  {
+    tag:"NSAIDs 기전",
+    q:"NSAIDs에 의한 위장관 손상 기전으로 가장 옳은 것은?",
+    opts:[
+      "위점막에 직접 접촉하여 손상만 유발하며, 전신적 기전은 없다",
+      "위산 분비 수용체를 직접 자극하여 과산증을 유발한다",
+      "H. pylori 감염을 촉진하여 간접적으로만 궤양을 유발한다",
+      "위점막 직접 손상과 COX-1 억제로 인한 프로스타글란딘 감소, 두 기전이 복합적으로 작용한다"
+    ],
+    ans:3,
+    exp:"NSAIDs는 위점막에 직접적인 손상을 일으키는 동시에, COX-1을 억제하여 프로스타글란딘(PGE2) 합성을 저해합니다. 이로 인해 점액 분비 감소, 중탄산염 분비 감소, 점막 혈류 감소 등 방어 기전이 약화되어 궤양이 발생합니다."
+  },
+  {
+    tag:"SRMD - 위험인자 분류",
+    q:"SRMD 예방요법에서 '주요 위험인자(1개 이상이면 예방 필요)'가 아닌 것은?",
+    opts:[
+      "48시간 이상 기계적 환기가 필요한 호흡부전",
+      "응고병(INR > 1.5 또는 혈소판 < 50,000/mm³, 또는 PTT > 정상 2배)",
+      "두부 또는 척수 외상",
+      "패혈증(Sepsis)"
+    ],
+    ans:3,
+    exp:"패혈증은 SRMD 예방요법의 '기타 위험인자'에 해당합니다(2개 이상이면 예방 필요). 주요 위험인자는 48시간 이상 기계적 환기, 응고병, 과거 위장관 출혈력, 두부/척수 외상, 화상(체표면적 >35%)입니다."
+  },
+  {
+    tag:"항분비치료 기간",
+    q:"H. pylori 양성 소화성궤양에서 항분비치료(PPI 또는 P-CAB)에 대한 설명으로 옳은 것은?",
+    opts:[
+      "제균 성공 여부와 무관하게 위궤양·십이지장궤양 모두 8주간 PPI를 추가 투여해야 한다",
+      "제균에 성공하면 추가 항분비치료 없이 제균요법만으로 충분하다",
+      "제균 기간을 포함하여 총 4~8주간 투여하되, 위궤양 6~8주·십이지장궤양 4~6주로 구분한다",
+      "PPI와 H2RA를 병용하면 단독 사용보다 궤양 치유율이 향상된다"
+    ],
+    ans:2,
+    exp:"H. pylori 양성 궤양에서는 제균요법과 산분비억제제를 함께 사용하며, 제균 기간을 포함한 총 투여 기간은 위궤양 6~8주, 십이지장궤양 4~6주입니다. PPI + H2RA 병용은 효과 증대 없이 비용만 증가시켜 권장되지 않습니다."
+  }
+];
+
+// ═══════════════════════════════════════════════════════════
+//  HEALTH STATE CONFIG  (HP: 0~5)
+//  mouth / browL / browR: SVG path d attribute
+//  uMain / uSec / uTri: CSS scale value (string)
+// ═══════════════════════════════════════════════════════════
+const HC={
+  5:{mouth:"M64,114 Q80,128 96,114",
+     browL:"M47,72 Q59,63 70,72",browR:"M90,72 Q101,63 113,72",
+     squint:"1",blush:".82",sweat:"0",tear:"0",
+     barW:"100%",barC:"#1A9B72",hpTxt:"100%",
+     sTxt:"완치됐어요! ✨",sClr:"#5DCAA5",
+     uMain:"0",uSec:"0",uTri:"0",healed:"1",inflame:"0",
+     stomTxt:"완전 회복! 🎉"},
+  4:{mouth:"M64,114 Q80,124 96,114",
+     browL:"M47,72 Q59,63 70,72",browR:"M90,72 Q101,63 113,72",
+     squint:".58",blush:".52",sweat:"0",tear:"0",
+     barW:"80%",barC:"#5DCAA5",hpTxt:"80%",
+     sTxt:"많이 좋아졌어요 👍",sClr:"#5DCAA5",
+     uMain:".28",uSec:"0",uTri:"0",healed:".55",inflame:"0",
+     stomTxt:"회복 중"},
+  3:{mouth:"M64,114 Q80,118 96,114",
+     browL:"M47,72 Q59,63 70,72",browR:"M90,72 Q101,63 113,72",
+     squint:"0",blush:"0",sweat:"0",tear:"0",
+     barW:"60%",barC:"#EF9F27",hpTxt:"60%",
+     sTxt:"치료 중...",sClr:"rgba(255,200,100,.88)",
+     uMain:".68",uSec:"0",uTri:"0",healed:"0",inflame:".04",
+     stomTxt:"궤양 진행 중"},
+  2:{mouth:"M64,116 Q80,111 96,116",
+     browL:"M47,74 Q59,66 70,72",browR:"M90,72 Q101,66 113,74",
+     squint:"0",blush:"0",sweat:".78",tear:"0",
+     barW:"40%",barC:"#F09595",hpTxt:"40%",
+     sTxt:"걱정됩니다... 😟",sClr:"#F09595",
+     uMain:".94",uSec:".58",uTri:"0",healed:"0",inflame:".1",
+     stomTxt:"궤양 악화!"},
+  1:{mouth:"M62,118 Q80,110 98,118",
+     browL:"M47,76 Q59,68 70,72",browR:"M90,72 Q101,68 113,76",
+     squint:"0",blush:"0",sweat:".96",tear:".68",
+     barW:"20%",barC:"#E24B4A",hpTxt:"20%",
+     sTxt:"많이 아파요... 😢",sClr:"#F09595",
+     uMain:"1.18",uSec:".92",uTri:".52",healed:"0",inflame:".18",
+     stomTxt:"다발성 궤양!"},
+  0:{mouth:"M60,120 Q80,109 100,120",
+     browL:"M47,78 Q59,70 70,72",browR:"M90,72 Q101,70 113,78",
+     squint:"0",blush:"0",sweat:"0",tear:"1",
+     barW:"2%",barC:"#8B1010",hpTxt:"위험!",
+     sTxt:"위험 상태! 🚨",sClr:"#F09595",
+     uMain:"1.48",uSec:"1.18",uTri:".88",healed:"0",inflame:".3",
+     stomTxt:"출혈 위험! ⚠️"}
+};
+
+// ═══════════════════════════════════════════════════════════
+//  GAME STATE
+// ═══════════════════════════════════════════════════════════
+let curQ=0, score=0, hp=3, answered=false;
+let shuffled=[], results=[];
+
+// Apply health state to all visual elements
+function applyHP(h){
+  const c=HC[h];
+  // Bar
+  const bar=document.getElementById("hp-fill");
+  bar.style.width=c.barW; bar.style.background=c.barC;
+  document.getElementById("hp-pct").textContent=c.hpTxt;
+  // Status
+  const sm=document.getElementById("status-txt");
+  sm.textContent=c.sTxt; sm.style.color=c.sClr;
+  // Face - mouth & brows
+  document.getElementById("mouth").setAttribute("d",c.mouth);
+  document.getElementById("brow-l").setAttribute("d",c.browL);
+  document.getElementById("brow-r").setAttribute("d",c.browR);
+  // Eyes / face details
+  document.getElementById("eye-cov-l").setAttribute("opacity",c.squint);
+  document.getElementById("eye-cov-r").setAttribute("opacity",c.squint);
+  document.getElementById("blush-l").setAttribute("opacity",c.blush);
+  document.getElementById("blush-r").setAttribute("opacity",c.blush);
+  document.getElementById("sweat").setAttribute("opacity",c.sweat);
+  document.getElementById("tears").setAttribute("opacity",c.tear);
+  // Stomach ulcers
+  document.getElementById("u-main").style.transform="scale("+c.uMain+")";
+  document.getElementById("u-sec").style.transform="scale("+c.uSec+")";
+  document.getElementById("u-tri").style.transform="scale("+c.uTri+")";
+  document.getElementById("healed-g").style.opacity=c.healed;
+  document.getElementById("inflame-tint").style.opacity=c.inflame;
+  document.getElementById("stomach-txt").textContent=c.stomTxt;
+}
+
+// Left panel flash on answer
+function flash(ok){
+  const f=document.getElementById("flash");
+  f.style.background=ok?"rgba(26,155,114,.22)":"rgba(180,40,40,.22)";
+  f.style.opacity="1";
+  setTimeout(()=>f.style.opacity="0",500);
+}
+
+// Update all score/counter displays
+function updateUI(){
+  const total=shuffled.length;
+  document.getElementById("q-ctr").textContent=(curQ+1)+" / "+total;
+  document.getElementById("prog-fill").style.width=((curQ/total)*100)+"%";
+  document.getElementById("score-pill").textContent=score+"점";
+  document.getElementById("score-big").textContent=score;
+  document.getElementById("score-lbl").textContent="/ "+curQ+" 문제 정답";
+}
+
+// Load current question into DOM
+function loadQ(){
+  answered=false;
+  const q=shuffled[curQ];
+  document.getElementById("q-tag").textContent=q.tag;
+  document.getElementById("q-text").textContent=q.q;
+  const ods=document.getElementById("options");
+  ods.innerHTML="";
+  q.opts.forEach((o,i)=>{
+    const b=document.createElement("button");
+    b.className="opt";
+    b.innerHTML='<span class="opt-n">'+(i+1)+'</span><span>'+o+'</span>';
+    b.onclick=()=>pick(i);
+    ods.appendChild(b);
+  });
+  document.getElementById("expl").className="expl";
+  document.getElementById("next-btn").className="next-btn";
+}
+
+// Handle answer selection
+function pick(idx){
+  if(answered)return;
+  answered=true;
+  const q=shuffled[curQ];
+  const ok=(idx===q.ans);
+  if(ok){score++;hp=Math.min(5,hp+1);flash(true);}
+  else{hp=Math.max(0,hp-1);flash(false);}
+  results.push({q:q.q,ok,ca:q.opts[q.ans]});
+  applyHP(hp);
+  updateUI();
+  // Style buttons
+  document.querySelectorAll(".opt").forEach((b,i)=>{
+    b.disabled=true;
+    if(i===q.ans&&i===idx)b.classList.add("ok");
+    else if(i===idx)b.classList.add("ng");
+    else if(i===q.ans)b.classList.add("hl");
+  });
+  // Explanation
+  const ex=document.getElementById("expl");
+  ex.innerHTML=(ok?"<strong>✅ 정답!</strong> ":"<strong>❌ 오답.</strong> ")+q.exp;
+  ex.classList.add("show");
+  // Next button
+  const nb=document.getElementById("next-btn");
+  nb.textContent=curQ<shuffled.length-1?"다음 문제 →":"결과 보기 →";
+  nb.classList.add("show");
+}
+
+document.getElementById("next-btn").addEventListener("click",()=>{
+  curQ++;
+  if(curQ>=shuffled.length)showResult();
+  else{updateUI();loadQ();}
+});
+
+// Show final result screen
+function showResult(){
+  document.getElementById("quiz-screen").style.display="none";
+  const rs=document.getElementById("result-screen");
+  rs.classList.add("show");
+  const total=shuffled.length;
+  const pct=score/total;
+  let e,t,s;
+  if(pct===1)       {e="🏆";t="완벽한 이해!";s="소화성궤양의 모든 핵심 개념을 완벽히 숙지했습니다!";}
+  else if(pct>=.83) {e="🌟";t="우수한 실력!";s=(total-score)+"문제 틀렸습니다. 틀린 개념을 한 번 더 복습해 보세요.";}
+  else if(pct>=.58) {e="📚";t="조금 더 공부해요!";s=score+"문제 정답. 제균요법 종류, 위험인자 분류, 약물 구분을 중점 복습하세요.";}
+  else              {e="💊";t="다시 도전해요!";s="강의 슬라이드를 꼼꼼히 복습한 뒤 다시 도전해 보세요!";}
+  document.getElementById("r-emoji").textContent=e;
+  document.getElementById("r-title").textContent=t;
+  document.getElementById("r-sub").textContent=s;
+  document.getElementById("r-score").textContent=score;
+  document.getElementById("r-denom").textContent="/ "+total+" 정답";
+  document.getElementById("bk-items").innerHTML=results.map(r=>
+    '<div class="bk-item"><span>'+(r.ok?"✅":"❌")+'</span>'+
+    '<div><div class="bk-q">'+r.q+'</div>'+
+    (!r.ok?'<div class="bk-a">정답: '+r.ca+'</div>':'')+
+    '</div></div>'
+  ).join("");
+}
+
+// Start / restart the game
+function startGame(){
+  shuffled=QS.slice().sort(()=>Math.random()-.5);
+  curQ=0;score=0;hp=3;answered=false;results=[];
+  document.getElementById("result-screen").classList.remove("show");
+  document.getElementById("quiz-screen").style.display="flex";
+  applyHP(hp);
+  updateUI();
+  loadQ();
+}
+
+startGame();
+</script>
+</body>
+</html>

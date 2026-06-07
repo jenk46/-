@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NSAIDs 유발 소화성궤양 안내</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #F7F3EE;
+    --surface:   #FFFCF8;
+    --navy:      #1E2D40;
+    --navy-mid:  #2E4A65;
+    --navy-pale: #E8EFF6;
+    --orange:    #C75B2A;
+    --orange-lt: #FDF0E9;
+    --orange-md: #E87A45;
+    --gold:      #B8860B;
+    --gold-lt:   #FFF8E1;
+    --green:     #2A6B4A;
+    --green-lt:  #E6F4EE;
+    --red:       #B22222;
+    --red-lt:    #FDECEA;
+    --slate:     #4A5568;
+    --slate-lt:  #EDF2F7;
+    --rule:      #D9CFC4;
+    --text:      #1A1A2E;
+    --text-mid:  #3D4A5C;
+    --text-dim:  #7A8899;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 13.5px;
+    line-height: 1.75;
+  }
+
+  /* ── 페이지 래퍼 ── */
+  .page {
+    max-width: 800px;
+    margin: 28px auto;
+    background: var(--surface);
+    box-shadow: 0 12px 48px rgba(30,45,64,.13);
+    border-radius: 4px;
+    overflow: hidden;
+    border-top: 5px solid var(--orange);
+  }
+
+  /* ════ HEADER ════ */
+  .header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0;
+    background: var(--navy);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--orange) 0%, var(--orange-md) 50%, var(--navy-mid) 100%);
+  }
+  .header-left {
+    padding: 34px 40px 30px;
+  }
+  .header-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--orange);
+    color: #fff;
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+  .header h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 27px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.3;
+    margin-bottom: 8px;
+  }
+  .header h1 em {
+    color: var(--orange-md);
+    font-style: normal;
+  }
+  .header-sub {
+    color: rgba(255,255,255,.55);
+    font-size: 12px;
+    font-weight: 300;
+  }
+  .header-right {
+    background: var(--orange);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 32px;
+    min-width: 130px;
+    position: relative;
+  }
+  .header-right::before {
+    content: '';
+    position: absolute;
+    left: -18px; top: 0; bottom: 0;
+    width: 36px;
+    background: var(--navy);
+    clip-path: polygon(0 0, 0% 100%, 100% 100%, 100% 0);
+  }
+  .header-stat {
+    text-align: center;
+    color: #fff;
+    position: relative;
+    z-index: 1;
+  }
+  .header-stat .big {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1;
+    display: block;
+  }
+  .header-stat .unit { font-size: 11px; opacity: .85; line-height: 1.4; }
+  .header-stat + .header-stat { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(255,255,255,.3); }
+
+  /* ════ BODY ════ */
+  .body {
+    padding: 34px 40px;
+    display: grid;
+    gap: 30px;
+  }
+
+  /* 섹션 타이틀 */
+  .sec-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 15.5px;
+    font-weight: 700;
+    color: var(--navy);
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 14px;
+  }
+  .sec-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--rule) 0%, transparent 100%);
+  }
+  .sec-icon {
+    width: 30px; height: 30px;
+    border-radius: 6px;
+    background: var(--orange);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+
+  /* ── 메커니즘 카드 ── */
+  .mech-row {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr auto 1fr;
+    align-items: center;
+    gap: 0;
+    background: var(--navy-pale);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+  .mech-card {
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .mech-card .micon { font-size: 22px; display: block; margin-bottom: 5px; }
+  .mech-card .mlabel {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--navy);
+    display: block;
+    margin-bottom: 3px;
+  }
+  .mech-card .mdesc { font-size: 11px; color: var(--text-mid); line-height: 1.5; }
+  .mech-arrow {
+    font-size: 20px;
+    color: var(--orange);
+    padding: 0 4px;
+    font-weight: 700;
+  }
+
+  .stat-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+  }
+  .stat-card {
+    border-radius: 8px;
+    padding: 14px 12px;
+    text-align: center;
+    border: 1px solid var(--rule);
+  }
+  .stat-card .snum {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--orange);
+    line-height: 1.1;
+    display: block;
+  }
+  .stat-card .sdesc { font-size: 11.5px; color: var(--text-mid); margin-top: 3px; line-height: 1.5; }
+
+  /* ── 위험인자 ── */
+  .risk-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+  .risk-box {
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .risk-box.patient {
+    background: var(--orange-lt);
+    border: 1.5px solid #F5C4A8;
+  }
+  .risk-box.drug {
+    background: var(--navy-pale);
+    border: 1.5px solid #B8CCE0;
+  }
+  .risk-box h4 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .risk-box.patient h4 { color: var(--orange); }
+  .risk-box.drug    h4 { color: var(--navy-mid); }
+  .risk-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .risk-list li {
+    font-size: 12px;
+    color: var(--text-mid);
+    padding-left: 14px;
+    position: relative;
+    line-height: 1.55;
+  }
+  .risk-list li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    font-size: 10px;
+    top: 2px;
+  }
+  .risk-box.patient .risk-list li::before { color: var(--orange); }
+  .risk-box.drug    .risk-list li::before { color: var(--navy-mid); }
+
+  /* 위험도 강조 */
+  .synergy-box {
+    background: var(--red-lt);
+    border: 1.5px solid #E8B4B4;
+    border-radius: 8px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  .synergy-nums {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .syn-chip {
+    text-align: center;
+    background: #fff;
+    border-radius: 6px;
+    padding: 8px 10px;
+    border: 1px solid #E8B4B4;
+  }
+  .syn-chip .n {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 20px;
+    font-weight: 900;
+    color: var(--red);
+    line-height: 1;
+    display: block;
+  }
+  .syn-chip .l { font-size: 10px; color: var(--text-mid); line-height: 1.4; }
+  .syn-plus { font-size: 16px; color: var(--red); font-weight: 700; }
+  .syn-eq   { font-size: 18px; color: var(--red); font-weight: 700; }
+  .synergy-text { font-size: 12.5px; color: var(--red); font-weight: 500; line-height: 1.6; }
+  .synergy-text strong { font-size: 14px; display: block; margin-bottom: 2px; }
+
+  /* ── 예방 전략 테이블 ── */
+  .strategy-wrap {
+    overflow-x: auto;
+  }
+  .strategy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .strategy-table th {
+    background: var(--navy);
+    color: #fff;
+    padding: 10px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: .3px;
+  }
+  .strategy-table th:first-child { text-align: left; border-radius: 0; }
+  .strategy-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--rule);
+    color: var(--text-mid);
+    vertical-align: middle;
+    text-align: center;
+  }
+  .strategy-table td:first-child { text-align: left; font-weight: 600; color: var(--navy); }
+  .strategy-table tbody tr:nth-child(even) { background: var(--slate-lt); }
+  .strategy-table tbody tr:nth-child(odd)  { background: var(--surface); }
+
+  .tag {
+    display: inline-block;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 8px;
+  }
+  .tag-green  { background: var(--green-lt);  color: var(--green); }
+  .tag-orange { background: var(--orange-lt); color: var(--orange); }
+  .tag-red    { background: var(--red-lt);    color: var(--red); }
+  .tag-navy   { background: var(--navy-pale); color: var(--navy-mid); }
+  .tag-gold   { background: var(--gold-lt);   color: var(--gold); }
+
+  /* ── 치료 흐름도 ── */
+  .flow-wrap {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .flow-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 0;
+    position: relative;
+  }
+  .flow-row + .flow-row::before {
+    content: '▼';
+    position: absolute;
+    left: 56px;
+    top: -14px;
+    color: var(--orange);
+    font-size: 14px;
+    z-index: 2;
+  }
+  .flow-label {
+    background: var(--orange);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 14px 10px;
+    border-bottom: 2px solid var(--surface);
+    line-height: 1.4;
+  }
+  .flow-label.alt { background: var(--navy-mid); }
+  .flow-label.end { background: var(--green); border-radius: 0 0 0 8px; }
+  .flow-content {
+    background: var(--slate-lt);
+    border-bottom: 2px solid var(--surface);
+    padding: 14px 18px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 6px;
+  }
+  .flow-content:last-child { border-radius: 0 0 8px 0; }
+  .flow-content p { font-size: 12.5px; color: var(--text-mid); line-height: 1.6; }
+  .flow-content strong { color: var(--navy); }
+  .flow-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+
+  /* ── 복약 기간 ── */
+  .duration-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .dur-card {
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1.5px solid var(--rule);
+  }
+  .dur-header {
+    padding: 10px 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #fff;
+    text-align: center;
+  }
+  .dur-header.h-pylori { background: var(--navy-mid); }
+  .dur-header.nsaid    { background: var(--orange); }
+  .dur-header.idio     { background: var(--slate); }
+  .dur-body {
+    padding: 12px 14px;
+    background: var(--surface);
+  }
+  .dur-body .drug-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-dim);
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .dur-body .week-row {
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .dur-body .wk-type { font-size: 11px; color: var(--text-dim); min-width: 52px; }
+  .dur-body .wk-bar {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--orange);
+    position: relative;
+  }
+  .dur-body .wk-bar.navy { background: var(--navy-mid); }
+  .dur-body .wk-val {
+    font-size: 11px;
+    color: var(--text-mid);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* ── 주의사항 그리드 ── */
+  .caution-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+  }
+  .caut-card {
+    border-radius: 8px;
+    padding: 14px 13px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    border: 1.5px solid transparent;
+  }
+  .caut-card.stop  { background: var(--red-lt);    border-color: #F1B8B8; }
+  .caut-card.note  { background: var(--orange-lt); border-color: #F5C4A8; }
+  .caut-card.good  { background: var(--green-lt);  border-color: #A8D8BE; }
+  .caut-icon { font-size: 20px; }
+  .caut-card h4 { font-size: 12.5px; font-weight: 700; }
+  .caut-card.stop h4  { color: var(--red); }
+  .caut-card.note h4  { color: var(--orange); }
+  .caut-card.good h4  { color: var(--green); }
+  .caut-card p { font-size: 11.5px; color: var(--text-mid); line-height: 1.55; }
+
+  /* ── 푸터 ── */
+  .footer {
+    background: var(--navy);
+    padding: 20px 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border-top: 4px solid var(--orange);
+  }
+  .footer-msg {
+    color: rgba(255,255,255,.7);
+    font-size: 12px;
+    line-height: 1.65;
+  }
+  .footer-msg strong { color: #fff; display: block; margin-bottom: 2px; }
+  .footer-contact {
+    background: var(--orange);
+    color: #fff;
+    border-radius: 6px;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: 12px;
+    flex-shrink: 0;
+    line-height: 1.5;
+  }
+  .footer-contact strong { display: block; font-size: 13.5px; }
+
+  @media print {
+    body { background: #fff; }
+    .page { margin: 0; box-shadow: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ════ HEADER ════ -->
+  <div class="header">
+    <div class="header-left">
+      <div class="header-pill">📋 환자 안내문</div>
+      <h1>진통소염제(NSAIDs)와<br><em>소화성궤양</em> — 꼭 알아두세요</h1>
+      <div class="header-sub">NSAIDs-Induced Peptic Ulcer Disease — Patient Information</div>
+    </div>
+    <div class="header-right">
+      <div class="header-stat">
+        <span class="big">25%</span>
+        <span class="unit">만성 복용자 중<br>궤양 발생</span>
+      </div>
+      <div class="header-stat">
+        <span class="big">5~6배</span>
+        <span class="unit">위장관 출혈<br>위험 증가</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════ BODY ════ -->
+  <div class="body">
+
+    <!-- 1. 왜 위험한가 -->
+    <section>
+      <div class="sec-title"><div class="sec-icon">⚡</div> NSAIDs는 왜 위를 다치게 할까요?</div>
+
+      <div class="mech-row">
+        <div class="mech-card">
+          <span class="micon">💊</span>
+          <span class="mlabel">NSAIDs 복용</span>
+          <span class="mdesc">이부프로펜, 아스피린,<br>나프록센 등</span>
+        </div>
+        <div class="mech-arrow">→</div>
+        <div class="mech-card">
+          <span class="micon">🔬</span>
+          <span class="mlabel">프로스타글란딘 억제</span>
+          <span class="mdesc">위점막 보호물질<br>생성 감소</span>
+        </div>
+        <div class="mech-arrow">→</div>
+        <div class="mech-card">
+          <span class="micon">🩹</span>
+          <span class="mlabel">위점막 손상</span>
+          <span class="mdesc">직접 자극 + 방어막<br>약화 → 궤양 발생</span>
+        </div>
+      </div>
+
+      <div class="stat-strip">
+        <div class="stat-card">
+          <span class="snum">25%</span>
+          <span class="sdesc">만성 복용 환자 중<br>소화성궤양 발생률</span>
+        </div>
+        <div class="stat-card">
+          <span class="snum">5~6배</span>
+          <span class="sdesc">비복용자 대비<br>위장관 출혈 위험</span>
+        </div>
+        <div class="stat-card">
+          <span class="snum">50%</span>
+          <span class="sdesc">궤양 천공의<br>NSAIDs 원인 비율</span>
+        </div>
+      </div>
+
+      <!-- H. pylori 동반 시 -->
+      <div class="synergy-box">
+        <div class="synergy-nums">
+          <div class="syn-chip"><span class="n">4배</span><span class="l">H. pylori<br>단독</span></div>
+          <div class="syn-plus">+</div>
+          <div class="syn-chip"><span class="n">3배</span><span class="l">NSAIDs<br>단독</span></div>
+          <div class="syn-eq">=</div>
+          <div class="syn-chip" style="border-color:var(--red);background:var(--red-lt);">
+            <span class="n" style="font-size:24px;">15.4배</span>
+            <span class="l">동시 존재 시</span>
+          </div>
+        </div>
+        <div class="synergy-text">
+          <strong>⚠ 헬리코박터 + NSAIDs 동시 존재 시 상승효과!</strong>
+          두 위험인자가 함께 있으면 궤양 발생 위험이 극적으로 높아집니다.<br>
+          NSAIDs 복용 전 헬리코박터 검사 및 제균이 중요합니다.
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 위험인자 -->
+    <section>
+      <div class="sec-title"><div class="sec-icon">⚠️</div> 나는 고위험군인가요?</div>
+      <div class="risk-grid">
+        <div class="risk-box patient">
+          <h4>🧑‍⚕️ 환자 관련 위험인자</h4>
+          <ul class="risk-list">
+            <li>소화성궤양 또는 합병증(출혈·천공) 과거력</li>
+            <li>나이 65세 이상</li>
+            <li>헬리코박터 파일로리 감염</li>
+            <li>흡연, 음주</li>
+            <li>심혈관계 질환, 류마티스성 관절염 등 만성쇠약성 질환</li>
+          </ul>
+        </div>
+        <div class="risk-box drug">
+          <h4>💊 약물 관련 위험인자</h4>
+          <ul class="risk-list">
+            <li>고용량의 NSAIDs 사용</li>
+            <li>여러 종류의 NSAIDs 중복 사용</li>
+            <li>저용량 또는 고용량의 아스피린과 동시 사용</li>
+            <li>항응고제·항혈소판제(예: 클로피도그렐) 동시 사용</li>
+            <li>부신피질호르몬제(스테로이드) 동시 사용</li>
+            <li>경구 비스포스포네이트(예: 알렌드로네이트) 동시 사용</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. 예방 전략 -->
+    <section>
+      <div class="sec-title"><div class="sec-icon">🛡️</div> 소화성궤양 예방 전략 (NSAIDs 장기 복용 시)</div>
+      <div class="strategy-wrap">
+        <table class="strategy-table">
+          <thead>
+            <tr>
+              <th style="width:140px;">상황</th>
+              <th>소화성궤양 위험 낮음</th>
+              <th>소화성궤양 위험 높음</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>심혈관계 질환 위험 <strong>낮음</strong></td>
+              <td><span class="tag tag-navy">비선택적 NSAIDs 단독</span><br><span style="font-size:11px;color:var(--text-dim);">위장관보호제 불필요</span></td>
+              <td>
+                <span class="tag tag-orange">선택적 COX-2 억제제</span>
+                <span style="font-size:11px;color:var(--text-dim);margin:0 4px;">또는</span>
+                <span class="tag tag-orange">비선택적 NSAIDs + PPI</span>
+              </td>
+            </tr>
+            <tr>
+              <td>심혈관계 질환 위험 <strong>높음</strong></td>
+              <td><span class="tag tag-navy">비선택적 NSAIDs + PPI</span></td>
+              <td>
+                <span class="tag tag-red">가능하면 NSAIDs 사용 회피</span><br>
+                <span style="font-size:11px;color:var(--text-dim);">불가피한 경우: 비선택적 NSAIDs + PPI</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">※ 소화성궤양 고위험: 고령(≥65세), PUD 과거력, 고용량 NSAIDs, 저용량 아스피린·항응고제·항혈소판제·스테로이드 병용 등</p>
+    </section>
+
+    <!-- 4. 치료 흐름 -->
+    <section>
+      <div class="sec-title"><div class="sec-icon">🔄</div> NSAIDs 유발 궤양, 이렇게 치료합니다</div>
+      <div class="flow-wrap" style="border-radius:8px;overflow:hidden;border:1.5px solid var(--rule);">
+
+        <div class="flow-row">
+          <div class="flow-label alt">H. pylori 감염 확인</div>
+          <div class="flow-content">
+            <p><strong>헬리코박터 감염이 함께 있다면</strong> 반드시 제균치료를 먼저 시행합니다.</p>
+            <div class="flow-tags"><span class="tag tag-navy">제균요법 병행</span></div>
+          </div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-label">활동성 궤양<br>NSAIDs 중단</div>
+          <div class="flow-content">
+            <p>원인 약물을 <strong>중단</strong>하고, 위산억제제를 복용합니다.</p>
+            <div class="flow-tags">
+              <span class="tag tag-orange">PPI 우선 선택</span>
+              <span class="tag tag-navy">H2RA 대안</span>
+              <span class="tag tag-gold">Misoprostol (대안)</span>
+            </div>
+          </div>
+        </div>
+        <div class="flow-row">
+          <div class="flow-label end">활동성 궤양<br>NSAIDs 지속</div>
+          <div class="flow-content">
+            <p>불가피하게 NSAIDs를 <strong>계속 복용해야 한다면</strong> PPI를 함께 복용합니다.</p>
+            <div class="flow-tags"><span class="tag tag-orange">PPI 병용 필수</span></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 5. 항분비치료 기간 -->
+    <section>
+      <div class="sec-title"><div class="sec-icon">🗓️</div> 위산억제제(PPI/P-CAB) 복용 기간</div>
+      <div class="duration-grid">
+        <div class="dur-card">
+          <div class="dur-header h-pylori">H. pylori 양성 궤양</div>
+          <div class="dur-body">
+            <div class="drug-label">치료 방법</div>
+            <p style="font-size:12px;color:var(--text-mid);line-height:1.6;">
+              <strong>제균치료</strong>를 포함하여 총 4~8주 동안 위산억제제를 복용합니다.
+              제균 성공이 가장 중요한 치료 목표입니다.
+            </p>
+          </div>
+        </div>
+        <div class="dur-card">
+          <div class="dur-header nsaid">NSAIDs 유발 궤양</div>
+          <div class="dur-body">
+            <div class="drug-label">PPI 또는 P-CAB</div>
+            <div class="week-row" style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <span style="font-size:11px;color:var(--text-dim);min-width:52px;">위궤양</span>
+              <div style="flex:1;height:8px;border-radius:4px;background:var(--orange);"></div>
+              <span style="font-size:11px;color:var(--text-mid);font-weight:700;">6~8주</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:11px;color:var(--text-dim);min-width:52px;">십이지장</span>
+              <div style="flex:.75;height:8px;border-radius:4px;background:var(--orange-md);"></div>
+              <span style="font-size:11px;color:var(--text-mid);font-weight:700;">4~6주</span>
+            </div>
+          </div>
+        </div>
+        <div class="dur-card">
+          <div class="dur-header idio">특발성 궤양</div>
+          <div class="dur-body">
+            <div class="drug-label">PPI 또는 P-CAB</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <span style="font-size:11px;color:var(--text-dim);min-width:52px;">위궤양</span>
+              <div style="flex:1;height:8px;border-radius:4px;background:var(--slate);"></div>
+              <span style="font-size:11px;color:var(--text-mid);font-weight:700;">6~8주</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="font-size:11px;color:var(--text-dim);min-width:52px;">십이지장</span>
+              <div style="flex:.75;height:8px;border-radius:4px;background:#94A3B8;"></div>
+              <span style="font-size:11px;color:var(--text-mid);font-weight:700;">4~6주</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. 생활 주의사항 -->
+    <section>
+      <div class="sec-title"><div class="sec-icon">📌</div> 생활 속 주의사항</div>
+      <div class="caution-grid">
+        <div class="caut-card stop">
+          <div class="caut-icon">🚫</div>
+          <h4>임의로 NSAIDs 증량 금지</h4>
+          <p>통증이 심해도 스스로 용량을 늘리지 마세요. 반드시 의사와 상담 후 조절하세요.</p>
+        </div>
+        <div class="caut-card stop">
+          <div class="caut-icon">⛔</div>
+          <h4>여러 NSAIDs 동시 복용 금지</h4>
+          <p>아스피린과 이부프로펜처럼 두 가지 이상 소염진통제를 함께 복용하면 위험이 급격히 높아집니다.</p>
+        </div>
+        <div class="caut-card stop">
+          <div class="caut-icon">🍺</div>
+          <h4>음주 자제</h4>
+          <p>알코올은 위점막을 직접 손상시키며, NSAIDs와 함께 복용 시 출혈 위험이 더욱 높아집니다.</p>
+        </div>
+        <div class="caut-card note">
+          <div class="caut-icon">💊</div>
+          <h4>처방된 PPI 꼭 복용</h4>
+          <p>속쓰림이 없어도 처방된 위산억제제는 정해진 기간 동안 복용해야 궤양이 치유됩니다.</p>
+        </div>
+        <div class="caut-card note">
+          <div class="caut-icon">🍽️</div>
+          <h4>식후 복용 권장</h4>
+          <p>NSAIDs는 위 자극이 강하므로 반드시 음식과 함께 복용하세요. 공복 복용은 삼가세요.</p>
+        </div>
+        <div class="caut-card good">
+          <div class="caut-icon">🏥</div>
+          <h4>이런 증상엔 즉시 내원</h4>
+          <p>검은색 변(흑색변), 피 섞인 구토, 갑작스러운 심한 복통은 즉시 응급실에 가야 합니다.</p>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /body -->
+
+  <!-- ════ FOOTER ════ -->
+  <div class="footer">
+    <div class="footer-msg">
+      <strong>NSAIDs 복용 중 위장 관련 이상 증상이 생기면 즉시 알려주세요</strong>
+      속쓰림, 상복부 통증, 오심, 흑색변 등이 나타나면 담당 의사 또는 약사에게 바로 연락하세요.<br>
+      궤양 예방을 위한 위산억제제 처방이 필요한지 함께 상의하시기 바랍니다.
+    </div>
+    <div class="footer-contact">
+      <strong>궁금하신 점은</strong>
+      담당 의사·약사에게<br>언제든 문의하세요
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

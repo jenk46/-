@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>헬리코박터 제균치료 안내</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cream: #FAF6EF;
+    --warm-white: #FFFDF9;
+    --teal-dark: #1A5C5A;
+    --teal-mid: #2A8A86;
+    --teal-light: #4DB8B3;
+    --teal-pale: #E0F4F3;
+    --amber: #D4820A;
+    --amber-light: #FFF3DC;
+    --red-warn: #C0392B;
+    --red-pale: #FDECEA;
+    --text-dark: #1C2B2B;
+    --text-mid: #3D5452;
+    --text-light: #6B8E8C;
+    --border: #C8E0DF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Noto Sans KR', sans-serif;
+    background: var(--cream);
+    color: var(--text-dark);
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  /* ── 인쇄용 A4 컨테이너 ── */
+  .page {
+    max-width: 794px;
+    margin: 30px auto;
+    background: var(--warm-white);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 8px 40px rgba(26,92,90,.12);
+  }
+
+  /* ── 헤더 ── */
+  .header {
+    background: var(--teal-dark);
+    padding: 36px 44px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    border-radius: 50%;
+    background: rgba(77,184,179,.18);
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; right: 80px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(77,184,179,.1);
+  }
+  .header-badge {
+    display: inline-block;
+    background: var(--teal-light);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    padding: 4px 12px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+  }
+  .header h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 30px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.25;
+    margin-bottom: 8px;
+  }
+  .header h1 span {
+    color: var(--teal-light);
+  }
+  .header-sub {
+    color: rgba(255,255,255,.72);
+    font-size: 13px;
+    font-weight: 300;
+  }
+
+  /* ── 본문 ── */
+  .body {
+    padding: 36px 44px;
+    display: grid;
+    gap: 28px;
+  }
+
+  /* ── 섹션 공통 ── */
+  .section-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--teal-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--teal-pale);
+  }
+  .section-title .icon {
+    width: 28px; height: 28px;
+    background: var(--teal-dark);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  /* ── 소개 박스 ── */
+  .intro-box {
+    background: var(--teal-pale);
+    border-left: 4px solid var(--teal-mid);
+    border-radius: 0 6px 6px 0;
+    padding: 16px 20px;
+    font-size: 13.5px;
+    color: var(--text-mid);
+    line-height: 1.8;
+  }
+  .intro-box strong { color: var(--teal-dark); }
+
+  /* ── 왜 필요한가 ── */
+  .why-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .why-card {
+    background: var(--teal-pale);
+    border-radius: 8px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .why-card .num {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 28px;
+    font-weight: 900;
+    color: var(--teal-mid);
+    line-height: 1;
+  }
+  .why-card .unit { font-size: 13px; color: var(--teal-mid); margin-bottom: 6px; }
+  .why-card .desc { font-size: 12px; color: var(--text-mid); line-height: 1.5; }
+
+  /* ── 약 복용 방법 ── */
+  .drug-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12.5px;
+  }
+  .drug-table thead tr {
+    background: var(--teal-dark);
+    color: #fff;
+  }
+  .drug-table th {
+    padding: 10px 12px;
+    font-weight: 600;
+    text-align: left;
+    font-size: 12px;
+    letter-spacing: .5px;
+  }
+  .drug-table tbody tr:nth-child(even) { background: var(--teal-pale); }
+  .drug-table tbody tr:nth-child(odd)  { background: var(--warm-white); }
+  .drug-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-mid);
+    vertical-align: middle;
+  }
+  .drug-table td:first-child {
+    font-weight: 700;
+    color: var(--teal-dark);
+    white-space: nowrap;
+  }
+  .badge-first {
+    display: inline-block;
+    background: var(--teal-mid);
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+
+  /* ── 타임라인 ── */
+  .timeline {
+    position: relative;
+    padding-left: 32px;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 11px; top: 0; bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--teal-mid), var(--teal-pale));
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 18px;
+  }
+  .timeline-item:last-child { margin-bottom: 0; }
+  .timeline-dot {
+    position: absolute;
+    left: -26px; top: 3px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--teal-mid);
+    border: 3px solid var(--warm-white);
+    box-shadow: 0 0 0 2px var(--teal-mid);
+  }
+  .timeline-label {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--teal-mid);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 3px;
+  }
+  .timeline-content {
+    font-size: 13px;
+    color: var(--text-mid);
+    background: var(--teal-pale);
+    border-radius: 6px;
+    padding: 10px 14px;
+  }
+
+  /* ── 주의사항 ── */
+  .caution-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .caution-card {
+    border-radius: 8px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .caution-card.warn {
+    background: var(--red-pale);
+    border: 1px solid #F1C0BB;
+  }
+  .caution-card.tip {
+    background: var(--amber-light);
+    border: 1px solid #F5CFA0;
+  }
+  .caution-icon {
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .caution-card h4 {
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .caution-card.warn h4 { color: var(--red-warn); }
+  .caution-card.tip  h4 { color: var(--amber); }
+  .caution-card p {
+    font-size: 12px;
+    color: var(--text-mid);
+    line-height: 1.6;
+  }
+
+  /* ── 복약 체크리스트 ── */
+  .checklist {
+    list-style: none;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .checklist li {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--text-mid);
+    background: var(--cream);
+    border-radius: 6px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+  }
+  .checklist li::before {
+    content: '✓';
+    color: var(--teal-mid);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.4;
+    flex-shrink: 0;
+  }
+
+  /* ── 제균 확인 검사 ── */
+  .confirm-box {
+    background: linear-gradient(135deg, var(--teal-pale) 0%, #fff 100%);
+    border: 2px solid var(--teal-light);
+    border-radius: 10px;
+    padding: 20px 24px;
+    display: flex;
+    gap: 20px;
+    align-items: center;
+  }
+  .confirm-circle {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: var(--teal-dark);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+  }
+  .confirm-circle .big { font-size: 22px; font-weight: 900; line-height: 1; }
+  .confirm-circle .sm  { font-size: 10px; line-height: 1.4; text-align: center; }
+  .confirm-text h4 { font-size: 14px; font-weight: 700; color: var(--teal-dark); margin-bottom: 4px; }
+  .confirm-text p  { font-size: 12.5px; color: var(--text-mid); line-height: 1.7; }
+
+  /* ── 푸터 ── */
+  .footer {
+    background: var(--teal-dark);
+    padding: 18px 44px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .footer-text {
+    color: rgba(255,255,255,.7);
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .footer-text strong { color: #fff; }
+  .footer-qs {
+    background: var(--teal-light);
+    border-radius: 6px;
+    padding: 10px 18px;
+    text-align: center;
+    color: #fff;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+  .footer-qs strong { display: block; font-size: 14px; }
+
+  @media print {
+    body { background: #fff; }
+    .page { margin: 0; border: none; box-shadow: none; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ── 헤더 ── -->
+  <div class="header">
+    <div class="header-badge">환자 안내문</div>
+    <h1>헬리코박터 파일로리<br><span>제균치료</span> 안내</h1>
+    <div class="header-sub">Helicobacter pylori Eradication Therapy Guide</div>
+  </div>
+
+  <!-- ── 본문 ── -->
+  <div class="body">
+
+    <!-- 1. 헬리코박터란? -->
+    <section>
+      <div class="section-title">
+        <div class="icon">🦠</div>
+        헬리코박터란 무엇인가요?
+      </div>
+      <div class="intro-box">
+        <strong>헬리코박터 파일로리(Helicobacter pylori)</strong>는 위 점막에 서식하는 세균으로,
+        전 세계 인구의 약 50%가 감염되어 있습니다.<br>
+        이 균은 <strong>소화성궤양(위궤양·십이지장궤양), 만성위염, 위암</strong>의 주요 원인입니다.
+        내시경 검사 또는 호기검사(숨 검사)를 통해 감염 여부를 확인할 수 있으며,
+        <strong>항생제와 위산억제제를 함께 복용하는 제균요법</strong>으로 치료합니다.
+      </div>
+
+      <div class="why-grid" style="margin-top:14px;">
+        <div class="why-card">
+          <div class="num">60<span style="font-size:16px">~</span>70<span style="font-size:14px">%</span></div>
+          <div class="unit">위궤양의 원인</div>
+          <div class="desc">헬리코박터가 위궤양의 주요 원인</div>
+        </div>
+        <div class="why-card">
+          <div class="num">90<span style="font-size:14px">%</span></div>
+          <div class="unit">십이지장궤양의 원인</div>
+          <div class="desc">십이지장궤양 환자 대부분에서 발견</div>
+        </div>
+        <div class="why-card">
+          <div class="num" style="font-size:20px;margin-bottom:4px;">재발</div>
+          <div class="unit">예방 효과</div>
+          <div class="desc">제균 성공 시 궤양 재발률 크게 감소</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. 약 복용 방법 -->
+    <section>
+      <div class="section-title">
+        <div class="icon">💊</div>
+        처방받으신 제균요법
+      </div>
+      <table class="drug-table">
+        <thead>
+          <tr>
+            <th>요법 종류</th>
+            <th>복용 약물</th>
+            <th>복용 횟수</th>
+            <th>기간</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>표준 3제요법 <span class="badge-first">1차</span></td>
+            <td>위산억제제(PPI) + 아목시실린 + 클래리스로마이신</td>
+            <td>하루 2회</td>
+            <td>7~14일</td>
+          </tr>
+          <tr>
+            <td>동시/순차치료 <span class="badge-first">1차</span></td>
+            <td>위산억제제(PPI) + 아목시실린 + 클래리스로마이신 + 메트로니다졸</td>
+            <td>하루 2회</td>
+            <td>10일</td>
+          </tr>
+          <tr>
+            <td>비스무스 4제요법</td>
+            <td>위산억제제(PPI) + 비스무스 + 테트라사이클린 + 메트로니다졸</td>
+            <td>하루 2~4회</td>
+            <td>10~14일</td>
+          </tr>
+          <tr>
+            <td>레보플록사신 3제요법</td>
+            <td>위산억제제(PPI) + 아목시실린 + 레보플록사신</td>
+            <td>하루 1~2회</td>
+            <td>10~14일</td>
+          </tr>
+        </tbody>
+      </table>
+      <p style="font-size:11.5px;color:var(--text-light);margin-top:8px;">※ 담당 의사·약사 선생님이 처방해 주신 요법을 정확히 따라 복용하세요.</p>
+    </section>
+
+    <!-- 3. 치료 일정 -->
+    <section>
+      <div class="section-title">
+        <div class="icon">📅</div>
+        치료 일정 흐름
+      </div>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-label">진단</div>
+          <div class="timeline-content">내시경 또는 호기(요소 호기)검사로 헬리코박터 감염 확인</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-label">제균치료 시작 → 7~14일</div>
+          <div class="timeline-content">처방된 항생제 + 위산억제제를 <strong>빠짐없이</strong> 복용합니다. 중간에 임의로 중단하지 마세요.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-label">치료 종료 후 2주</div>
+          <div class="timeline-content">PPI(위산억제제) 복용을 중단합니다. 이 기간 동안 PPI를 계속 드시면 이후 제균 확인 검사 결과가 부정확해질 수 있습니다.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <div class="timeline-label">제균치료 종료 후 4주 이상 경과</div>
+          <div class="timeline-content">호기검사 또는 내시경 검사로 <strong>제균 성공 여부</strong>를 반드시 확인합니다.</div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot" style="background:var(--amber);box-shadow:0 0 0 2px var(--amber);"></div>
+          <div class="timeline-label">제균 실패 시</div>
+          <div class="timeline-content">다른 항생제 조합(2차 요법)으로 재치료합니다. 담당 의사와 상담하세요.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. 주의사항 -->
+    <section>
+      <div class="section-title">
+        <div class="icon">⚠️</div>
+        복약 주의사항
+      </div>
+      <div class="caution-grid">
+        <div class="caution-card warn">
+          <div class="caution-icon">🚫</div>
+          <div>
+            <h4>절대 금주(술)!</h4>
+            <p>메트로니다졸 복용 중 음주 시 심한 구역·구토·홍조가 생길 수 있습니다.</p>
+          </div>
+        </div>
+        <div class="caution-card warn">
+          <div class="caution-icon">⛔</div>
+          <div>
+            <h4>임의 중단 금지</h4>
+            <p>항생제 내성균이 생겨 제균 실패율이 높아집니다. 증상이 나아져도 끝까지 복용하세요.</p>
+          </div>
+        </div>
+        <div class="caution-card tip">
+          <div class="caution-icon">🍽️</div>
+          <div>
+            <h4>식사와 함께 복용</h4>
+            <p>위 자극을 줄이기 위해 식사 직후 복용을 권장합니다. PPI는 식전 30분 복용이 효과적입니다.</p>
+          </div>
+        </div>
+        <div class="caution-card tip">
+          <div class="caution-icon">💬</div>
+          <div>
+            <h4>부작용 알아두기</h4>
+            <p>설사, 쓴맛, 메스꺼움은 흔한 반응입니다. 심한 발진·호흡곤란 시 즉시 병원에 연락하세요.</p>
+          </div>
+        </div>
+        <div class="caution-card tip">
+          <div class="caution-icon">💊</div>
+          <div>
+            <h4>NSAIDs(진통제) 주의</h4>
+            <p>이부프로펜 등 소염진통제는 위점막을 손상시킵니다. 복용 중이라면 담당 의사에게 알리세요.</p>
+          </div>
+        </div>
+        <div class="caution-card tip">
+          <div class="caution-icon">🚬</div>
+          <div>
+            <h4>금연 권장</h4>
+            <p>흡연은 위점막 회복을 방해하고 궤양 재발 위험을 높입니다. 금연을 강력히 권장합니다.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. 복약 체크리스트 -->
+    <section>
+      <div class="section-title">
+        <div class="icon">✅</div>
+        제균치료 복약 체크리스트
+      </div>
+      <ul class="checklist">
+        <li>처방된 모든 약을 기간 내에 빠짐없이 복용한다</li>
+        <li>매일 같은 시간에 규칙적으로 복용한다</li>
+        <li>치료 기간 동안 금주한다</li>
+        <li>NSAIDs(소염진통제) 복용 여부를 의사에게 알린다</li>
+        <li>심한 부작용 발생 시 즉시 의료진에게 연락한다</li>
+        <li>치료 종료 4주 후 제균 확인 검사를 받는다</li>
+        <li>검사 2주 전에는 PPI 복용을 중단한다</li>
+        <li>제균 실패 시 2차 요법에 대해 의사와 상담한다</li>
+      </ul>
+    </section>
+
+    <!-- 6. 제균 확인 -->
+    <section>
+      <div class="confirm-box">
+        <div class="confirm-circle">
+          <div class="big">4주</div>
+          <div class="sm">치료 종료<br>이후</div>
+        </div>
+        <div class="confirm-text">
+          <h4>🔬 제균 확인 검사를 반드시 받으세요!</h4>
+          <p>
+            치료가 끝났다고 완료가 아닙니다. <strong>호기검사(요소 호기검사)</strong> 또는 <strong>상부위장관 내시경</strong>으로
+            헬리코박터가 완전히 제거되었는지 확인해야 합니다.<br>
+            검사 <strong>2주 전부터 위산억제제(PPI)를 중단</strong>해야 정확한 결과를 얻을 수 있습니다.
+          </p>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /body -->
+
+  <!-- ── 푸터 ── -->
+  <div class="footer">
+    <div class="footer-text">
+      <strong>궁금한 점이 있으시면 언제든 문의하세요</strong><br>
+      약 복용 중 심한 이상반응(발진, 호흡곤란, 심한 복통 등)이 나타나면 즉시 의료진에게 알려주세요.
+    </div>
+    <div class="footer-qs">
+      <strong>담당 약사·의사</strong>
+      에게 문의하세요
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

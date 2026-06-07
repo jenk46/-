@@ -1,0 +1,1499 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Low FODMAP Catch Game</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Apple SD Gothic Neo", "Noto Sans KR", Arial, sans-serif;
+      background: linear-gradient(#bde9ff, #f9fff0);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #253238;
+      overflow: hidden;
+    }
+    #gameWrap {
+      width: min(980px, 96vw);
+      height: min(700px, 94vh);
+      background: #fffdf5;
+      border: 5px solid #73b65a;
+      border-radius: 24px;
+      box-shadow: 0 10px 35px rgba(0,0,0,0.18);
+      position: relative;
+      overflow: hidden;
+    }
+    #hud {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 16px;
+      background: rgba(255,255,255,0.86);
+      border-bottom: 2px solid #d8efc9;
+      backdrop-filter: blur(4px);
+    }
+    #title {
+      font-weight: 900;
+      font-size: clamp(18px, 3vw, 28px);
+      color: #2f7d32;
+    }
+    .pill {
+      background: #eef8ea;
+      border: 2px solid #b6ddaa;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    #lifeBarWrap {
+      position: absolute;
+      right: 16px;
+      top: 74px;
+      z-index: 22;
+      width: 220px;
+      background: rgba(255,255,255,0.9);
+      border: 2px solid #b6ddaa;
+      border-radius: 999px;
+      padding: 6px 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #lifeIcon {
+      font-size: 20px;
+      line-height: 1;
+    }
+    #lifeBarTrack {
+      width: 100%;
+      height: 18px;
+      background: #e3ebde;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+    #lifeBar {
+      height: 100%;
+      width: 100%;
+      background: linear-gradient(90deg, #66bb6a, #d4f16a);
+      border-radius: 999px;
+      transition: width 0.25s ease;
+    }
+
+    #gameArea {
+      position: absolute;
+      inset: 62px 0 0 0;
+      background:
+        radial-gradient(circle at 15% 18%, rgba(255,255,255,0.95) 0 22px, transparent 23px),
+        radial-gradient(circle at 18% 17%, rgba(255,255,255,0.95) 0 18px, transparent 19px),
+        radial-gradient(circle at 80% 22%, rgba(255,255,255,0.9) 0 28px, transparent 29px),
+        linear-gradient(#c8efff 0%, #e8fbff 52%, #d9f6c7 52%, #b8e39f 100%);
+      overflow: hidden;
+    }
+    #ground {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 38px;
+      background: linear-gradient(#7cc15f, #5aa246);
+      border-top: 3px solid #4c963b;
+      z-index: 6;
+    }
+    #player {
+      position: absolute;
+      bottom: 28px;
+      width: 112px;
+      height: 126px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      transition: filter 0.15s;
+    }
+    #head {
+      position: absolute;
+      top: 0;
+      left: 31px;
+      width: 50px;
+      height: 50px;
+      background: #ffd9a6;
+      border: 3px solid #6f4b36;
+      border-radius: 50%;
+    }
+    #hair {
+      position: absolute;
+      top: -4px;
+      left: 29px;
+      width: 54px;
+      height: 30px;
+      background: #4b2d20;
+      border-radius: 50% 50% 35% 35%;
+      z-index: 2;
+    }
+    #face {
+      position: absolute;
+      top: 19px;
+      left: 40px;
+      font-size: 18px;
+      z-index: 3;
+    }
+    #body {
+      position: absolute;
+      top: 51px;
+      left: 29px;
+      width: 54px;
+      height: 52px;
+      background: #ffb74d;
+      border: 3px solid #6f4b36;
+      border-radius: 18px 18px 14px 14px;
+    }
+    #legs {
+      position: absolute;
+      top: 99px;
+      left: 34px;
+      width: 44px;
+      height: 24px;
+      border-left: 10px solid #375a9e;
+      border-right: 10px solid #375a9e;
+    }
+    #basket {
+      position: absolute;
+      top: 42px;
+      left: -4px;
+      width: 120px;
+      height: 48px;
+      border: 5px solid #8d5a2b;
+      border-top: none;
+      border-radius: 0 0 38px 38px;
+      background: repeating-linear-gradient(45deg, #c98944, #c98944 8px, #dba45e 8px, #dba45e 16px);
+      z-index: 4;
+    }
+    #basket::before {
+      content: "";
+      position: absolute;
+      left: 20px;
+      top: -26px;
+      width: 72px;
+      height: 38px;
+      border: 5px solid #8d5a2b;
+      border-bottom: none;
+      border-radius: 50% 50% 0 0;
+    }
+
+    .food {
+      position: absolute;
+      width: 94px;
+      height: 94px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 8;
+      user-select: none;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 3px rgba(0,0,0,0.16));
+    }
+    .food .emoji {
+      font-size: 52px;
+      line-height: 1;
+    }
+    .food .name {
+      margin-top: 4px;
+      max-width: 118px;
+      background: rgba(255,255,255,0.94);
+      border-radius: 8px;
+      padding: 3px 7px;
+      font-size: 15px;
+      font-weight: 900;
+      text-align: center;
+      border: 1px solid rgba(0,0,0,0.12);
+      color: #111;
+      white-space: nowrap;
+    }
+
+    .popText {
+      position: absolute;
+      font-weight: 900;
+      font-size: 22px;
+      z-index: 30;
+      animation: floatUp 850ms ease-out forwards;
+      pointer-events: none;
+      text-shadow: 0 2px 0 #fff;
+    }
+    @keyframes floatUp {
+      from { opacity: 1; transform: translateY(0) scale(1); }
+      to { opacity: 0; transform: translateY(-45px) scale(1.2); }
+    }
+    .poop {
+      position: absolute;
+      font-size: 34px;
+      z-index: 12;
+      animation: poopFall 900ms ease-in forwards;
+      pointer-events: none;
+    }
+    @keyframes poopFall {
+      0% { opacity: 0; transform: translateY(-6px) scale(0.4) rotate(-10deg); }
+      20% { opacity: 1; transform: translateY(0) scale(1.1) rotate(8deg); }
+      100% { opacity: 1; transform: translateY(58px) scale(1) rotate(0); }
+    }
+
+    #toast {
+      position: absolute;
+      left: 50%;
+      top: 78px;
+      transform: translateX(-50%);
+      z-index: 40;
+      background: rgba(34,34,34,0.82);
+      color: white;
+      padding: 10px 16px;
+      border-radius: 999px;
+      font-weight: 900;
+      opacity: 0;
+      transition: opacity 0.2s;
+      text-align: center;
+      max-width: 90%;
+    }
+
+    #startScreen, #gameOver {
+      position: absolute;
+      inset: 62px 0 0 0;
+      z-index: 50;
+      background: rgba(255,253,245,0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 22px;
+    }
+    #gameOver { display: none; }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 6vw, 52px);
+      color: #2f7d32;
+    }
+    p {
+      margin: 7px 0;
+      line-height: 1.55;
+      font-size: clamp(15px, 2.4vw, 19px);
+    }
+    .btn {
+      margin-top: 18px;
+      border: 0;
+      background: #43a047;
+      color: white;
+      font-size: 20px;
+      font-weight: 900;
+      padding: 13px 26px;
+      border-radius: 999px;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #2e7d32;
+    }
+    .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #2e7d32; }
+
+    #toiletExplosion {
+      position: relative;
+      width: 250px;
+      height: 150px;
+      margin: 6px 0 10px;
+    }
+    #toiletMain {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 78px;
+      animation: toiletShake 0.6s infinite alternate;
+      z-index: 2;
+    }
+    .boom {
+      position: absolute;
+      font-size: 44px;
+      animation: boomPop 1s infinite ease-in-out;
+    }
+    .boom1 { left: 20px; top: 18px; animation-delay: 0s; }
+    .boom2 { right: 20px; top: 12px; animation-delay: 0.2s; }
+    .boom3 { left: 44px; bottom: 10px; animation-delay: 0.4s; }
+    .boom4 { right: 40px; bottom: 12px; animation-delay: 0.1s; }
+    #kaboomText {
+      font-size: 22px;
+      font-weight: 900;
+      color: #d84315;
+      margin-bottom: 8px;
+      animation: kaboomBlink 0.7s infinite alternate;
+    }
+    @keyframes toiletShake {
+      from { transform: translate(-50%, -50%) rotate(-8deg) scale(1); }
+      to { transform: translate(-50%, -50%) rotate(8deg) scale(1.06); }
+    }
+    @keyframes boomPop {
+      0% { transform: scale(0.8) rotate(-10deg); opacity: 0.7; }
+      50% { transform: scale(1.25) rotate(8deg); opacity: 1; }
+      100% { transform: scale(0.9) rotate(-4deg); opacity: 0.75; }
+    }
+    @keyframes kaboomBlink {
+      from { transform: scale(1); }
+      to { transform: scale(1.08); }
+    }
+
+
+    #startCard {
+      max-width: 720px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,255,241,0.97));
+      border: 4px solid #b8e39f;
+      border-radius: 26px;
+      padding: 26px 24px 28px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    }
+    #startBadge {
+      display: inline-block;
+      background: #ffef9f;
+      color: #7a5900;
+      border: 2px solid #f0c95a;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-weight: 900;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+    #startCard .lead {
+      font-size: clamp(16px, 2.8vw, 22px);
+      font-weight: 700;
+      color: #30463c;
+      margin-bottom: 12px;
+    }
+    #startVisual {
+      margin: 14px auto;
+      font-size: clamp(28px, 6vw, 46px);
+      line-height: 1.3;
+      background: rgba(255,255,255,0.75);
+      border: 2px dashed #c8e6c9;
+      border-radius: 18px;
+      padding: 12px 14px;
+      max-width: 580px;
+    }
+
+    #gameOver.flash {
+      animation: endFlash 0.7s ease-out 1;
+    }
+    @keyframes endFlash {
+      0% { background: rgba(255,253,245,0.2); }
+      25% { background: rgba(255,130,100,0.85); }
+      55% { background: rgba(255,253,245,0.98); }
+      100% { background: rgba(255,253,245,0.95); }
+    }
+
+    #toiletExplosion {
+      position: relative;
+      width: 320px;
+      height: 210px;
+      margin: 6px 0 10px;
+    }
+    #toiletMain {
+      position: absolute;
+      left: 50%;
+      top: 53%;
+      transform: translate(-50%, -50%);
+      font-size: 102px;
+      animation: toiletShake 0.18s infinite alternate;
+      z-index: 5;
+      filter: drop-shadow(0 8px 8px rgba(0,0,0,0.22));
+    }
+    .boom {
+      position: absolute;
+      font-size: 54px;
+      animation: boomPop 0.9s infinite ease-in-out;
+      z-index: 6;
+    }
+    .boom1 { left: 16px; top: 16px; animation-delay: 0s; }
+    .boom2 { right: 10px; top: 18px; animation-delay: 0.18s; }
+    .boom3 { left: 30px; bottom: 18px; animation-delay: 0.36s; }
+    .boom4 { right: 26px; bottom: 22px; animation-delay: 0.12s; }
+    .smoke {
+      position: absolute;
+      font-size: 34px;
+      z-index: 4;
+      opacity: 0.85;
+      animation: smokeFloat 1.5s infinite ease-in-out;
+    }
+    .sm1 { left: 86px; top: 8px; animation-delay: 0s; }
+    .sm2 { right: 78px; top: 0px; animation-delay: 0.45s; }
+    .sm3 { left: 128px; top: 28px; animation-delay: 0.75s; }
+    .ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 72px;
+      height: 72px;
+      border: 6px solid rgba(255,138,101,0.75);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.3);
+      animation: ringBlast 1.1s infinite ease-out;
+      z-index: 3;
+    }
+    .ring2 {
+      animation-delay: 0.4s;
+      border-color: rgba(255,214,102,0.9);
+    }
+    #kaboomText {
+      font-size: 24px;
+      font-weight: 900;
+      color: #d84315;
+      margin-bottom: 8px;
+      animation: kaboomBlink 0.5s infinite alternate;
+      text-shadow: 0 2px 0 #fff;
+    }
+    @keyframes toiletShake {
+      from { transform: translate(-50%, -50%) rotate(-9deg) scale(1); }
+      to { transform: translate(-50%, -50%) rotate(9deg) scale(1.1); }
+    }
+    @keyframes boomPop {
+      0% { transform: scale(0.85) rotate(-12deg); opacity: 0.75; }
+      50% { transform: scale(1.45) rotate(10deg); opacity: 1; }
+      100% { transform: scale(0.92) rotate(-4deg); opacity: 0.82; }
+    }
+    @keyframes smokeFloat {
+      0% { transform: translateY(8px) scale(0.9); opacity: 0.35; }
+      50% { transform: translateY(-10px) scale(1.18); opacity: 0.95; }
+      100% { transform: translateY(-20px) scale(1.35); opacity: 0.15; }
+    }
+    @keyframes ringBlast {
+      0% { transform: translate(-50%, -50%) scale(0.15); opacity: 0.95; }
+      100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+    }
+
+
+    .resultScene {
+      display: none;
+    }
+    #happyGutPhoto {
+      position: relative;
+      width: 300px;
+      height: 235px;
+      margin: 4px auto 12px;
+      background: radial-gradient(circle at 50% 42%, #fff7c2 0 34%, #ffe082 35% 58%, #ffcc80 59% 100%);
+      border: 8px solid #fff;
+      border-radius: 32px;
+      box-shadow: 0 12px 26px rgba(0,0,0,0.18), inset 0 0 0 4px rgba(255,183,77,0.55);
+      overflow: hidden;
+      animation: photoBounce 0.8s ease-out 1;
+    }
+    #gutChar {
+      position: absolute;
+      left: 50%;
+      top: 45%;
+      width: 170px;
+      height: 120px;
+      transform: translate(-50%, -50%);
+      background: #ff9f8f;
+      border: 6px solid #b8574f;
+      border-radius: 48% 52% 54% 46% / 45% 44% 56% 55%;
+      box-shadow:
+        inset 18px 0 0 rgba(255,255,255,0.22),
+        0 10px 10px rgba(0,0,0,0.16);
+      animation: happyGutWiggle 0.9s infinite alternate ease-in-out;
+    }
+    #gutChar::before {
+      content: "";
+      position: absolute;
+      left: 28px;
+      top: 23px;
+      width: 112px;
+      height: 72px;
+      border: 12px solid #ffd1c8;
+      border-left-color: transparent;
+      border-bottom-color: transparent;
+      border-radius: 50%;
+      transform: rotate(18deg);
+      opacity: 0.85;
+    }
+    #gutChar::after {
+      content: "";
+      position: absolute;
+      right: -18px;
+      top: 42px;
+      width: 46px;
+      height: 34px;
+      background: #ff9f8f;
+      border: 6px solid #b8574f;
+      border-left: 0;
+      border-radius: 0 28px 28px 0;
+    }
+    #gutEyes {
+      position: absolute;
+      left: 50%;
+      top: 31px;
+      transform: translateX(-50%);
+      z-index: 2;
+      font-size: 28px;
+      font-weight: 900;
+      color: #5d2a2a;
+      letter-spacing: 14px;
+      white-space: nowrap;
+    }
+    #gutMouth {
+      position: absolute;
+      left: 50%;
+      top: 64px;
+      transform: translateX(-50%);
+      z-index: 2;
+      font-size: 34px;
+      font-weight: 900;
+      color: #5d2a2a;
+    }
+    #gutCaption {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      width: 86%;
+      background: rgba(255,255,255,0.9);
+      border: 2px solid #ffb74d;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 18px;
+      font-weight: 900;
+      color: #6d3c00;
+    }
+    .sparkle {
+      position: absolute;
+      font-size: 30px;
+      animation: sparkleSpin 1.1s infinite ease-in-out;
+    }
+    .s1 { left: 28px; top: 24px; animation-delay: 0s; }
+    .s2 { right: 30px; top: 34px; animation-delay: 0.25s; }
+    .s3 { right: 55px; bottom: 58px; animation-delay: 0.5s; }
+    @keyframes photoBounce {
+      0% { transform: scale(0.45) rotate(-8deg); opacity: 0; }
+      70% { transform: scale(1.08) rotate(3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    @keyframes happyGutWiggle {
+      from { transform: translate(-50%, -50%) rotate(-5deg) scale(1); }
+      to { transform: translate(-50%, -50%) rotate(5deg) scale(1.05); }
+    }
+    @keyframes sparkleSpin {
+      0% { transform: scale(0.8) rotate(0deg); opacity: 0.45; }
+      50% { transform: scale(1.25) rotate(18deg); opacity: 1; }
+      100% { transform: scale(0.9) rotate(0deg); opacity: 0.55; }
+    }
+
+    #mobileControls {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 52px;
+      z-index: 25;
+      display: none;
+      justify-content: space-between;
+      padding: 0 18px;
+      pointer-events: none;
+    }
+    .control {
+      pointer-events: auto;
+      width: 78px;
+      height: 78px;
+      border-radius: 50%;
+      border: 0;
+      background: rgba(255,255,255,0.75);
+      font-size: 34px;
+      font-weight: 900;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    @media (max-width: 740px) {
+      #hud { grid-template-columns: 1fr 1fr; font-size: 13px; }
+      #title { grid-column: 1 / -1; text-align: center; }
+      #gameArea, #startScreen, #gameOver { inset: 112px 0 0 0; }
+      #lifeBarWrap { top: 124px; right: 10px; width: 180px; }
+  
+    #startCard {
+      max-width: 720px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,255,241,0.97));
+      border: 4px solid #b8e39f;
+      border-radius: 26px;
+      padding: 26px 24px 28px;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    }
+    #startBadge {
+      display: inline-block;
+      background: #ffef9f;
+      color: #7a5900;
+      border: 2px solid #f0c95a;
+      border-radius: 999px;
+      padding: 8px 16px;
+      font-weight: 900;
+      margin-bottom: 10px;
+      letter-spacing: 0.5px;
+    }
+    #startCard .lead {
+      font-size: clamp(16px, 2.8vw, 22px);
+      font-weight: 700;
+      color: #30463c;
+      margin-bottom: 12px;
+    }
+    #startVisual {
+      margin: 14px auto;
+      font-size: clamp(28px, 6vw, 46px);
+      line-height: 1.3;
+      background: rgba(255,255,255,0.75);
+      border: 2px dashed #c8e6c9;
+      border-radius: 18px;
+      padding: 12px 14px;
+      max-width: 580px;
+    }
+
+    #gameOver.flash {
+      animation: endFlash 0.7s ease-out 1;
+    }
+    @keyframes endFlash {
+      0% { background: rgba(255,253,245,0.2); }
+      25% { background: rgba(255,130,100,0.85); }
+      55% { background: rgba(255,253,245,0.98); }
+      100% { background: rgba(255,253,245,0.95); }
+    }
+
+    #toiletExplosion {
+      position: relative;
+      width: 320px;
+      height: 210px;
+      margin: 6px 0 10px;
+    }
+    #toiletMain {
+      position: absolute;
+      left: 50%;
+      top: 53%;
+      transform: translate(-50%, -50%);
+      font-size: 102px;
+      animation: toiletShake 0.18s infinite alternate;
+      z-index: 5;
+      filter: drop-shadow(0 8px 8px rgba(0,0,0,0.22));
+    }
+    .boom {
+      position: absolute;
+      font-size: 54px;
+      animation: boomPop 0.9s infinite ease-in-out;
+      z-index: 6;
+    }
+    .boom1 { left: 16px; top: 16px; animation-delay: 0s; }
+    .boom2 { right: 10px; top: 18px; animation-delay: 0.18s; }
+    .boom3 { left: 30px; bottom: 18px; animation-delay: 0.36s; }
+    .boom4 { right: 26px; bottom: 22px; animation-delay: 0.12s; }
+    .smoke {
+      position: absolute;
+      font-size: 34px;
+      z-index: 4;
+      opacity: 0.85;
+      animation: smokeFloat 1.5s infinite ease-in-out;
+    }
+    .sm1 { left: 86px; top: 8px; animation-delay: 0s; }
+    .sm2 { right: 78px; top: 0px; animation-delay: 0.45s; }
+    .sm3 { left: 128px; top: 28px; animation-delay: 0.75s; }
+    .ring {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 72px;
+      height: 72px;
+      border: 6px solid rgba(255,138,101,0.75);
+      border-radius: 50%;
+      transform: translate(-50%, -50%) scale(0.3);
+      animation: ringBlast 1.1s infinite ease-out;
+      z-index: 3;
+    }
+    .ring2 {
+      animation-delay: 0.4s;
+      border-color: rgba(255,214,102,0.9);
+    }
+    #kaboomText {
+      font-size: 24px;
+      font-weight: 900;
+      color: #d84315;
+      margin-bottom: 8px;
+      animation: kaboomBlink 0.5s infinite alternate;
+      text-shadow: 0 2px 0 #fff;
+    }
+    @keyframes toiletShake {
+      from { transform: translate(-50%, -50%) rotate(-9deg) scale(1); }
+      to { transform: translate(-50%, -50%) rotate(9deg) scale(1.1); }
+    }
+    @keyframes boomPop {
+      0% { transform: scale(0.85) rotate(-12deg); opacity: 0.75; }
+      50% { transform: scale(1.45) rotate(10deg); opacity: 1; }
+      100% { transform: scale(0.92) rotate(-4deg); opacity: 0.82; }
+    }
+    @keyframes smokeFloat {
+      0% { transform: translateY(8px) scale(0.9); opacity: 0.35; }
+      50% { transform: translateY(-10px) scale(1.18); opacity: 0.95; }
+      100% { transform: translateY(-20px) scale(1.35); opacity: 0.15; }
+    }
+    @keyframes ringBlast {
+      0% { transform: translate(-50%, -50%) scale(0.15); opacity: 0.95; }
+      100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+    }
+
+
+    .resultScene {
+      display: none;
+    }
+    #happyGutPhoto {
+      position: relative;
+      width: 300px;
+      height: 235px;
+      margin: 4px auto 12px;
+      background: radial-gradient(circle at 50% 42%, #fff7c2 0 34%, #ffe082 35% 58%, #ffcc80 59% 100%);
+      border: 8px solid #fff;
+      border-radius: 32px;
+      box-shadow: 0 12px 26px rgba(0,0,0,0.18), inset 0 0 0 4px rgba(255,183,77,0.55);
+      overflow: hidden;
+      animation: photoBounce 0.8s ease-out 1;
+    }
+    #gutChar {
+      position: absolute;
+      left: 50%;
+      top: 45%;
+      width: 170px;
+      height: 120px;
+      transform: translate(-50%, -50%);
+      background: #ff9f8f;
+      border: 6px solid #b8574f;
+      border-radius: 48% 52% 54% 46% / 45% 44% 56% 55%;
+      box-shadow:
+        inset 18px 0 0 rgba(255,255,255,0.22),
+        0 10px 10px rgba(0,0,0,0.16);
+      animation: happyGutWiggle 0.9s infinite alternate ease-in-out;
+    }
+    #gutChar::before {
+      content: "";
+      position: absolute;
+      left: 28px;
+      top: 23px;
+      width: 112px;
+      height: 72px;
+      border: 12px solid #ffd1c8;
+      border-left-color: transparent;
+      border-bottom-color: transparent;
+      border-radius: 50%;
+      transform: rotate(18deg);
+      opacity: 0.85;
+    }
+    #gutChar::after {
+      content: "";
+      position: absolute;
+      right: -18px;
+      top: 42px;
+      width: 46px;
+      height: 34px;
+      background: #ff9f8f;
+      border: 6px solid #b8574f;
+      border-left: 0;
+      border-radius: 0 28px 28px 0;
+    }
+    #gutEyes {
+      position: absolute;
+      left: 50%;
+      top: 31px;
+      transform: translateX(-50%);
+      z-index: 2;
+      font-size: 28px;
+      font-weight: 900;
+      color: #5d2a2a;
+      letter-spacing: 14px;
+      white-space: nowrap;
+    }
+    #gutMouth {
+      position: absolute;
+      left: 50%;
+      top: 64px;
+      transform: translateX(-50%);
+      z-index: 2;
+      font-size: 34px;
+      font-weight: 900;
+      color: #5d2a2a;
+    }
+    #gutCaption {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      width: 86%;
+      background: rgba(255,255,255,0.9);
+      border: 2px solid #ffb74d;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 18px;
+      font-weight: 900;
+      color: #6d3c00;
+    }
+    .sparkle {
+      position: absolute;
+      font-size: 30px;
+      animation: sparkleSpin 1.1s infinite ease-in-out;
+    }
+    .s1 { left: 28px; top: 24px; animation-delay: 0s; }
+    .s2 { right: 30px; top: 34px; animation-delay: 0.25s; }
+    .s3 { right: 55px; bottom: 58px; animation-delay: 0.5s; }
+    @keyframes photoBounce {
+      0% { transform: scale(0.45) rotate(-8deg); opacity: 0; }
+      70% { transform: scale(1.08) rotate(3deg); opacity: 1; }
+      100% { transform: scale(1) rotate(0); opacity: 1; }
+    }
+    @keyframes happyGutWiggle {
+      from { transform: translate(-50%, -50%) rotate(-5deg) scale(1); }
+      to { transform: translate(-50%, -50%) rotate(5deg) scale(1.05); }
+    }
+    @keyframes sparkleSpin {
+      0% { transform: scale(0.8) rotate(0deg); opacity: 0.45; }
+      50% { transform: scale(1.25) rotate(18deg); opacity: 1; }
+      100% { transform: scale(0.9) rotate(0deg); opacity: 0.55; }
+    }
+
+    #mobileControls { display: flex; }
+      .food .emoji { font-size: 44px; }
+      .food .name { font-size: 13px; max-width: 104px; }
+    }
+  
+    /* More realistic smiling gut success illustration */
+    #happyGutPhoto {
+      position: relative;
+      width: 300px;
+      height: 235px;
+      margin: 4px auto 12px;
+      background: radial-gradient(circle at 50% 42%, #fff7c2 0 34%, #ffe082 35% 58%, #ffcc80 59% 100%);
+      border: 8px solid #fff;
+      border-radius: 32px;
+      box-shadow: 0 12px 26px rgba(0,0,0,0.18), inset 0 0 0 4px rgba(255,183,77,0.55);
+      overflow: hidden;
+      animation: photoBounce 0.8s ease-out 1;
+    }
+    #gutSvg {
+      position: absolute;
+      left: 50%;
+      top: 44%;
+      width: 242px;
+      height: 170px;
+      transform: translate(-50%, -50%);
+      filter: drop-shadow(0 6px 6px rgba(0,0,0,0.20));
+      animation: happyGutWiggle 0.95s infinite alternate ease-in-out;
+    }
+    .stomach-body {
+      fill: url(#gutFill);
+      stroke: #b8574f;
+      stroke-width: 5.5;
+      stroke-linejoin: round;
+    }
+    .colon-outline {
+      fill: none;
+      stroke: #b8574f;
+      stroke-width: 16;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .small-intestine {
+      fill: none;
+      stroke: #f6b3aa;
+      stroke-width: 10.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+    .gut-highlight {
+      fill: none;
+      stroke: url(#gutSoft);
+      stroke-width: 9;
+      stroke-linecap: round;
+    }
+    .eye {
+      fill: #5d2a2a;
+    }
+    .smile {
+      fill: none;
+      stroke: #5d2a2a;
+      stroke-width: 4.5;
+      stroke-linecap: round;
+    }
+    #gutCaption {
+      position: absolute;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      width: 86%;
+      background: rgba(255,255,255,0.9);
+      border: 2px solid #ffb74d;
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 18px;
+      font-weight: 900;
+      color: #6d3c00;
+    }
+    @media (max-width: 740px) {
+      #happyGutPhoto { width: 250px; height: 210px; }
+      #gutSvg { width: 205px; height: 145px; }
+      #gutCaption { font-size: 16px; }
+    }
+
+  </style>
+</head>
+<body>
+  <div id="gameWrap">
+    <div id="hud">
+      <div id="title">🍽️ Low FODMAP 캐치 게임</div>
+      <div class="pill">점수 <span id="score">0</span></div>
+      <div class="pill">시간 <span id="time">120</span>s</div>
+    </div>
+
+    <div id="lifeBarWrap">
+      <div id="lifeIcon">❤️</div>
+      <div id="lifeBarTrack"><div id="lifeBar"></div></div>
+    </div>
+
+    <div id="gameArea">
+      <div id="toast"></div>
+      <div id="player">
+        <div id="hair"></div>
+        <div id="head"></div>
+        <div id="face">•‿•</div>
+        <div id="body"></div>
+        <div id="legs"></div>
+        <div id="basket"></div>
+      </div>
+      <div id="ground"></div>
+      <div id="mobileControls">
+        <button class="control" id="leftBtn">◀</button>
+        <button class="control" id="rightBtn">▶</button>
+      </div>
+    </div>
+
+    <div id="startScreen">
+      <div id="startCard">
+        <div id="startBadge">🚨 IBS FOOD MISSION 🚨</div>
+        <h1>장 트러블을 피해라!</h1>
+        <p class="lead">하늘에서 쏟아지는 음식들 중에서 <b>Low FODMAP 음식만</b> 재빨리 골라 담아 보세요.</p>
+        <div id="startVisual">🍌 🥕 🍚 🥛 🧅 🍞 🍉 💩</div>
+        <p><b>규칙</b> : 맞는 음식 1개 = <b>1점</b> / 제한 음식 = <b>생명 감소</b></p>
+        <p><b>미션</b> : 제한 시간 120초 안에 <b>30점 이상</b> 달성하기!</p>
+        <p><b>조작</b> : 키보드 ← → / A D / 모바일 버튼</p>
+        <button class="btn" id="startBtn">도전 시작!</button>
+      </div>
+    </div>
+
+    <div id="gameOver">
+      <h1 id="resultTitle">GAME OVER!</h1>
+
+      <div id="failScene" class="resultScene">
+        <div id="toiletExplosion">
+          <div class="ring"></div>
+          <div class="ring ring2"></div>
+          <div class="smoke sm1">💨</div>
+          <div class="smoke sm2">💨</div>
+          <div class="smoke sm3">💨</div>
+          <div class="boom boom1">💥</div>
+          <div class="boom boom2">💥</div>
+          <div id="toiletMain">🚽</div>
+          <div class="boom boom3">💥</div>
+          <div class="boom boom4">💥</div>
+        </div>
+        <div id="kaboomText">💥 변기 대폭발!!! 💥</div>
+      </div>
+
+      <div id="successScene" class="resultScene">
+        <div id="happyGutPhoto">
+          <div class="sparkle s1">✨</div>
+          <div class="sparkle s2">✨</div>
+          <div class="sparkle s3">✨</div>
+
+          <svg id="gutSvg" viewBox="0 0 320 220" aria-label="smiling gut illustration" role="img">
+            <defs>
+              <linearGradient id="gutFill" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#ffb4ab"/>
+                <stop offset="100%" stop-color="#f48b82"/>
+              </linearGradient>
+              <linearGradient id="gutSoft" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ffd9d3" stop-opacity="0.95"/>
+                <stop offset="100%" stop-color="#ffc3b8" stop-opacity="0.15"/>
+              </linearGradient>
+            </defs>
+
+            <path class="stomach-body"
+              d="M92 36
+                 C86 52, 90 68, 102 80
+                 C110 88, 114 97, 112 110
+                 C110 127, 120 142, 139 145
+                 C156 148, 170 140, 178 124
+                 C188 105, 190 87, 183 68
+                 C177 52, 168 43, 153 39
+                 C139 35, 129 29, 124 20
+                 C116 8, 98 14, 96 29
+                 C95 32, 94 34, 92 36 Z" />
+
+            <path class="colon-outline"
+              d="M86 78
+                 C64 80, 50 97, 50 116
+                 L50 145
+                 C50 166, 67 181, 86 181
+                 L232 181
+                 C251 181, 268 166, 268 145
+                 L268 116
+                 C268 97, 254 80, 232 78
+                 L198 78
+                 C188 78, 181 84, 181 93
+                 L181 106
+                 C181 114, 174 120, 166 120
+                 L152 120
+                 C144 120, 137 114, 137 106
+                 L137 93
+                 C137 84, 130 78, 120 78
+                 Z" />
+
+            <path class="small-intestine"
+              d="M108 115
+                 C127 100, 145 101, 160 113
+                 C174 124, 191 124, 207 112
+                 C218 103, 232 102, 243 110
+                 C252 117, 252 132, 242 139
+                 C230 148, 214 147, 201 138
+                 C188 129, 173 129, 160 139
+                 C146 149, 128 151, 114 142
+                 C102 134, 101 121, 108 115
+                 M115 149
+                 C126 158, 144 160, 157 151
+                 C170 142, 185 142, 198 151
+                 C212 161, 228 158, 239 149" />
+
+            <path class="gut-highlight"
+              d="M78 87
+                 C72 98, 72 108, 72 120
+                 L72 143
+                 C72 154, 79 163, 89 166" />
+
+            <circle class="eye" cx="132" cy="116" r="4.2"/>
+            <circle class="eye" cx="188" cy="116" r="4.2"/>
+            <path class="smile" d="M140 136 C149 147, 171 147, 180 136" />
+          </svg>
+
+          <div id="gutCaption">장 건강 미션 성공!</div>
+        </div>
+      </div>
+
+      <p id="finalScore"></p>
+      <p id="finalMsg"></p>
+      <button class="btn" id="restartBtn">다시 하기</button>
+    </div>
+  </div>
+
+  <script>
+    const gameArea = document.getElementById("gameArea");
+    const player = document.getElementById("player");
+    const scoreEl = document.getElementById("score");
+    const lifeBar = document.getElementById("lifeBar");
+    const timeEl = document.getElementById("time");
+    const toast = document.getElementById("toast");
+    const startScreen = document.getElementById("startScreen");
+    const gameOver = document.getElementById("gameOver");
+    const finalScore = document.getElementById("finalScore");
+    const finalMsg = document.getElementById("finalMsg");
+    const resultTitle = document.getElementById("resultTitle");
+    const failScene = document.getElementById("failScene");
+    const successScene = document.getElementById("successScene");
+
+    const goodFoods = [
+      { name: "Banana", icon: "🍌" },
+      { name: "Blueberry", icon: "🫐" },
+      { name: "Boysenberry", icon: "🫐" },
+      { name: "Cantaloupe", icon: "🍈" },
+      { name: "Cranberry", icon: "🫐" },
+      { name: "Durian", icon: "🟡" },
+      { name: "Grape", icon: "🍇" },
+      { name: "Grapefruit", icon: "🍊" },
+      { name: "Honeydew", icon: "🍈" },
+      { name: "Kiwi", icon: "🥝" },
+      { name: "Lemon", icon: "🍋" },
+      { name: "Lime", icon: "🍋" },
+      { name: "Mandarin", icon: "🍊" },
+      { name: "Orange", icon: "🍊" },
+      { name: "Passionfruit", icon: "🟣" },
+      { name: "Papaya", icon: "🧡" },
+      { name: "Raspberry", icon: "🍓" },
+      { name: "Rhubarb", icon: "🌿" },
+      { name: "Rockmelon", icon: "🍈" },
+      { name: "Strawberry", icon: "🍓" },
+      { name: "Alfalfa", icon: "🥬" },
+      { name: "Bamboo shoots", icon: "🎋" },
+      { name: "Bok choy", icon: "🥬" },
+      { name: "Carrot", icon: "🥕" },
+      { name: "Celery", icon: "🥬" },
+      { name: "Choko", icon: "🥒" },
+      { name: "Choy sum", icon: "🥬" },
+      { name: "Endive", icon: "🥬" },
+      { name: "Ginger", icon: "🫚" },
+      { name: "Green beans", icon: "🫛" },
+      { name: "Lettuce", icon: "🥬" },
+      { name: "Olives", icon: "🫒" },
+      { name: "Parsnip", icon: "🥕" },
+      { name: "Potato", icon: "🥔" },
+      { name: "Pumpkin", icon: "🎃" },
+      { name: "Red capsicum", icon: "🫑" },
+      { name: "Spinach", icon: "🥬" },
+      { name: "Sweet potato", icon: "🍠" },
+      { name: "Taro", icon: "🥔" },
+      { name: "Tomato", icon: "🍅" },
+      { name: "Turnip", icon: "🥔" },
+      { name: "Yam", icon: "🍠" },
+      { name: "Zucchini", icon: "🥒" },
+      { name: "Basil", icon: "🌿" },
+      { name: "Mint", icon: "🌿" },
+      { name: "Parsley", icon: "🌿" },
+      { name: "Rosemary", icon: "🌿" },
+      { name: "Thyme", icon: "🌿" },
+      { name: "Gluten-free bread", icon: "🍞" },
+      { name: "Spelt bread", icon: "🍞" },
+      { name: "Rice", icon: "🍚" },
+      { name: "Oats", icon: "🥣" },
+      { name: "Polenta", icon: "🥣" },
+      { name: "Arrowroot", icon: "🥣" },
+      { name: "Millet", icon: "🌾" },
+      { name: "Psyllium", icon: "🥣" },
+      { name: "Quinoa", icon: "🥣" },
+      { name: "Sorghum", icon: "🌾" },
+      { name: "Tapioca", icon: "🧋" },
+      { name: "Lactose-free milk", icon: "🥛" },
+      { name: "Oat milk", icon: "🥛" },
+      { name: "Rice milk", icon: "🥛" },
+      { name: "Soy milk", icon: "🥛" },
+      { name: "Hard cheese", icon: "🧀" },
+      { name: "Brie", icon: "🧀" },
+      { name: "Camembert", icon: "🧀" },
+      { name: "Lactose-free yogurt", icon: "🍶" },
+      { name: "Gelati", icon: "🍨" },
+      { name: "Sorbet", icon: "🍧" },
+      { name: "Olive oil", icon: "🫒" },
+      { name: "Tofu", icon: "⬜" },
+      { name: "Sugar", icon: "🍬" },
+      { name: "Glucose", icon: "🍬" },
+      { name: "Golden syrup", icon: "🍯" },
+      { name: "Maple syrup", icon: "🍁" },
+      { name: "Molasses", icon: "🍯" },
+      { name: "Treacle", icon: "🍯" }
+    ];
+
+    const badFoods = [
+      { name: "Apple", icon: "🍎" },
+      { name: "Mango", icon: "🥭" },
+      { name: "Nashi pear", icon: "🍐" },
+      { name: "Pear", icon: "🍐" },
+      { name: "Tinned fruit", icon: "🥫" },
+      { name: "Watermelon", icon: "🍉" },
+      { name: "Fructose", icon: "🍬" },
+      { name: "HF corn syrup", icon: "🍬" },
+      { name: "Fruit juice", icon: "🧃" },
+      { name: "Dried fruit", icon: "🍇" },
+      { name: "Honey", icon: "🍯" },
+      { name: "Milk", icon: "🥛" },
+      { name: "Custard", icon: "🍮" },
+      { name: "Ice cream", icon: "🍨" },
+      { name: "Yogurt", icon: "🍶" },
+      { name: "Cottage cheese", icon: "🧀" },
+      { name: "Cream cheese", icon: "🧀" },
+      { name: "Mascarpone", icon: "🧀" },
+      { name: "Ricotta", icon: "🧀" },
+      { name: "Artichoke", icon: "🥬" },
+      { name: "Asparagus", icon: "🥬" },
+      { name: "Beetroot", icon: "🟣" },
+      { name: "Broccoli", icon: "🥦" },
+      { name: "Brussels sprouts", icon: "🥬" },
+      { name: "Cabbage", icon: "🥬" },
+      { name: "Eggplant", icon: "🍆" },
+      { name: "Fennel", icon: "🌿" },
+      { name: "Garlic", icon: "🧄" },
+      { name: "Leek", icon: "🥬" },
+      { name: "Okra", icon: "🥬" },
+      { name: "Onion", icon: "🧅" },
+      { name: "Shallots", icon: "🧅" },
+      { name: "Spring onion", icon: "🧅" },
+      { name: "Wheat bread", icon: "🍞" },
+      { name: "Crackers", icon: "🍘" },
+      { name: "Cookies", icon: "🍪" },
+      { name: "Couscous", icon: "🥣" },
+      { name: "Pasta", icon: "🍝" },
+      { name: "Custard apple", icon: "🍏" },
+      { name: "Persimmon", icon: "🟠" },
+      { name: "Chicory", icon: "🌿" },
+      { name: "Dandelion", icon: "🌼" },
+      { name: "Inulin", icon: "🍬" },
+      { name: "Pistachio", icon: "🥜" },
+      { name: "Baked beans", icon: "🫘" },
+      { name: "Chickpeas", icon: "🫛" },
+      { name: "Kidney beans", icon: "🫘" },
+      { name: "Lentils", icon: "🫘" },
+      { name: "Soy beans", icon: "🫛" },
+      { name: "Apricot", icon: "🍑" },
+      { name: "Avocado", icon: "🥑" },
+      { name: "Blackberry", icon: "🫐" },
+      { name: "Cherry", icon: "🍒" },
+      { name: "Longon", icon: "🟤" },
+      { name: "Lychee", icon: "🟤" },
+      { name: "Nectarine", icon: "🍑" },
+      { name: "Peach", icon: "🍑" },
+      { name: "Plum", icon: "🟣" },
+      { name: "Prune", icon: "🟤" },
+      { name: "Cauliflower", icon: "🥦" },
+      { name: "Green capsicum", icon: "🫑" },
+      { name: "Mushroom", icon: "🍄" },
+      { name: "Sweet corn", icon: "🌽" },
+      { name: "Sorbitol", icon: "🍬" },
+      { name: "Mannitol", icon: "🍬" },
+      { name: "Isomalt", icon: "🍬" },
+      { name: "Maltitol", icon: "🍬" },
+      { name: "Xylitol", icon: "🍬" }
+    ];
+
+    let score = 0;
+    let lives = 7;
+    let timeLeft = 120;
+    let playerX = 0;
+    let keys = {};
+    let foods = [];
+    let running = false;
+    let lastSpawn = 0;
+    let spawnGap = 1100;
+    let gameLoopId;
+    let timerId;
+
+    function areaRect() { return gameArea.getBoundingClientRect(); }
+
+    function updateLifeGauge() {
+      const maxLives = 7;
+      const pct = Math.max(0, Math.min(100, (lives / maxLives) * 100));
+      lifeBar.style.width = pct + "%";
+    }
+
+    function resetGame() {
+      score = 0;
+      lives = 7;
+      timeLeft = 120;
+      scoreEl.textContent = score;
+      timeEl.textContent = timeLeft;
+      updateLifeGauge();
+      foods.forEach(f => f.el.remove());
+      foods = [];
+      const rect = areaRect();
+      playerX = rect.width / 2 - player.offsetWidth / 2;
+      updatePlayer();
+      spawnGap = 1100;
+    }
+
+    function updatePlayer() {
+      const rect = areaRect();
+      playerX = Math.max(0, Math.min(rect.width - player.offsetWidth, playerX));
+      player.style.left = playerX + "px";
+      player.style.transform = "none";
+    }
+
+    function randomFood() {
+      const isGood = Math.random() < 0.55;
+      const list = isGood ? goodFoods : badFoods;
+      const data = list[Math.floor(Math.random() * list.length)];
+      return { ...data, isGood };
+    }
+
+    function spawnFood() {
+      const rect = areaRect();
+      const data = randomFood();
+      const el = document.createElement("div");
+      el.className = "food";
+      el.innerHTML = `<div class="emoji">${data.icon}</div><div class="name">${data.name}</div>`;
+      const x = Math.random() * (rect.width - 100) + 4;
+      el.style.left = x + "px";
+      el.style.top = "-84px";
+      gameArea.appendChild(el);
+      foods.push({
+        el,
+        x,
+        y: -84,
+        vy: 1.35 + Math.random() * 1.55 + Math.min(score / 240, 1.35),
+        isGood: data.isGood,
+        name: data.name
+      });
+    }
+
+    function showToast(msg) {
+      toast.textContent = msg;
+      toast.style.opacity = 1;
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => toast.style.opacity = 0, 1000);
+    }
+
+    function popText(text, x, y, ok) {
+      const t = document.createElement("div");
+      t.className = "popText";
+      t.style.left = x + "px";
+      t.style.top = y + "px";
+      t.style.color = ok ? "#2e7d32" : "#c62828";
+      t.textContent = text;
+      gameArea.appendChild(t);
+      setTimeout(() => t.remove(), 900);
+    }
+
+    function poopEvent() {
+      const p = document.createElement("div");
+      p.className = "poop";
+      p.textContent = "💩";
+      p.style.left = (playerX + player.offsetWidth / 2 - 16) + "px";
+      p.style.top = (areaRect().height - 96) + "px";
+      gameArea.appendChild(p);
+      player.style.filter = "hue-rotate(110deg) saturate(1.3)";
+      setTimeout(() => player.style.filter = "", 250);
+      setTimeout(() => p.remove(), 1200);
+    }
+
+    function isCaught(food) {
+      const basketLeft = playerX + 5;
+      const basketRight = playerX + player.offsetWidth - 5;
+      const basketTop = areaRect().height - 114;
+      const basketBottom = areaRect().height - 54;
+      const foodCenterX = food.x + 47;
+      const foodBottom = food.y + 78;
+      return foodCenterX >= basketLeft && foodCenterX <= basketRight &&
+             foodBottom >= basketTop && foodBottom <= basketBottom;
+    }
+
+    function handleCatch(food, index) {
+      if (food.isGood) {
+        score += 1;
+        scoreEl.textContent = score;
+        popText("+1", food.x, food.y, true);
+        showToast(`${food.name}: allowed on low FODMAP`);
+        if (score >= 30) {
+          food.el.remove();
+          foods.splice(index, 1);
+          endGame(true);
+          return;
+        }
+      } else {
+        lives -= 1;
+        updateLifeGauge();
+        popText("-1 💩", food.x, food.y, false);
+        showToast(`${food.name}: high FODMAP / avoid`);
+        poopEvent();
+        if (lives <= 0) endGame();
+      }
+      food.el.remove();
+      foods.splice(index, 1);
+    }
+
+    function updateFoods() {
+      const rect = areaRect();
+      for (let i = foods.length - 1; i >= 0; i--) {
+        const f = foods[i];
+        f.y += f.vy;
+        f.el.style.top = f.y + "px";
+        if (isCaught(f)) {
+          handleCatch(f, i);
+        } else if (f.y > rect.height + 90) {
+          f.el.remove();
+          foods.splice(i, 1);
+        }
+      }
+    }
+
+    function updateMovement() {
+      const speed = 7;
+      if (keys["ArrowLeft"] || keys["a"] || keys["A"]) playerX -= speed;
+      if (keys["ArrowRight"] || keys["d"] || keys["D"]) playerX += speed;
+      updatePlayer();
+    }
+
+    function loop(timestamp) {
+      if (!running) return;
+      updateMovement();
+      if (timestamp - lastSpawn > spawnGap) {
+        spawnFood();
+        lastSpawn = timestamp;
+        spawnGap = Math.max(620, 1100 - score * 1.9);
+      }
+      updateFoods();
+      gameLoopId = requestAnimationFrame(loop);
+    }
+
+    function startGame() {
+      resetGame();
+      startScreen.style.display = "none";
+      gameOver.style.display = "none";
+      successScene.style.display = "none";
+      failScene.style.display = "none";
+      running = true;
+      lastSpawn = 0;
+      gameLoopId = requestAnimationFrame(loop);
+      timerId = setInterval(() => {
+        timeLeft--;
+        timeEl.textContent = timeLeft;
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    function endGame(success = false) {
+      if (!running) return;
+      running = false;
+      cancelAnimationFrame(gameLoopId);
+      clearInterval(timerId);
+
+      foods.forEach(f => f.el.remove());
+      foods = [];
+
+      finalScore.textContent = `Final score: ${score} points`;
+
+      if (success || score >= 30) {
+        resultTitle.textContent = "MISSION SUCCESS!";
+        successScene.style.display = "block";
+        failScene.style.display = "none";
+        finalMsg.textContent = "성공! 30점을 달성해서 게임을 클리어했어요. 웃고 있는 장 엔딩 획득!";
+      } else {
+        resultTitle.textContent = "GAME OVER!";
+        successScene.style.display = "none";
+        failScene.style.display = "block";
+        if (score >= 20) {
+          finalMsg.textContent = "아깝다! 조금만 더 하면 30점 성공 기준에 도달해요.";
+        } else {
+          finalMsg.textContent = "변기 폭파 엔딩... 다시 도전해서 더 많이 맞춰봐요!";
+        }
+      }
+
+      gameOver.style.display = "flex";
+      gameOver.classList.remove("flash");
+      void gameOver.offsetWidth;
+      gameOver.classList.add("flash");
+    }
+
+    document.getElementById("startBtn").addEventListener("click", startGame);
+    document.getElementById("restartBtn").addEventListener("click", startGame);
+
+    window.addEventListener("keydown", e => {
+      keys[e.key] = true;
+      if (["ArrowLeft", "ArrowRight", " "].includes(e.key)) e.preventDefault();
+    });
+    window.addEventListener("keyup", e => keys[e.key] = false);
+
+    function holdButton(btn, keyName) {
+      btn.addEventListener("pointerdown", () => keys[keyName] = true);
+      btn.addEventListener("pointerup", () => keys[keyName] = false);
+      btn.addEventListener("pointerleave", () => keys[keyName] = false);
+      btn.addEventListener("pointercancel", () => keys[keyName] = false);
+    }
+    holdButton(document.getElementById("leftBtn"), "ArrowLeft");
+    holdButton(document.getElementById("rightBtn"), "ArrowRight");
+
+    window.addEventListener("resize", updatePlayer);
+  </script>
+</body>
+</html>
